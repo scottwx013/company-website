@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产品服务 - 福利云</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .huawei-blue { color: #0052D9; }
+        .bg-huawei-blue { background-color: #0052D9; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .nav-blur { backdrop-filter: blur(10px); background: rgba(255,255,255,0.95); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航 -->
+    <nav class="nav-blur fixed w-full z-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="index.html" class="flex items-center">
+                        <div class="w-10 h-10 bg-huawei-blue rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-xl">福</span>
+                        </div>
+                        <span class="ml-3 text-xl font-bold text-gray-900">福利云</span>
+                    </a>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-600 hover:text-blue-600">首页</a>
+                    <a href="products.html" class="text-gray-900 font-medium hover:text-blue-600">产品服务</a>
+                    <a href="merchants.html" class="text-gray-600 hover:text-blue-600">商户网络</a>
+                    <a href="cases.html" class="text-gray-600 hover:text-blue-600">成功案例</a>
+                    <a href="about.html" class="text-gray-600 hover:text-blue-600">关于我们</a>
+                    <a href="contact.html" class="text-gray-600 hover:text-blue-600">联系我们</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面标题 -->
+    <section class="pt-32 pb-16 bg-gradient-to-r from-blue-900 to-blue-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">产品与服务</h1>
+            <p class="text-blue-100 text-xl">全方位员工福利解决方案，满足企业多样化需求</p>
+        </div>
+    </section>
+
+    <!-- 产品列表 -->
+    <section class="py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div id="products-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- 动态加载 -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 服务流程 -->
+    <section class="py-20 bg-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">服务流程</h2>
+                <p class="text-gray-600">简单四步，轻松上线</p>
+            </div>
+            <div class="grid md:grid-cols-4 gap-8">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl font-bold">1</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">需求沟通</h3>
+                    <p class="text-gray-600">深入了解企业需求和预算</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl font-bold">2</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">方案定制</h3>
+                    <p class="text-gray-600">量身定制福利方案</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl font-bold">3</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">系统对接</h3>
+                    <p class="text-gray-600">快速部署，无缝对接</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl font-bold">4</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">持续服务</h3>
+                    <p class="text-gray-600">7×24小时客服支持</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-16 bg-blue-600">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold text-white mb-6">需要定制化方案？</h2>
+            <p class="text-blue-100 mb-8">我们的专家团队随时为您提供咨询服务</p>
+            <a href="contact.html" class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold inline-block hover:bg-gray-100">联系咨询</a>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-900 text-gray-300 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2024 福利云. 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>
+        loadProducts();
+    </script>
+</body>
+</html>

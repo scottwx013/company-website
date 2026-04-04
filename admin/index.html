@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - 福利云</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .bg-huawei-blue { background-color: #0052D9; }
+        .sidebar { min-height: calc(100vh - 64px); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- 顶部导航 -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+                        <span class="text-white font-bold">福</span>
+                    </div>
+                    <span class="ml-3 text-lg font-bold text-gray-900">福利云管理后台</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="../index.html" target="_blank" class="text-gray-600 hover:text-blue-600 text-sm">查看网站 →</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex">
+        <!-- 侧边栏 -->
+        <aside class="w-64 bg-white border-r border-gray-200 sidebar">
+            <nav class="p-4 space-y-2">
+                <button onclick="showTab('company')" id="tab-btn-company" class="w-full text-left px-4 py-3 rounded-lg font-medium bg-blue-50 text-blue-700">
+                    🏢 公司信息
+                </button>
+                <button onclick="showTab('merchants')" id="tab-btn-merchants" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                    🏪 商户管理
+                </button>
+                <button onclick="showTab('products')" id="tab-btn-products" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                    📦 产品管理
+                </button>
+                <button onclick="showTab('cases')" id="tab-btn-cases" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                    💼 案例管理
+                </button>
+                <button onclick="showTab('home')" id="tab-btn-home" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                    🏠 首页配置
+                </button>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="flex-1 p-8">
+            <!-- 公司信息 -->
+            <div id="tab-company" class="tab-content active">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">公司信息</h2>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">公司名称</label>
+                            <input type="text" id="company-name" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">公司口号</label>
+                            <input type="text" id="company-slogan" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 font-medium mb-2">公司简介</label>
+                            <textarea id="company-description" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">联系电话</label>
+                            <input type="text" id="company-phone" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">电子邮箱</label>
+                            <input type="email" id="company-email" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 font-medium mb-2">公司地址</label>
+                            <input type="text" id="company-address" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="saveCompany()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">保存修改</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 商户管理 -->
+            <div id="tab-merchants" class="tab-content">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">商户管理</h2>
+                        <button onclick="openMerchantModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">+ 添加商户</button>
+                    </div>
+                    
+                    <div id="merchants-list" class="space-y-4">
+                        <!-- 动态加载 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 产品管理 -->
+            <div id="tab-products" class="tab-content">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">产品管理</h2>
+                    
+                    <div id="products-list" class="space-y-4">
+                        <!-- 动态加载 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 案例管理 -->
+            <div id="tab-cases" class="tab-content">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">案例管理</h2>
+                    
+                    <div id="cases-list" class="space-y-4">
+                        <!-- 动态加载 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 首页配置 -->
+            <div id="tab-home" class="tab-content">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">首页配置</h2>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">主标题</label>
+                            <input type="text" id="home-hero-title" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">副标题</label>
+                            <input type="text" id="home-hero-subtitle" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        </div>
+                        
+                        <div class="flex justify-end">
+                            <button onclick="saveHome()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">保存修改</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 商户编辑弹窗 -->
+    <div id="merchant-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-6 w-full max-w-lg max-h-screen overflow-y-auto">
+            <h3 class="text-xl font-bold mb-4" id="modal-title">添加商户</h3>
+            
+            <input type="hidden" id="merchant-id">
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">商户名称 *</label>
+                    <input type="text" id="merchant-name" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">城市 *</label>
+                        <input type="text" id="merchant-city" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">类别 *</label>
+                        <select id="merchant-category" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            <option value="超市">超市</option>
+                            <option value="餐饮">餐饮></option>
+                            <option value="零售">零售</option>
+                            <option value="服务">服务</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">详细地址 *</label>
+                    <input type="text" id="merchant-address" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">经度</label>
+                        <input type="number" step="0.0001" id="merchant-lng" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="116.4074">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">纬度</label>
+                        <input type="number" step="0.0001" id="merchant-lat" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="39.9042">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">标签（用逗号分隔）</label>
+                    <input type="text" id="merchant-tags" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="大型连锁, 品类齐全">
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-4 mt-6">
+                <button onclick="closeMerchantModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">取消</button>
+                <button onclick="saveMerchant()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let siteData = null;
+        
+        // 加载数据
+        async function loadData() {
+            const response = await fetch('../data/content.json');
+            siteData = await response.json();
+            return siteData;
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadData();
+            loadCompanyData();
+            loadMerchantsList();
+            loadHomeData();
+        });
+        
+        // 切换标签页
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('[id^="tab-btn-"]').forEach(el => {
+                el.classList.remove('bg-blue-50', 'text-blue-700');
+                el.classList.add('text-gray-700');
+            });
+            
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            const btn = document.getElementById(`tab-btn-${tab}`);
+            btn.classList.remove('text-gray-700');
+            btn.classList.add('bg-blue-50', 'text-blue-700');
+        }
+        
+        // 加载公司信息
+        function loadCompanyData() {
+            document.getElementById('company-name').value = siteData.company.name;
+            document.getElementById('company-slogan').value = siteData.company.slogan;
+            document.getElementById('company-description').value = siteData.company.description;
+            document.getElementById('company-phone').value = siteData.company.phone;
+            document.getElementById('company-email').value = siteData.company.email;
+            document.getElementById('company-address').value = siteData.company.address;
+        }
+        
+        // 保存公司信息
+        function saveCompany() {
+            siteData.company.name = document.getElementById('company-name').value;
+            siteData.company.slogan = document.getElementById('company-slogan').value;
+            siteData.company.description = document.getElementById('company-description').value;
+            siteData.company.phone = document.getElementById('company-phone').value;
+            siteData.company.email = document.getElementById('company-email').value;
+            siteData.company.address = document.getElementById('company-address').value;
+            
+            saveData();
+        }
+        
+        // 加载商户列表
+        function loadMerchantsList() {
+            const container = document.getElementById('merchants-list');
+            container.innerHTML = siteData.merchants.map(m => `
+                <div class="border border-gray-200 rounded-lg p-4 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-semibold">${m.name}</h4>
+                        <p class="text-sm text-gray-500">${m.city} · ${m.category} · ${m.address}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="editMerchant(${m.id})" class="text-blue-600 hover:text-blue-800 text-sm">编辑</button>
+                        <button onclick="deleteMerchant(${m.id})" class="text-red-600 hover:text-red-800 text-sm">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 打开商户弹窗
+        function openMerchantModal() {
+            document.getElementById('merchant-modal').classList.remove('hidden');
+            document.getElementById('modal-title').textContent = '添加商户';
+            document.getElementById('merchant-id').value = '';
+            document.getElementById('merchant-name').value = '';
+            document.getElementById('merchant-city').value = '';
+            document.getElementById('merchant-address').value = '';
+            document.getElementById('merchant-lat').value = '';
+            document.getElementById('merchant-lng').value = '';
+            document.getElementById('merchant-tags').value = '';
+        }
+        
+        // 关闭商户弹窗
+        function closeMerchantModal() {
+            document.getElementById('merchant-modal').classList.add('hidden');
+        }
+        
+        // 编辑商户
+        function editMerchant(id) {
+            const m = siteData.merchants.find(x => x.id === id);
+            if (!m) return;
+            
+            document.getElementById('merchant-modal').classList.remove('hidden');
+            document.getElementById('modal-title').textContent = '编辑商户';
+            document.getElementById('merchant-id').value = m.id;
+            document.getElementById('merchant-name').value = m.name;
+            document.getElementById('merchant-city').value = m.city;
+            document.getElementById('merchant-category').value = m.category;
+            document.getElementById('merchant-address').value = m.address;
+            document.getElementById('merchant-lat').value = m.lat;
+            document.getElementById('merchant-lng').value = m.lng;
+            document.getElementById('merchant-tags').value = m.tags.join(', ');
+        }
+        
+        // 保存商户
+        function saveMerchant() {
+            const id = document.getElementById('merchant-id').value;
+            const name = document.getElementById('merchant-name').value;
+            const city = document.getElementById('merchant-city').value;
+            const category = document.getElementById('merchant-category').value;
+            const address = document.getElementById('merchant-address').value;
+            
+            if (!name || !city || !address) {
+                alert('请填写必填项');
+                return;
+            }
+            
+            const merchantData = {
+                id: id ? parseInt(id) : Date.now(),
+                name,
+                city,
+                category,
+                address,
+                lat: parseFloat(document.getElementById('merchant-lat').value) || 0,
+                lng: parseFloat(document.getElementById('merchant-lng').value) || 0,
+                tags: document.getElementById('merchant-tags').value.split(',').map(t => t.trim()).filter(t => t)
+            };
+            
+            if (id) {
+                const idx = siteData.merchants.findIndex(x => x.id === parseInt(id));
+                siteData.merchants[idx] = merchantData;
+            } else {
+                siteData.merchants.push(merchantData);
+            }
+            
+            saveData();
+            closeMerchantModal();
+            loadMerchantsList();
+        }
+        
+        // 删除商户
+        function deleteMerchant(id) {
+            if (!confirm('确定要删除这个商户吗？')) return;
+            siteData.merchants = siteData.merchants.filter(m => m.id !== id);
+            saveData();
+            loadMerchantsList();
+        }
+        
+        // 加载首页数据
+        function loadHomeData() {
+            document.getElementById('home-hero-title').value = siteData.home.hero.title;
+            document.getElementById('home-hero-subtitle').value = siteData.home.hero.subtitle;
+        }
+        
+        // 保存首页
+        function saveHome() {
+            siteData.home.hero.title = document.getElementById('home-hero-title').value;
+            siteData.home.hero.subtitle = document.getElementById('home-hero-subtitle').value;
+            saveData();
+        }
+        
+        // 保存数据（模拟）
+        function saveData() {
+            // 实际项目中这里需要调用后端 API 保存 JSON 文件
+            // 由于这是纯前端演示，数据只保存在内存中
+            console.log('保存数据:', siteData);
+            alert('保存成功！(演示模式：数据未持久化到服务器)');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商户网络 - 福利云</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .huawei-blue { color: #0052D9; }
+        .bg-huawei-blue { background-color: #0052D9; }
+        .nav-blur { backdrop-filter: blur(10px); background: rgba(255,255,255,0.95); }
+        .merchant-card { transition: all 0.3s ease; }
+        .merchant-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航 -->
+    <nav class="nav-blur fixed w-full z-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="index.html" class="flex items-center">
+                        <div class="w-10 h-10 bg-huawei-blue rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-xl">福</span>
+                        </div>
+                        <span class="ml-3 text-xl font-bold text-gray-900">福利云</span>
+                    </a>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-600 hover:text-blue-600">首页</a>
+                    <a href="products.html" class="text-gray-600 hover:text-blue-600">产品服务</a>
+                    <a href="merchants.html" class="text-gray-900 font-medium hover:text-blue-600">商户网络</a>
+                    <a href="cases.html" class="text-gray-600 hover:text-blue-600">成功案例</a>
+                    <a href="about.html" class="text-gray-600 hover:text-blue-600">关于我们</a>
+                    <a href="contact.html" class="text-gray-600 hover:text-blue-600">联系我们</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面标题 -->
+    <section class="pt-32 pb-16 bg-gradient-to-r from-blue-900 to-blue-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">全国商户网络</h1>
+                <p class="text-blue-100 text-xl mb-6">覆盖300+城市，5000+优质商户</p>
+                <div class="flex justify-center gap-4">
+                    <button onclick="getLocation()" class="bg-white text-blue-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        定位并排序
+                    </button>
+                </div>
+                <p id="location-status" class="text-blue-200 text-sm mt-4"></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 筛选和列表 -->
+    <section class="py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- 筛选栏 -->
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+                <div class="flex flex-wrap gap-4 items-center">
+                    <div class="flex items-center">
+                        <label class="text-gray-700 font-medium mr-3">选择城市：</label>
+                        <select id="city-filter" onchange="filterMerchants()" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="all">全部城市</option>
+                            <option value="北京">北京</option>
+                            <option value="上海">上海</option>
+                            <option value="广州">广州</option>
+                            <option value="深圳">深圳</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center">
+                        <label class="text-gray-700 font-medium mr-3">商户类型：</label>
+                        <select id="category-filter" onchange="filterMerchants()" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="all">全部类型</option>
+                            <option value="超市">超市</option>
+                            <option value="餐饮">餐饮</option>
+                        </select>
+                    </div>
+                    <div id="sort-info" class="ml-auto text-gray-600">
+                        <span id="merchant-count">0</span> 家商户
+                    </div>
+                </div>
+            </div>
+
+            <!-- 商户列表 -->
+            <div id="merchants-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 动态加载 -->
+            </div>
+
+            <!-- 空状态 -->
+            <div id="empty-state" class="hidden text-center py-20">
+                <p class="text-gray-500 text-lg">暂无符合条件的商户</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-900 text-gray-300 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2024 福利云. 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>
+        // 加载商户列表
+        loadMerchants();
+
+        // 获取用户位置
+        function getLocation() {
+            const statusEl = document.getElementById('location-status');
+            statusEl.textContent = '正在获取您的位置...';
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+                        statusEl.textContent = `定位成功！正在按距离排序...`;
+                        
+                        // 按距离排序
+                        sortMerchantsByDistance(userLat, userLng);
+                    },
+                    (error) => {
+                        statusEl.textContent = '定位失败，请手动选择城市';
+                        console.error('定位错误:', error);
+                    }
+                );
+            } else {
+                statusEl.textContent = '您的浏览器不支持地理定位';
+            }
+        }
+
+        // 按距离排序商户
+        function sortMerchantsByDistance(userLat, userLng) {
+            fetch('data/content.json')
+                .then(res => res.json())
+                .then(data => {
+                    let merchants = data.merchants.map(m => {
+                        const distance = calculateDistance(userLat, userLng, m.lat, m.lng);
+                        return { ...m, distance };
+                    });
+                    
+                    // 按距离排序
+                    merchants.sort((a, b) => a.distance - b.distance);
+                    
+                    // 渲染
+                    renderMerchants(merchants, true);
+                });
+        }
+
+        // 计算两点间距离（km）
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371; // 地球半径
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+    </script>
+</body>
+</html>

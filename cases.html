@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成功案例 - 福利云</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .bg-huawei-blue { background-color: #0052D9; }
+        .nav-blur { backdrop-filter: blur(10px); background: rgba(255,255,255,0.95); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航 -->
+    <nav class="nav-blur fixed w-full z-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="index.html" class="flex items-center">
+                        <div class="w-10 h-10 bg-huawei-blue rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-xl">福</span>
+                        </div>
+                        <span class="ml-3 text-xl font-bold text-gray-900">福利云</span>
+                    </a>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-600 hover:text-blue-600">首页</a>
+                    <a href="products.html" class="text-gray-600 hover:text-blue-600">产品服务</a>
+                    <a href="merchants.html" class="text-gray-600 hover:text-blue-600">商户网络</a>
+                    <a href="cases.html" class="text-gray-900 font-medium hover:text-blue-600">成功案例</a>
+                    <a href="about.html" class="text-gray-600 hover:text-blue-600">关于我们</a>
+                    <a href="contact.html" class="text-gray-600 hover:text-blue-600">联系我们</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面标题 -->
+    <section class="pt-32 pb-16 bg-gradient-to-r from-blue-900 to-blue-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">成功案例</h1>
+            <p class="text-blue-100 text-xl">他们都在使用福利云提升员工满意度</p>
+        </div>
+    </section>
+
+    <!-- 案例列表 -->
+    <section class="py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div id="cases-container" class="grid md:grid-cols-3 gap-8">
+                <!-- 动态加载 -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 客户评价 -->
+    <section class="py-20 bg-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">客户评价</h2>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-xl shadow-sm">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xl">张</div>
+                        <div class="ml-4">
+                            <p class="font-semibold">张经理</p>
+                            <p class="text-gray-500 text-sm">某互联网公司 HRD</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 italic">"福利云让我们的福利管理工作效率提升了3倍，员工满意度调查创历史新高。"</p>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-sm">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-xl">李</div>
+                        <div class="ml-4">
+                            <p class="font-semibold">李总监</p>
+                            <p class="text-gray-500 text-sm">某制造企业 行政总监</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 italic">"全国统一的福利平台，解决了我们分支机构分散管理的难题。"</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-900 text-gray-300 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2024 福利云. 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>loadCases();</script>
+</body>
+</html>
