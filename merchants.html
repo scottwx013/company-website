@@ -244,14 +244,23 @@
 
         // 筛选商户
         function filterMerchants() {
+            // 确保数据已加载
+            if (!allMerchants || allMerchants.length === 0) {
+                console.log('筛选时数据未加载，跳过');
+                return;
+            }
+            
             const city = document.getElementById('city-filter').value;
             const category = document.getElementById('category-filter').value;
+            
+            console.log('筛选条件:', { city, category, total: allMerchants.length });
             
             let filtered = allMerchants;
             if (city !== 'all') filtered = filtered.filter(m => m.city === city);
             // 多卡券种类筛选 - 商户的categories包含所选种类
-            if (category !== 'all') filtered = filtered.filter(m => m.categories.includes(category));
+            if (category !== 'all') filtered = filtered.filter(m => m.categories && m.categories.includes(category));
             
+            console.log('筛选结果:', filtered.length, '个商户');
             renderMerchants(filtered);
         }
 
