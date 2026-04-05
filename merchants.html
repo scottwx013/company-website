@@ -135,37 +135,57 @@
 
         // 加载商户列表
         async function loadMerchants() {
+            console.log('开始加载商户...');
+            
             // 优先从 API 加载
             let merchants = [];
             try {
+                console.log('尝试从 API 加载...');
                 const apiRes = await fetch('/api/data?action=merchants');
                 const apiResult = await apiRes.json();
-                if (apiResult.success) {
+                console.log('API 返回:', apiResult);
+                if (apiResult.success && apiResult.data) {
                     merchants = apiResult.data;
+                    console.log('从 API 加载了', merchants.length, '个商户');
                 }
             } catch (e) {
-                console.warn('API 加载失败，使用本地数据');
-                const response = await fetch('data/content.json');
-                const data = await response.json();
-                merchants = data.merchants || [];
+                console.warn('API 加载失败，使用本地数据:', e);
+                try {
+                    const response = await fetch('data/content.json');
+                    const data = await response.json();
+                    merchants = data.merchants || [];
+                } catch (e2) {
+                    console.error('本地数据也加载失败:', e2);
+                }
             }
+            
+            console.log('原始商户数据:', merchants);
             
             // 只显示启用的商户，并处理多卡券种类
             allMerchants = merchants
                 .filter(m => m.status !== 'offline')
                 .map(m => {
+                    // 创建新对象，避免修改原始数据
+                    const merchant = { ...m };
                     // 兼容新旧数据，确保有categories数组
-                    if (!m.categories) {
-                        m.categories = m.couponTypes || m.categories || (m.category ? [m.category] : []);
+                    if (!merchant.categories || merchant.categories.length === 0) {
+                        merchant.categories = merchant.couponTypes || (merchant.category ? [merchant.category] : []);
                     }
                     // 取第一个作为主显示分类
-                    m.category = m.categories[0] || '';
-                    return m;
+                    merchant.category = merchant.categories[0] || '';
+                    return merchant;
                 });
             
+            console.log('处理后的商户:', allMerchants);
+            
             // 填充城市筛选
-            const cities = [...new Set(allMerchants.map(m => m.city))];
+            const cities = [...new Set(allMerchants.map(m => m.city))].filter(c => c);
+            console.log('城市列表:', cities);
             const citySelect = document.getElementById('city-filter');
+            // 保留第一个选项（全部城市）
+            const firstOption = citySelect.options[0];
+            citySelect.innerHTML = '';
+            citySelect.appendChild(firstOption);
             cities.forEach(city => {
                 const option = document.createElement('option');
                 option.value = city;
