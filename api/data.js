@@ -17,6 +17,8 @@ const defaultData = {
             address: "北京市朝阳区建国路88号",
             phone: "010-12345678",
             couponTypes: ["餐饮券"],
+            category: "餐饮券",
+            tags: ["餐饮券"],
             lat: 39.9042,
             lng: 116.4074,
             status: "online"
@@ -28,6 +30,8 @@ const defaultData = {
             address: "上海市黄浦区南京东路100号",
             phone: "021-87654321",
             couponTypes: ["电影通兑券"],
+            category: "电影通兑券",
+            tags: ["电影通兑券"],
             lat: 31.2304,
             lng: 121.4737,
             status: "online"
