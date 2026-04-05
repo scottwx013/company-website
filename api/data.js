@@ -1,11 +1,14 @@
 // Vercel Serverless Function - 数据管理 API
-// 数据存储在内存中（带文件回退）
+// 数据存储在内存 + 文件回退（/tmp 目录在 Vercel 上可写但临时）
 
 const fs = require('fs');
 const path = require('path');
 
 // 内存中的数据缓存
 let memoryData = null;
+
+// 数据文件路径（使用 /tmp 目录，Vercel 支持写入）
+const DATA_FILE = '/tmp/yili-data.json';
 
 // 默认数据
 const defaultData = {
@@ -92,13 +95,59 @@ const defaultData = {
             { year: "2020", title: "公司成立", desc: "宜礼正式成立" },
             { year: "2021", title: "产品上线", desc: "首个福利产品上线" }
         ]
+    },
+    home: {
+        stats: [
+            { number: "500+", label: "服务企业" },
+            { number: "100万+", label: "覆盖员工" },
+            { number: "50+", label: "合作商户" },
+            { number: "99%", label: "满意度" }
+        ],
+        features: [
+            { icon: "gift", title: "一站式福利", desc: "覆盖节日、生日、体检等全场景" },
+            { icon: "users", title: "专属顾问", desc: "7×24小时专属客户成功经理" },
+            { icon: "shield", title: "品质保障", desc: "严选供应商，品质全程把控" },
+            { icon: "chart", title: "数据洞察", desc: "福利数据分析，优化员工体验" }
+        ]
     }
 };
+
+// 从文件加载数据
+function loadFromFile() {
+    try {
+        if (fs.existsSync(DATA_FILE)) {
+            const content = fs.readFileSync(DATA_FILE, 'utf8');
+            return JSON.parse(content);
+        }
+    } catch (e) {
+        console.error('加载数据文件失败:', e);
+    }
+    return null;
+}
+
+// 保存数据到文件
+function saveToFile(data) {
+    try {
+        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+        return true;
+    } catch (e) {
+        console.error('保存数据文件失败:', e);
+        return false;
+    }
+}
 
 // 初始化数据
 function initData() {
     if (!memoryData) {
-        memoryData = JSON.parse(JSON.stringify(defaultData));
+        // 先尝试从文件加载
+        const fileData = loadFromFile();
+        if (fileData) {
+            memoryData = fileData;
+            console.log('从文件加载数据成功');
+        } else {
+            memoryData = JSON.parse(JSON.stringify(defaultData));
+            console.log('使用默认数据');
+        }
     }
     return memoryData;
 }
@@ -138,6 +187,9 @@ module.exports = (req, res) => {
         if (action === 'about') {
             return res.json({ success: true, data: data.about });
         }
+        if (action === 'home') {
+            return res.json({ success: true, data: data.home });
+        }
         // 返回全部数据
         return res.json({ success: true, data });
     }
@@ -145,6 +197,7 @@ module.exports = (req, res) => {
     // POST/PUT 请求 - 更新数据
     if (req.method === 'POST' || req.method === 'PUT') {
         const body = req.body;
+        let changed = false;
         
         if (action === 'merchant') {
             if (body.id) {
@@ -152,6 +205,8 @@ module.exports = (req, res) => {
                 const idx = data.merchants.findIndex(m => m.id === body.id);
                 if (idx !== -1) {
                     data.merchants[idx] = { ...data.merchants[idx], ...body };
+                    changed = true;
+                    saveToFile(data);
                     return res.json({ success: true, data: data.merchants[idx] });
                 }
             } else {
@@ -159,6 +214,8 @@ module.exports = (req, res) => {
                 const newId = Math.max(...data.merchants.map(m => m.id), 0) + 1;
                 const newMerchant = { ...body, id: newId, status: body.status || 'online' };
                 data.merchants.push(newMerchant);
+                changed = true;
+                saveToFile(data);
                 return res.json({ success: true, data: newMerchant });
             }
         }
@@ -168,24 +225,39 @@ module.exports = (req, res) => {
                 const idx = data.products.findIndex(p => p.id === body.id);
                 if (idx !== -1) {
                     data.products[idx] = { ...data.products[idx], ...body };
+                    changed = true;
+                    saveToFile(data);
                     return res.json({ success: true, data: data.products[idx] });
                 }
             } else {
                 const newId = Math.max(...data.products.map(p => p.id), 0) + 1;
                 const newProduct = { ...body, id: newId };
                 data.products.push(newProduct);
+                changed = true;
+                saveToFile(data);
                 return res.json({ success: true, data: newProduct });
             }
         }
         
         if (action === 'company') {
             data.company = { ...data.company, ...body };
+            changed = true;
+            saveToFile(data);
             return res.json({ success: true, data: data.company });
         }
         
         if (action === 'about') {
             data.about = { ...data.about, ...body };
+            changed = true;
+            saveToFile(data);
             return res.json({ success: true, data: data.about });
+        }
+        
+        if (action === 'home') {
+            data.home = { ...data.home, ...body };
+            changed = true;
+            saveToFile(data);
+            return res.json({ success: true, data: data.home });
         }
         
         return res.json({ success: false, error: 'Unknown action' });
@@ -196,11 +268,13 @@ module.exports = (req, res) => {
         if (action === 'merchant') {
             const id = parseInt(req.query.id);
             data.merchants = data.merchants.filter(m => m.id !== id);
+            saveToFile(data);
             return res.json({ success: true });
         }
         if (action === 'product') {
             const id = parseInt(req.query.id);
             data.products = data.products.filter(p => p.id !== id);
+            saveToFile(data);
             return res.json({ success: true });
         }
         return res.json({ success: false, error: 'Unknown action' });

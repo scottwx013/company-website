@@ -198,6 +198,13 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="js/main.js"></script>
     <script>
+        // 初始化首页内容
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof loadHomeContent === 'function') {
+                loadHomeContent();
+            }
+        });
+        
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
             menu.classList.toggle('hidden');

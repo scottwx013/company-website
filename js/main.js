@@ -226,29 +226,34 @@ async function loadAbout() {
     
     // 加载价值观
     const valuesContainer = document.getElementById('company-values');
-    if (valuesContainer) {
+    if (valuesContainer && data.about && data.about.values) {
         valuesContainer.innerHTML = data.about.values.map(v => `
             <div class="bg-white rounded-lg p-4 text-center shadow-sm">
-                <p class="font-semibold text-gray-900">${v}</p>
+                <p class="font-semibold text-gray-900">${v.title || v}</p>
+                <p class="text-sm text-gray-600 mt-1">${v.desc || ''}</p>
             </div>
         `).join('');
     }
     
     // 加载里程碑
     const milestonesContainer = document.getElementById('milestones-container');
-    if (milestonesContainer) {
-        milestonesContainer.innerHTML = data.about.milestones.map(m => `
+    if (milestonesContainer && data.about && data.about.timeline) {
+        milestonesContainer.innerHTML = data.about.timeline.map(m => `
             <div class="timeline-item pb-8">
                 <div class="bg-white rounded-xl p-6 shadow-sm">
                     <span class="text-blue-600 font-bold text-lg">${m.year}</span>
-                    <p class="text-gray-700 mt-2">${m.event}</p>
+                    <h4 class="font-semibold text-gray-900 mt-1">${m.title}</h4>
+                    <p class="text-gray-700 mt-2">${m.desc}</p>
                 </div>
             </div>
         `).join('');
     }
+    
+    // 加载公司故事
+    const storyEl = document.getElementById('company-story');
+    if (storyEl && data.about && data.about.story) {
+        storyEl.textContent = data.about.story;
+    }
 }
 
-// 页面加载时执行
-document.addEventListener('DOMContentLoaded', () => {
-    loadHomeContent();
-});
+// 注意：各页面需在DOMContentLoaded中自行调用加载函数

@@ -127,7 +127,11 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="js/main.js"></script>
     <script>
-        loadAbout();
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof loadAbout === 'function') {
+                loadAbout();
+            }
+        });
     </script>
 </body>
 </html>
