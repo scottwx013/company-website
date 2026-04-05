@@ -186,8 +186,11 @@
                 cities.map(city => `<option value="${city}">${city}</option>`).join('');
             citySelect.innerHTML = cityOptionsHtml;
             
-            renderMerchants(allMerchants);
-            console.log('调用 renderMerchants 完成');
+            // 确保DOM更新后再渲染
+            setTimeout(() => {
+                renderMerchants(allMerchants);
+                console.log('调用 renderMerchants 完成');
+            }, 0);
         }
 
         // 渲染商户列表 - 紧凑版
