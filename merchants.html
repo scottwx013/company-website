@@ -133,23 +133,26 @@
         let allMerchants = [];
         let map = null;
 
-        // 加载商户列表
+        // 加载商户列表 - 使用 Supabase
         async function loadMerchants() {
-            console.log('开始加载商户...');
+            console.log('开始从 Supabase 加载商户...');
             
-            // 优先从 API 加载
             let merchants = [];
             try {
-                console.log('尝试从 API 加载...');
-                const apiRes = await fetch('/api/data?action=merchants');
-                const apiResult = await apiRes.json();
-                console.log('API 返回:', apiResult);
-                if (apiResult.success && apiResult.data) {
-                    merchants = apiResult.data;
-                    console.log('从 API 加载了', merchants.length, '个商户');
+                const result = await getMerchants();
+                console.log('Supabase 返回:', result);
+                if (result.success && result.data) {
+                    merchants = result.data;
+                    console.log('从 Supabase 加载了', merchants.length, '个商户');
+                } else {
+                    console.warn('Supabase 返回失败:', result.error);
+                    // 回退到本地 JSON
+                    const response = await fetch('data/content.json');
+                    const data = await response.json();
+                    merchants = data.merchants || [];
                 }
             } catch (e) {
-                console.warn('API 加载失败，使用本地数据:', e);
+                console.error('Supabase 加载失败:', e);
                 try {
                     const response = await fetch('data/content.json');
                     const data = await response.json();
@@ -168,7 +171,7 @@
                     // 创建新对象，避免修改原始数据
                     const merchant = { ...m };
                     // 兼容新旧数据，确保有categories数组
-                    const cats = merchant.categories || merchant.couponTypes || (merchant.category ? [merchant.category] : []);
+                    const cats = merchant.coupon_types || merchant.couponTypes || (merchant.category ? [merchant.category] : []);
                     merchant.categories = Array.isArray(cats) ? cats : [cats].filter(Boolean);
                     // 取第一个作为主显示分类
                     merchant.category = merchant.categories[0] || '';
