@@ -21,38 +21,67 @@ async function loadData(forceRefresh = false) {
         
         if (supabaseInitialized || typeof getMerchants === 'function') {
             try {
-                const [merchantsRes, productsRes, companyRes, aboutRes, homeRes] = await Promise.all([
-                    getMerchants(),
-                    getProducts(),
-                    getCompany(),
-                    getAbout(),
-                    getHomeConfig()
-                ]);
+                // 分别加载，避免一个失败导致全部失败
+                let merchantsRes = { success: false, data: [] };
+                let productsRes = { success: false, data: [] };
+                let companyRes = { success: false, data: {} };
+                let aboutRes = { success: false, data: {} };
+                let homeRes = { success: false, data: {} };
                 
-                if (merchantsRes.success && productsRes.success) {
-                    siteData = {
-                        merchants: merchantsRes.data || [],
-                        products: productsRes.data || [],
-                        company: companyRes.success ? companyRes.data : {},
-                        about: aboutRes.success ? {
-                            story: aboutRes.data.story,
-                            mission: aboutRes.data.mission,
-                            vision: aboutRes.data.vision,
-                            values: aboutRes.data.values || [],
-                            timeline: aboutRes.data.timeline || []
-                        } : {},
-                        home: homeRes.success ? {
-                            stats: homeRes.data.stats || [],
-                            features: homeRes.data.features || [],
-                            hero_title: homeRes.data.hero_title,
-                            hero_subtitle: homeRes.data.hero_subtitle
-                        } : {}
-                    };
-                    console.log('已从 Supabase 加载数据');
-                    return siteData;
+                try {
+                    merchantsRes = await getMerchants();
+                    console.log('商户加载:', merchantsRes.success ? merchantsRes.data.length + '个' : '失败', merchantsRes.error || '');
+                } catch (e) {
+                    console.warn('商户加载失败:', e.message);
                 }
-            } catch (error) {
-                console.warn('Supabase 加载失败，使用本地数据:', error);
+                
+                try {
+                    productsRes = await getProducts();
+                    console.log('产品加载:', productsRes.success ? productsRes.data.length + '个' : '失败');
+                } catch (e) {
+                    console.warn('产品加载失败:', e.message);
+                }
+                
+                try {
+                    companyRes = await getCompany();
+                } catch (e) {
+                    console.warn('公司信息加载失败:', e.message);
+                }
+                
+                try {
+                    aboutRes = await getAbout();
+                } catch (e) {
+                    console.warn('关于我们加载失败:', e.message);
+                }
+                
+                try {
+                    homeRes = await getHomeConfig();
+                } catch (e) {
+                    console.warn('首页配置加载失败:', e.message);
+                }
+                
+                siteData = {
+                    merchants: merchantsRes.data || [],
+                    products: productsRes.data || [],
+                    company: companyRes.data || {},
+                    about: aboutRes.data ? {
+                        story: aboutRes.data.story,
+                        mission: aboutRes.data.mission,
+                        vision: aboutRes.data.vision,
+                        values: aboutRes.data.values || [],
+                        timeline: aboutRes.data.timeline || []
+                    } : {},
+                    home: homeRes.data ? {
+                        stats: homeRes.data.stats || [],
+                        features: homeRes.data.features || [],
+                        hero_title: homeRes.data.hero_title,
+                        hero_subtitle: homeRes.data.hero_subtitle
+                    } : {}
+                };
+                console.log('数据加载完成:', siteData.merchants.length, '商户,', siteData.products.length, '产品');
+                return siteData;
+            } catch (e) {
+                console.error('Supabase 加载失败:', e);
             }
         }
         
@@ -155,7 +184,9 @@ async function loadProducts() {
 
 // 加载商户列表
 async function loadMerchants() {
+    console.log('开始加载商户...');
     const data = await loadData();
+    console.log('数据加载完成:', data.merchants ? data.merchants.length : 0, '个商户');
     if (data.merchants) {
         renderMerchants(data.merchants);
     }
@@ -163,6 +194,7 @@ async function loadMerchants() {
 
 // 渲染商户列表
 function renderMerchants(merchants, showDistance = false) {
+    console.log('渲染商户:', merchants ? merchants.length : 0, '个');
     const container = document.getElementById('merchants-container');
     const emptyState = document.getElementById('empty-state');
     const countEl = document.getElementById('merchant-count');
@@ -172,6 +204,7 @@ function renderMerchants(merchants, showDistance = false) {
     }
     
     if (!merchants || merchants.length === 0) {
+        console.log('没有商户数据，显示空状态');
         if (container) container.innerHTML = '';
         if (emptyState) emptyState.classList.remove('hidden');
         return;
@@ -202,6 +235,7 @@ function renderMerchants(merchants, showDistance = false) {
                 </div>
             </div>
         `).join('');
+        console.log('商户渲染完成');
     }
 }
 
