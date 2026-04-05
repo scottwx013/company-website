@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Supabase 连接测试</title>
+</head>
+<body>
+    <h1>Supabase 连接测试</h1>
+    <div id="result">加载中...</div>
+    
+    <script>
+        const SUPABASE_URL = 'https://ysfmlwdbgwenqtpfntrf.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZm1sd2RiZ3dlbnF0cGZudHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTYxNzUsImV4cCI6MjA5MDk3MjE3NX0.Qnawrj79G8cA6JEMlM2qDV0d20ofZrE4SwxN_K-c0q0';
+        
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                console.log('开始测试连接...');
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/merchants?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                
+                console.log('响应状态:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <h2 style="color: green">✅ 连接成功！</h2>
+                    <p>找到 ${data.length} 个商户：</p>
+                    <ul>${data.map(m => `<li>${m.name} (${m.city}) - ${m.category}</li>`).join('')}</ul>
+                `;
+            } catch (error) {
+                console.error('错误:', error);
+                resultDiv.innerHTML = `
+                    <h2 style="color: red">❌ 连接失败</h2>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+        
+        testConnection();
+    </script>
+</body>
+</html>
