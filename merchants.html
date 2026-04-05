@@ -178,20 +178,13 @@
             
             console.log('处理后的商户:', allMerchants);
             
-            // 填充城市筛选
+            // 填充城市筛选（使用innerHTML避免触发onchange）
             const cities = [...new Set(allMerchants.map(m => m.city))].filter(c => c);
             console.log('城市列表:', cities);
             const citySelect = document.getElementById('city-filter');
-            // 保留第一个选项（全部城市）
-            const firstOption = citySelect.options[0];
-            citySelect.innerHTML = '';
-            citySelect.appendChild(firstOption);
-            cities.forEach(city => {
-                const option = document.createElement('option');
-                option.value = city;
-                option.textContent = city;
-                citySelect.appendChild(option);
-            });
+            const cityOptionsHtml = '<option value="all">全部城市</option>' + 
+                cities.map(city => `<option value="${city}">${city}</option>`).join('');
+            citySelect.innerHTML = cityOptionsHtml;
             
             renderMerchants(allMerchants);
             console.log('调用 renderMerchants 完成');
