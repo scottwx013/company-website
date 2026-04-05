@@ -168,11 +168,11 @@
                     // 创建新对象，避免修改原始数据
                     const merchant = { ...m };
                     // 兼容新旧数据，确保有categories数组
-                    if (!merchant.categories || merchant.categories.length === 0) {
-                        merchant.categories = merchant.couponTypes || (merchant.category ? [merchant.category] : []);
-                    }
+                    const cats = merchant.categories || merchant.couponTypes || (merchant.category ? [merchant.category] : []);
+                    merchant.categories = Array.isArray(cats) ? cats : [cats].filter(Boolean);
                     // 取第一个作为主显示分类
                     merchant.category = merchant.categories[0] || '';
+                    console.log('处理商户:', merchant.name, 'categories:', merchant.categories);
                     return merchant;
                 });
             
