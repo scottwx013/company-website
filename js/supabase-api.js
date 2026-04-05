@@ -1,4 +1,4 @@
-// Supabase REST API 客户端（备用方案）
+// Supabase REST API 客户端
 // 直接使用 fetch 调用 Supabase REST API
 
 const SUPABASE_CONFIG = {
@@ -7,16 +7,17 @@ const SUPABASE_CONFIG = {
 };
 
 // 通用请求函数
-async function supabaseRequest(table, method = 'GET', body = null, id = null) {
-    const url = id 
-        ? `${SUPABASE_CONFIG.url}/rest/v1/${table}?id=eq.${id}`
-        : `${SUPABASE_CONFIG.url}/rest/v1/${table}`;
+function supabaseRequest(table, method, body, id) {
+    method = method || 'GET';
+    var url = id 
+        ? SUPABASE_CONFIG.url + '/rest/v1/' + table + '?id=eq.' + id
+        : SUPABASE_CONFIG.url + '/rest/v1/' + table;
     
-    const options = {
+    var options = {
         method: method,
         headers: {
             'apikey': SUPABASE_CONFIG.anonKey,
-            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+            'Authorization': 'Bearer ' + SUPABASE_CONFIG.anonKey,
             'Content-Type': 'application/json'
         }
     };
@@ -25,42 +26,34 @@ async function supabaseRequest(table, method = 'GET', body = null, id = null) {
         options.body = JSON.stringify(body);
     }
     
-    // 对于 GET 请求，添加 Prefer 头
-    if (method === 'GET') {
-        options.headers['Prefer'] = 'return=representation';
-    }
-    
-    try {
-        const response = await fetch(url, options);
-        
+    return fetch(url, options).then(function(response) {
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
+            return response.text().then(function(text) {
+                throw new Error('HTTP ' + response.status + ': ' + text);
+            });
         }
-        
-        const data = await response.json();
-        return { success: true, data };
-    } catch (error) {
-        console.error(`Supabase ${method} 请求失败:`, error);
+        return response.json();
+    }).then(function(data) {
+        return { success: true, data: data };
+    }).catch(function(error) {
+        console.error('Supabase 请求失败:', error);
         return { success: false, error: error.message };
-    }
+    });
 }
 
 // ============ 商户 API ============
 
-async function getMerchants() {
-    console.log('正在获取商户数据...');
-    const result = await supabaseRequest('merchants');
-    console.log('商户数据结果:', result.success ? result.data.length + '个' : '失败', result.error || '');
-    return result;
+function getMerchants() {
+    console.log('调用 getMerchants...');
+    return supabaseRequest('merchants');
 }
 
-async function getMerchant(id) {
-    return await supabaseRequest('merchants', 'GET', null, id);
+function getMerchant(id) {
+    return supabaseRequest('merchants', 'GET', null, id);
 }
 
-async function createMerchant(merchant) {
-    const body = {
+function createMerchant(merchant) {
+    var body = {
         name: merchant.name,
         city: merchant.city,
         address: merchant.address,
@@ -72,11 +65,11 @@ async function createMerchant(merchant) {
         lng: merchant.lng || null,
         status: merchant.status || 'online'
     };
-    return await supabaseRequest('merchants', 'POST', body);
+    return supabaseRequest('merchants', 'POST', body);
 }
 
-async function updateMerchant(id, merchant) {
-    const body = {
+function updateMerchant(id, merchant) {
+    var body = {
         name: merchant.name,
         city: merchant.city,
         address: merchant.address,
@@ -88,60 +81,59 @@ async function updateMerchant(id, merchant) {
         lng: merchant.lng || null,
         status: merchant.status || 'online'
     };
-    return await supabaseRequest('merchants', 'PATCH', body, id);
+    return supabaseRequest('merchants', 'PATCH', body, id);
 }
 
-async function deleteMerchant(id) {
-    return await supabaseRequest('merchants', 'DELETE', null, id);
+function deleteMerchant(id) {
+    return supabaseRequest('merchants', 'DELETE', null, id);
 }
 
 // ============ 产品 API ============
 
-async function getProducts() {
-    console.log('正在获取产品数据...');
-    const result = await supabaseRequest('products');
-    console.log('产品数据结果:', result.success ? result.data.length + '个' : '失败');
-    return result;
+function getProducts() {
+    console.log('调用 getProducts...');
+    return supabaseRequest('products');
 }
 
-async function createProduct(product) {
-    const body = {
+function createProduct(product) {
+    var body = {
         name: product.name,
         description: product.description,
         features: product.features || [],
         image: product.image || '',
         image_alt: product.imageAlt || product.name
     };
-    return await supabaseRequest('products', 'POST', body);
+    return supabaseRequest('products', 'POST', body);
 }
 
-async function updateProduct(id, product) {
-    const body = {
+function updateProduct(id, product) {
+    var body = {
         name: product.name,
         description: product.description,
         features: product.features || [],
         image: product.image || '',
         image_alt: product.imageAlt || product.name
     };
-    return await supabaseRequest('products', 'PATCH', body, id);
+    return supabaseRequest('products', 'PATCH', body, id);
 }
 
-async function deleteProduct(id) {
-    return await supabaseRequest('products', 'DELETE', null, id);
+function deleteProduct(id) {
+    return supabaseRequest('products', 'DELETE', null, id);
 }
 
 // ============ 公司信息 API ============
 
-async function getCompany() {
-    const result = await supabaseRequest('company');
-    if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-        return { success: true, data: result.data[0] };
-    }
-    return result;
+function getCompany() {
+    return supabaseRequest('company').then(function(result) {
+        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+            return { success: true, data: result.data[0] };
+        }
+        return result;
+    });
 }
 
-async function updateCompany(company) {
-    const body = {
+function updateCompany(company) {
+    var body = {
         name: company.name,
         slogan: company.slogan,
         description: company.description,
@@ -149,57 +141,59 @@ async function updateCompany(company) {
         email: company.email,
         address: company.address
     };
-    return await supabaseRequest('company', 'PATCH', body, 1);
+    return supabaseRequest('company', 'PATCH', body, 1);
 }
 
 // ============ 关于我们 API ============
 
-async function getAbout() {
-    const result = await supabaseRequest('about');
-    if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-        return { success: true, data: result.data[0] };
-    }
-    return result;
+function getAbout() {
+    return supabaseRequest('about').then(function(result) {
+        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+            return { success: true, data: result.data[0] };
+        }
+        return result;
+    });
 }
 
-async function updateAbout(about) {
-    const body = {
+function updateAbout(about) {
+    var body = {
         story: about.story,
         mission: about.mission,
         vision: about.vision,
         values: about.values || [],
         timeline: about.timeline || []
     };
-    return await supabaseRequest('about', 'PATCH', body, 1);
+    return supabaseRequest('about', 'PATCH', body, 1);
 }
 
 // ============ 首页配置 API ============
 
-async function getHomeConfig() {
-    const result = await supabaseRequest('home_config');
-    if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-        return { success: true, data: result.data[0] };
-    }
-    return result;
+function getHomeConfig() {
+    return supabaseRequest('home_config').then(function(result) {
+        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+            return { success: true, data: result.data[0] };
+        }
+        return result;
+    });
 }
 
-async function updateHomeConfig(config) {
-    const body = {
+function updateHomeConfig(config) {
+    var body = {
         stats: config.stats || [],
         features: config.features || [],
         hero_title: config.hero_title,
         hero_subtitle: config.hero_subtitle
     };
-    return await supabaseRequest('home_config', 'PATCH', body, 1);
+    return supabaseRequest('home_config', 'PATCH', body, 1);
 }
 
 // ============ 批量操作 ============
 
-async function importMerchants(merchants) {
-    const results = [];
-    for (const merchant of merchants) {
-        const result = await createMerchant(merchant);
-        results.push(result);
-    }
-    return results;
+function importMerchants(merchants) {
+    var promises = merchants.map(function(merchant) {
+        return createMerchant(merchant);
+    });
+    return Promise.all(promises);
 }
+
+console.log('supabase-api.js 加载完成');
