@@ -2,160 +2,153 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>商户网络 - 福利云</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>商户网络 - 宜礼</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { font-family: 'Noto Sans SC', sans-serif; }
+        body { font-family: 'Noto Sans SC', sans-serif; touch-action: manipulation; }
         .huawei-blue { color: #0052D9; }
         .bg-huawei-blue { background-color: #0052D9; }
         .nav-blur { backdrop-filter: blur(10px); background: rgba(255,255,255,0.95); }
-        .merchant-card { transition: all 0.3s ease; cursor: pointer; }
-        .merchant-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        #map { height: 400px; border-radius: 12px; }
+        .merchant-card { transition: all 0.2s ease; cursor: pointer; }
+        .merchant-card:active { transform: scale(0.98); }
+        #map { height: 280px; border-radius: 8px; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 16px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: white; border-radius: 12px; width: 92%; max-width: 600px; max-height: 85vh; overflow-y: auto; }
+        /* 紧凑样式 */
+        .compact-select { font-size: 13px; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd; background: white; }
+        .merchant-item { padding: 10px 12px; margin-bottom: 8px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-100">
     <!-- 导航 -->
     <nav class="nav-blur fixed w-full z-50 border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
+        <div class="max-w-7xl mx-auto px-3">
+            <div class="flex justify-between h-12">
                 <div class="flex items-center">
-                    <a href="index.html" class="flex items-center">
-                        <div class="w-10 h-10 bg-huawei-blue rounded-lg flex items-center justify-center">
-                            <span class="text-white font-bold text-xl">福</span>
-                        </div>
-                        <span class="ml-3 text-xl font-bold text-gray-900">福利云</span>
+                    <a href="index.html">
+                        <img src="assets/logo-purple.jpg" alt="宜礼" style="height:32px;width:auto;object-fit:contain">
                     </a>
                 </div>
-                <div class="hidden md:flex items-center space-x-8">
+                <div class="flex items-center space-x-4 text-sm">
                     <a href="index.html" class="text-gray-600 hover:text-blue-600">首页</a>
-                    <a href="products.html" class="text-gray-600 hover:text-blue-600">产品服务</a>
-                    <a href="merchants.html" class="text-gray-900 font-medium hover:text-blue-600">商户网络</a>
-                    <a href="about.html" class="text-gray-600 hover:text-blue-600">关于我们</a>
-                    <a href="contact.html" class="text-gray-600 hover:text-blue-600">联系我们</a>
+                    <a href="merchants.html" class="text-blue-600 font-medium">商户</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- 页面标题 -->
-    <section class="pt-32 pb-16 bg-gradient-to-r from-blue-900 to-blue-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">全国商户网络</h1>
-                <p class="text-blue-100 text-xl mb-6">覆盖300+城市，5000+优质商户</p>
-                <div class="flex justify-center gap-4">
-                    <button onclick="getLocation()" class="bg-white text-blue-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                        定位并排序
-                    </button>
-                </div>
-                <p id="location-status" class="text-blue-200 text-sm mt-4"></p>
+    <!-- 附近商户标题栏 -->
+    <section class="pt-14 bg-gradient-to-r from-blue-900 to-blue-700">
+        <div class="px-3 py-2 flex items-center justify-between">
+            <div class="flex items-center">
+                <svg class="w-4 h-4 text-white mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                </svg>
+                <span class="text-white font-medium text-sm">附近商户</span>
             </div>
+            <button onclick="getLocation()" class="bg-white/20 text-white text-xs px-3 py-1 rounded flex items-center">
+                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                </svg>
+                点这里，定位排序
+            </button>
         </div>
     </section>
 
-    <!-- 筛选和列表 -->
-    <section class="py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- 筛选栏 -->
-            <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
-                <div class="flex flex-wrap gap-4 items-center">
-                    <div class="flex items-center">
-                        <label class="text-gray-700 font-medium mr-3">选择城市：</label>
-                        <select id="city-filter" onchange="filterMerchants()" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="all">全部城市</option>
-                        </select>
-                    </div>
-                    <div class="flex items-center">
-                        <label class="text-gray-700 font-medium mr-3">可用券种：</label>
-                        <select id="category-filter" onchange="filterMerchants()" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="all">全部券种</option>
-                            <option value="电影通兑券">电影通兑券</option>
-                            <option value="蛋糕券">蛋糕券</option>
-                            <option value="餐券">餐券</option>
-                        </select>
-                    </div>
-                    <div id="sort-info" class="ml-auto text-gray-600">
-                        <span id="merchant-count">0</span> 家商户
-                    </div>
-                </div>
-            </div>
+    <!-- 提醒文字 -->
+    <div class="bg-white px-3 py-1">
+        <p class="text-xs text-red-500">*不显示优惠券和点餐商户，不可使用选座积分(券)。</p>
+    </div>
 
-            <!-- 商户列表 -->
-            <div id="merchants-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- 动态加载 -->
+    <!-- 筛选栏 -->
+    <div class="bg-white px-3 py-2 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <select id="city-filter" onchange="filterMerchants()" class="compact-select">
+                    <option value="all">选择城市</option>
+                </select>
+                <select id="category-filter" onchange="filterMerchants()" class="compact-select">
+                    <option value="all">卡券种类</option>
+                    <option value="电影通兑券">电影通兑券</option>
+                    <option value="蛋糕券">蛋糕券</option>
+                    <option value="餐饮券">餐饮券</option>
+                </select>
             </div>
-
-            <!-- 空状态 -->
-            <div id="empty-state" class="hidden text-center py-20">
-                <p class="text-gray-500 text-lg">暂无符合条件的商户</p>
-            </div>
+            <span class="text-xs text-gray-500"><span id="merchant-count">0</span> 家</span>
         </div>
-    </section>
+        <p id="location-status" class="text-xs text-gray-400 mt-1"></p>
+    </div>
+
+    <!-- 商户列表 -->
+    <div class="px-2 py-2">
+        <div id="merchants-container">
+            <!-- 动态加载 -->
+        </div>
+
+        <!-- 空状态 -->
+        <div id="empty-state" class="hidden text-center py-10">
+            <p class="text-gray-400 text-sm">暂无符合条件的商户</p>
+        </div>
+    </div>
 
     <!-- 商户详情弹窗 -->
     <div id="merchant-modal" class="modal">
-        <div class="modal-content p-6">
-            <div class="flex justify-between items-start mb-4">
+        <div class="modal-content p-4">
+            <div class="flex justify-between items-start mb-3">
                 <div>
-                    <h3 id="modal-merchant-name" class="text-2xl font-bold text-gray-900"></h3>
-                    <p id="modal-merchant-address" class="text-gray-600 mt-1"></p>
-                    <div id="modal-merchant-tags" class="flex gap-2 mt-2"></div>
+                    <h3 id="modal-merchant-name" class="text-lg font-bold text-gray-900"></h3>
+                    <p id="modal-merchant-address" class="text-xs text-gray-500 mt-1"></p>
                 </div>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button onclick="closeModal()" class="text-gray-400 p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
             
             <!-- 地图 -->
-            <div id="map" class="mb-4"></div>
+            <div id="map" class="mb-3"></div>
             
             <!-- 导航按钮 -->
-            <div class="flex gap-3">
-                <a id="nav-baidu" href="#" target="_blank" class="flex-1 bg-blue-600 text-white text-center py-3 rounded-lg hover:bg-blue-700 transition">
-                    百度地图导航
+            <div class="grid grid-cols-3 gap-2">
+                <a id="nav-baidu" href="#" target="_blank" class="bg-blue-600 text-white text-center text-xs py-2 rounded hover:bg-blue-700">
+                    百度导航
                 </a>
-                <a id="nav-gaode" href="#" target="_blank" class="flex-1 bg-green-600 text-white text-center py-3 rounded-lg hover:bg-green-700 transition">
-                    高德地图导航
+                <a id="nav-gaode" href="#" target="_blank" class="bg-green-600 text-white text-center text-xs py-2 rounded hover:bg-green-700">
+                    高德导航
                 </a>
-                <a id="nav-tencent" href="#" target="_blank" class="flex-1 bg-cyan-600 text-white text-center py-3 rounded-lg hover:bg-cyan-700 transition">
-                    腾讯地图导航
+                <a id="nav-tencent" href="#" target="_blank" class="bg-cyan-600 text-white text-center text-xs py-2 rounded hover:bg-cyan-700">
+                    腾讯导航
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- 页脚 -->
-    <footer class="bg-gray-900 text-gray-300 py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p>&copy; 2024 福利云. 保留所有权利.</p>
-        </div>
-    </footer>
-
-    <script src="js/main.js"></script>
     <script>
         let allMerchants = [];
         let map = null;
-        let marker = null;
 
         // 加载商户列表
         async function loadMerchants() {
             const response = await fetch('data/content.json');
             const data = await response.json();
-            allMerchants = data.merchants;
+            // 只显示启用的商户，并处理多卡券种类
+            allMerchants = (data.merchants || [])
+                .filter(m => m.status !== 'offline')
+                .map(m => {
+                    // 兼容新旧数据，确保有categories数组
+                    if (!m.categories) {
+                        m.categories = m.category ? [m.category] : [];
+                    }
+                    // 取第一个作为主显示分类
+                    m.category = m.categories[0] || '';
+                    return m;
+                });
             
             // 填充城市筛选
             const cities = [...new Set(allMerchants.map(m => m.city))];
@@ -170,7 +163,7 @@
             renderMerchants(allMerchants);
         }
 
-        // 渲染商户列表
+        // 渲染商户列表 - 紧凑版
         function renderMerchants(merchants, showDistance = false) {
             const container = document.getElementById('merchants-container');
             const emptyState = document.getElementById('empty-state');
@@ -185,22 +178,21 @@
             }
             
             emptyState.classList.add('hidden');
-            container.innerHTML = merchants.map(m => `
-                <div class="merchant-card bg-white rounded-xl shadow-sm p-6" onclick="openMerchantModal(${m.id})">
-                    <div class="flex justify-between items-start mb-4">
-                        <h3 class="text-xl font-bold text-gray-900">${m.name}</h3>
-                        <span class="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full">${m.category}</span>
+            container.innerHTML = merchants.map(m => {
+                const catTags = m.categories.map(cat => `<span class="text-xs px-1 py-0.5 rounded mr-1" style="background:#e3f2fd;color:#1976d2">${cat}</span>`).join('');
+                return `
+                <div class="merchant-item" onclick="openMerchantModal(${m.id})">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-medium text-gray-900 text-sm">${m.name}</span>
+                        <div class="flex flex-wrap justify-end">${catTags}</div>
                     </div>
-                    <p class="text-gray-600 mb-2">📍 ${m.city} · ${m.address}</p>
-                    ${showDistance && m.distance ? `<p class="text-green-600 text-sm mb-2">📏 距您 ${m.distance.toFixed(1)} km</p>` : ''}
-                    <div class="flex flex-wrap gap-2 mt-4">
-                        ${m.tags.map(tag => `<span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">${tag}</span>`).join('')}
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-gray-100">
-                        <span class="text-blue-600 text-sm font-medium">点击查看地图和导航 →</span>
+                    <p class="text-xs text-gray-500 mb-1">${m.city} · ${m.address}</p>
+                    ${showDistance && m.distance ? `<p class="text-xs text-green-600 mb-1">距您 ${m.distance.toFixed(1)}km</p>` : ''}
+                    <div class="flex flex-wrap gap-1">
+                        ${m.tags.slice(0,2).map(tag => `<span class="text-xs text-gray-400">${tag}</span>`).join(' · ')}
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         // 筛选商户
@@ -210,7 +202,8 @@
             
             let filtered = allMerchants;
             if (city !== 'all') filtered = filtered.filter(m => m.city === city);
-            if (category !== 'all') filtered = filtered.filter(m => m.category === category);
+            // 多卡券种类筛选 - 商户的categories包含所选种类
+            if (category !== 'all') filtered = filtered.filter(m => m.categories.includes(category));
             
             renderMerchants(filtered);
         }
@@ -222,15 +215,11 @@
             
             document.getElementById('modal-merchant-name').textContent = merchant.name;
             document.getElementById('modal-merchant-address').textContent = merchant.address;
-            document.getElementById('modal-merchant-tags').innerHTML = merchant.tags.map(tag => 
-                `<span class="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full">${tag}</span>`
-            ).join('');
             
             // 设置导航链接
             const lat = merchant.lat;
             const lng = merchant.lng;
             const name = encodeURIComponent(merchant.name);
-            const address = encodeURIComponent(merchant.address);
             
             // 百度地图
             document.getElementById('nav-baidu').href = `https://api.map.baidu.com/direction?destination=latlng:${lat},${lng}|name:${name}&mode=driving&output=html`;
@@ -249,9 +238,7 @@
 
         // 初始化地图
         function initMap(lat, lng, name) {
-            if (map) {
-                map.remove();
-            }
+            if (map) map.remove();
             
             map = L.map('map').setView([lat, lng], 15);
             
@@ -259,10 +246,7 @@
                 attribution: '© OpenStreetMap'
             }).addTo(map);
             
-            L.marker([lat, lng])
-                .addTo(map)
-                .bindPopup(name)
-                .openPopup();
+            L.marker([lat, lng]).addTo(map).bindPopup(name).openPopup();
         }
 
         // 关闭弹窗
@@ -273,23 +257,22 @@
         // 获取用户位置
         function getLocation() {
             const statusEl = document.getElementById('location-status');
-            statusEl.textContent = '正在获取您的位置...';
+            statusEl.textContent = '定位中...';
             
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const userLat = position.coords.latitude;
                         const userLng = position.coords.longitude;
-                        statusEl.textContent = `定位成功！正在按距离排序...`;
+                        statusEl.textContent = '已按距离排序';
                         sortMerchantsByDistance(userLat, userLng);
                     },
                     (error) => {
-                        statusEl.textContent = '定位失败，请手动选择城市';
-                        console.error('定位错误:', error);
+                        statusEl.textContent = '定位失败';
                     }
                 );
             } else {
-                statusEl.textContent = '您的浏览器不支持地理定位';
+                statusEl.textContent = '浏览器不支持定位';
             }
         }
 
@@ -309,11 +292,8 @@
             const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLng = (lng2 - lng1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLng/2) * Math.sin(dLng/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
+            const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
         // 点击弹窗外部关闭

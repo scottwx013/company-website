@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>产品服务 - 福利云</title>
+    <title>产品服务 - 宜礼</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -11,6 +11,19 @@
         .huawei-blue { color: #0052D9; }
         .bg-huawei-blue { background-color: #0052D9; }
         .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .nav-blur {
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.95);
+        }
+        .logo-img {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+            transition: transform 0.2s ease;
+        }
+        .logo-img:hover {
+            transform: scale(1.02);
+        }
         .nav-blur { backdrop-filter: blur(10px); background: rgba(255,255,255,0.95); }
     </style>
 </head>
@@ -21,10 +34,8 @@
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <a href="index.html" class="flex items-center">
-                        <div class="w-10 h-10 bg-huawei-blue rounded-lg flex items-center justify-center">
-                            <span class="text-white font-bold text-xl">福</span>
-                        </div>
-                        <span class="ml-3 text-xl font-bold text-gray-900">福利云</span>
+                        <img src="assets/logo-purple.jpg" alt="宜礼" class="h-10 w-auto">
+                        <span class="ml-3 text-xl font-bold text-gray-900">宜礼</span>
                     </a>
                 </div>
                 <div class="hidden md:flex items-center space-x-8">
@@ -107,7 +118,7 @@
     <!-- 页脚 -->
     <footer class="bg-gray-900 text-gray-300 py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p>&copy; 2024 福利云. 保留所有权利.</p>
+            <p>&copy; 2024 宜礼. 保留所有权利.</p>
         </div>
     </footer>
 

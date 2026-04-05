@@ -1,10 +1,10 @@
 {
   "company": {
-    "name": "福利云",
+    "name": "宜礼",
     "slogan": "专业员工福利解决方案提供商",
     "description": "为企事业单位提供全方位的员工福利解决方案，让福利管理更简单、更贴心",
-    "phone": "400-888-9999",
-    "email": "contact@fuliyun.com",
+    "phone": "400-928-9028",
+    "email": "contact@yili.com",
     "address": "北京市海淀区中关村科技园"
   },
   "home": {
@@ -48,42 +48,48 @@
       "name": "节日福利套餐",
       "description": "春节、端午、中秋等节日福利一站式解决方案",
       "features": ["多档位选择", "全国配送", "个性化定制"],
-      "image": "🎊"
+      "image": "https://images.unsplash.com/photo-1631867675167-90a456a90863?w=400&h=300&fit=crop",
+      "imageAlt": "中秋月饼"
     },
     {
       "id": 2,
       "name": "员工关怀计划",
       "description": "生日福利、入职周年、婚育礼金等全场景关怀",
       "features": ["自动化发放", "智能提醒", "数据分析"],
-      "image": "💐"
+      "image": "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&h=300&fit=crop",
+      "imageAlt": "员工关怀"
     },
     {
       "id": 3,
-      "name": "健康体检服务",
-      "description": "优质体检机构合作，员工健康有保障",
-      "features": ["三甲医院", "全国通用", "报告解读"],
-      "image": "🏥"
+      "name": "观看电影演出",
+      "description": "全国影院通兑，热门演出票务，丰富员工业余生活",
+      "features": ["全国通用", "在线选座", "即时出票"],
+      "image": "https://images.unsplash.com/photo-1585647347483-22b66260dfff?w=400&h=300&fit=crop",
+      "imageAlt": "电影演出"
     },
     {
       "id": 4,
-      "name": "商业保险方案",
-      "description": "补充医疗、意外险等多元化保险选择",
-      "features": ["高性价比", "快速理赔", "专属客服"],
-      "image": "🛡️"
+      "name": "餐饮补贴方案",
+      "description": "覆盖数万家优质餐饮商户，满足员工日常用餐需求",
+      "features": ["海量商户", "即时到账", "灵活使用"],
+      "image": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop",
+      "imageAlt": "餐饮美食"
     },
     {
       "id": 5,
-      "name": "积分福利商城",
-      "description": "自建积分体系，员工自由兑换心仪商品",
-      "features": ["百万商品", "快速发货", "售后保障"],
-      "image": "🛒"
+      "name": "线上活动礼品",
+      "description": "精选百万商品库，员工自由兑换心仪礼品",
+      "features": ["品类丰富", "快速发货", "品质保障"],
+      "image": "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?w=400&h=300&fit=crop",
+      "imageAlt": "礼品兑换"
     },
     {
       "id": 6,
       "name": "团建活动服务",
       "description": "专业团建策划执行，增强团队凝聚力",
       "features": ["定制方案", "全程执行", "摄影跟拍"],
-      "image": "🎯"
+      "image": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=300&fit=crop",
+      "imageAlt": "团队建设"
     }
   ],
   "merchants": [

@@ -3,12 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>关于我们 - 福利云</title>
+    <title>关于我们 - 宜礼</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans SC', sans-serif; }
         .bg-huawei-blue { background-color: #0052D9; }
+        .nav-blur {
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.95);
+        }
+        .logo-img {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+            transition: transform 0.2s ease;
+        }
+        .logo-img:hover {
+            transform: scale(1.02);
+        }
         .nav-blur { backdrop-filter: blur(10px); background: rgba(255,255,255,0.95); }
         .timeline-item { position: relative; padding-left: 2rem; }
         .timeline-item::before {
@@ -40,10 +53,8 @@
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <a href="index.html" class="flex items-center">
-                        <div class="w-10 h-10 bg-huawei-blue rounded-lg flex items-center justify-center">
-                            <span class="text-white font-bold text-xl">福</span>
-                        </div>
-                        <span class="ml-3 text-xl font-bold text-gray-900">福利云</span>
+                        <img src="assets/logo-purple.jpg" alt="宜礼" class="h-10 w-auto">
+                        <span class="ml-3 text-xl font-bold text-gray-900">宜礼</span>
                     </a>
                 </div>
                 <div class="hidden md:flex items-center space-x-8">
@@ -60,7 +71,7 @@
     <!-- 页面标题 -->
     <section class="pt-32 pb-16 bg-gradient-to-r from-blue-900 to-blue-700">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">关于福利云</h1>
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">关于宜礼</h1>
             <p class="text-blue-100 text-xl">让每一家企业都能轻松管理员工福利</p>
         </div>
     </section>
@@ -71,7 +82,7 @@
             <div class="grid md:grid-cols-2 gap-12 items-center">
                 <div>
                     <h2 class="text-3xl font-bold text-gray-900 mb-6">公司简介</h2>
-                    <p class="text-gray-600 text-lg mb-6" id="company-story">福利云成立于2018年，专注于为企业提供专业、高效的员工福利解决方案。</p>
+                    <p class="text-gray-600 text-lg mb-6" id="company-story">宜礼成立于2018年，专注于为企业提供专业、高效的员工福利解决方案。</p>
                     <div class="space-y-4">
                         <div>
                             <h4 class="font-semibold text-gray-900">使命</h4>
@@ -98,7 +109,7 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <h2 class="text-3xl font-bold text-gray-900 mb-4">发展历程</h2>
-                <p class="text-gray-600">福利云的成长之路</p>
+                <p class="text-gray-600">宜礼的成长之路</p>
             </div>
             <div id="milestones-container" class="space-y-8">
                 <!-- 动态加载 -->
@@ -106,50 +117,10 @@
         </div>
     </section>
 
-    <!-- 团队介绍 -->
-    <section class="py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl font-bold text-gray-900 mb-4">核心团队</h2>
-                <p class="text-gray-600">来自顶级互联网企业和咨询公司的专业团队</p>
-            </div>
-            <div class="grid md:grid-cols-4 gap-8">
-                <div class="text-center">
-                    <div class="w-24 h-24 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                        <span class="text-3xl">👨‍💼</span>
-                    </div>
-                    <h4 class="font-semibold">王明</h4>
-                    <p class="text-gray-500">创始人 & CEO</p>
-                </div>
-                <div class="text-center">
-                    <div class="w-24 h-24 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                        <span class="text-3xl">👩‍💼</span>
-                    </div>
-                    <h4 class="font-semibold">李婷</h4>
-                    <p class="text-gray-500">联合创始人 & COO</p>
-                </div>
-                <div class="text-center">
-                    <div class="w-24 h-24 bg-purple-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                        <span class="text-3xl">👨‍💻</span>
-                    </div>
-                    <h4 class="font-semibold">张伟</h4>
-                    <p class="text-gray-500">CTO</p>
-                </div>
-                <div class="text-center">
-                    <div class="w-24 h-24 bg-orange-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                        <span class="text-3xl">👩‍💻</span>
-                    </div>
-                    <h4 class="font-semibold">刘芳</h4>
-                    <p class="text-gray-500">VP of Sales</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- 页脚 -->
     <footer class="bg-gray-900 text-gray-300 py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p>&copy; 2024 福利云. 保留所有权利.</p>
+            <p>&copy; 2024 宜礼. 保留所有权利.</p>
         </div>
     </footer>
 

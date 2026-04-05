@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理后台 - 福利云</title>
+    <title>管理后台 - 宜礼</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -12,135 +12,293 @@
         .sidebar { min-height: calc(100vh - 64px); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        .merchant-status-online { background: #e8f5e9; color: #2e7d32; }
+        .merchant-status-offline { background: #ffebee; color: #c62828; }
+        .checkbox-wrapper { display: flex; align-items: center; }
+        .checkbox-wrapper input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        .login-box { max-width: 400px; margin: 100px auto; }
+        .hidden { display: none !important; }
+        .category-tag { display: inline-block; padding: 2px 8px; margin: 2px; border-radius: 4px; font-size: 12px; background: #e3f2fd; color: #1976d2; }
     </style>
 </head>
 <body class="bg-gray-100">
-    <!-- 顶部导航 -->
-    <nav class="bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-                        <span class="text-white font-bold">福</span>
-                    </div>
-                    <span class="ml-3 text-lg font-bold text-gray-900">福利云管理后台</span>
+    <!-- 登录页面 -->
+    <div id="login-page" class="min-h-screen flex items-center justify-center">
+        <div class="login-box bg-white rounded-xl shadow-lg p-8 w-full mx-4">
+            <div class="text-center mb-8">
+                <img src="../assets/logo.png" alt="宜礼" class="h-12 mx-auto mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">管理后台登录</h2>
+                <p class="text-gray-500 mt-2">请输入账户密码</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">用户名</label>
+                    <input type="text" id="login-username" class="w-full border border-gray-300 rounded-lg px-4 py-3" placeholder="admin">
                 </div>
-                <div class="flex items-center space-x-4">
-                    <a href="../index.html" target="_blank" class="text-gray-600 hover:text-blue-600 text-sm">查看网站 →</a>
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">密码</label>
+                    <input type="password" id="login-password" class="w-full border border-gray-300 rounded-lg px-4 py-3" placeholder="请输入密码">
                 </div>
+                <p id="login-error" class="text-red-500 text-sm hidden">用户名或密码错误</p>
+                <button onclick="doLogin()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700">登录</button>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <div class="flex">
-        <!-- 侧边栏 -->
-        <aside class="w-64 bg-white border-r border-gray-200 sidebar">
-            <nav class="p-4 space-y-2">
-                <button onclick="showTab('company')" id="tab-btn-company" class="w-full text-left px-4 py-3 rounded-lg font-medium bg-blue-50 text-blue-700">
-                    🏢 公司信息
-                </button>
-                <button onclick="showTab('merchants')" id="tab-btn-merchants" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
-                    🏪 商户管理
-                </button>
-                <button onclick="showTab('products')" id="tab-btn-products" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
-                    📦 产品管理
-                </button>
-                <button onclick="showTab('home')" id="tab-btn-home" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
-                    🏠 首页配置
-                </button>
-            </nav>
-        </aside>
-
-        <!-- 主内容区 -->
-        <main class="flex-1 p-8">
-            <!-- 公司信息 -->
-            <div id="tab-company" class="tab-content active">
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">公司信息</h2>
-                    
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">公司名称</label>
-                            <input type="text" id="company-name" class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">公司口号</label>
-                            <input type="text" id="company-slogan" class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-gray-700 font-medium mb-2">公司简介</label>
-                            <textarea id="company-description" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2"></textarea>
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">联系电话</label>
-                            <input type="text" id="company-phone" class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">电子邮箱</label>
-                            <input type="email" id="company-email" class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-gray-700 font-medium mb-2">公司地址</label>
-                            <input type="text" id="company-address" class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                        </div>
+    <!-- 管理后台主页面 -->
+    <div id="admin-page" class="hidden">
+        <!-- 顶部导航 -->
+        <nav class="bg-white border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <img src="../assets/logo.png" alt="宜礼" style="height:32px;width:auto;object-fit:contain">
+                        <span class="ml-3 text-lg font-bold text-gray-900">管理后台</span>
                     </div>
-                    
-                    <div class="mt-6 flex justify-end">
-                        <button onclick="saveCompany()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">保存修改</button>
+                    <div class="flex items-center space-x-4">
+                        <span id="current-user" class="text-sm text-gray-600"></span>
+                        <a href="../index.html" target="_blank" class="text-gray-600 hover:text-blue-600 text-sm">查看网站 →</a>
+                        <button onclick="doLogout()" class="text-sm text-gray-600 hover:text-red-600">退出</button>
                     </div>
                 </div>
             </div>
+        </nav>
 
-            <!-- 商户管理 -->
-            <div id="tab-merchants" class="tab-content">
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900">商户管理</h2>
-                        <button onclick="openMerchantModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">+ 添加商户</button>
-                    </div>
-                    
-                    <div id="merchants-list" class="space-y-4">
-                        <!-- 动态加载 -->
-                    </div>
-                </div>
-            </div>
+        <div class="flex">
+            <!-- 侧边栏 -->
+            <aside class="w-64 bg-white border-r border-gray-200 sidebar">
+                <nav class="p-4 space-y-2">
+                    <button onclick="showTab('company')" id="tab-btn-company" class="w-full text-left px-4 py-3 rounded-lg font-medium bg-blue-50 text-blue-700">
+                        🏢 公司信息
+                    </button>
+                    <button onclick="showTab('merchants')" id="tab-btn-merchants" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                        🏪 商户管理
+                    </button>
+                    <button onclick="showTab('products')" id="tab-btn-products" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                        📦 产品管理
+                    </button>
+                    <button onclick="showTab('home')" id="tab-btn-home" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                        🏠 首页配置
+                    </button>
+                    <button onclick="showTab('about')" id="tab-btn-about" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                        📖 关于我们
+                    </button>
+                    <button onclick="showTab('account')" id="tab-btn-account" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                        🔐 账户管理
+                    </button>
+                </nav>
+            </aside>
 
-            <!-- 产品管理 -->
-            <div id="tab-products" class="tab-content">
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900">产品管理</h2>
-                        <button onclick="openProductModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">+ 添加产品</button>
-                    </div>
-                    
-                    <div id="products-list" class="space-y-4">
-                        <!-- 动态加载 -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- 首页配置 -->
-            <div id="tab-home" class="tab-content">
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">首页配置</h2>
-                    
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">主标题</label>
-                            <input type="text" id="home-hero-title" class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                        </div>
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">副标题</label>
-                            <input type="text" id="home-hero-subtitle" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+            <!-- 主内容区 -->
+            <main class="flex-1 p-8">
+                <!-- 公司信息 -->
+                <div id="tab-company" class="tab-content active">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">公司信息</h2>
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">公司名称</label>
+                                <input type="text" id="company-name" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">公司口号</label>
+                                <input type="text" id="company-slogan" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-gray-700 font-medium mb-2">公司简介</label>
+                                <textarea id="company-description" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">联系电话</label>
+                                <input type="text" id="company-phone" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">电子邮箱</label>
+                                <input type="email" id="company-email" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-gray-700 font-medium mb-2">公司地址</label>
+                                <input type="text" id="company-address" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
                         </div>
                         
-                        <div class="flex justify-end">
-                            <button onclick="saveHome()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">保存修改</button>
+                        <div class="mt-6 flex justify-end">
+                            <button onclick="saveCompany()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">保存修改</button>
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
+
+                <!-- 商户管理 -->
+                <div id="tab-merchants" class="tab-content">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-bold text-gray-900">商户管理</h2>
+                            <div class="flex gap-2">
+                                <button onclick="openImportModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">📥 批量导入</button>
+                                <button onclick="openMerchantModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">+ 添加商户</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 搜索筛选栏 -->
+                        <div class="bg-gray-50 rounded-lg p-3 mb-4 grid grid-cols-4 gap-3">
+                            <div>
+                                <input type="text" id="merchant-search" placeholder="搜索商户名称/地址" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" oninput="filterMerchantsList()">
+                            </div>
+                            <div>
+                                <select id="merchant-filter-city" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" onchange="filterMerchantsList()">
+                                    <option value="">全部城市</option>
+                                </select>
+                            </div>
+                            <div class="col-span-2 flex items-center gap-2 flex-wrap">
+                                <span class="text-sm text-gray-600">卡券种类:</span>
+                                <label class="flex items-center text-sm cursor-pointer">
+                                    <input type="checkbox" value="电影通兑券" class="merchant-cat-filter mr-1" onchange="filterMerchantsList()"> 电影通兑券
+                                </label>
+                                <label class="flex items-center text-sm cursor-pointer">
+                                    <input type="checkbox" value="蛋糕券" class="merchant-cat-filter mr-1" onchange="filterMerchantsList()"> 蛋糕券
+                                </label>
+                                <label class="flex items-center text-sm cursor-pointer">
+                                    <input type="checkbox" value="餐饮券" class="merchant-cat-filter mr-1" onchange="filterMerchantsList()"> 餐饮券
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- 批量操作栏 -->
+                        <div class="bg-blue-50 rounded-lg p-3 mb-4 flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <label class="checkbox-wrapper">
+                                    <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
+                                    <span class="ml-2 text-sm text-gray-700">全选</span>
+                                </label>
+                                <span id="selected-count" class="text-sm text-gray-500">已选 0 个</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="batchOnline()" class="bg-green-600 text-white px-3 py-1.5 rounded text-sm hover:bg-green-700">批量上线</button>
+                                <button onclick="batchOffline()" class="bg-red-600 text-white px-3 py-1.5 rounded text-sm hover:bg-red-700">批量下线</button>
+                            </div>
+                        </div>
+                        
+                        <div id="merchants-list" class="space-y-3">
+                            <!-- 动态加载 -->
+                        </div>
+                        
+                        <div id="merchants-empty" class="hidden text-center py-10 text-gray-500">
+                            暂无符合条件的商户
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 产品管理 -->
+                <div id="tab-products" class="tab-content">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-900">产品管理</h2>
+                            <button onclick="openProductModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">+ 添加产品</button>
+                        </div>
+                        
+                        <div id="products-list" class="space-y-4">
+                            <!-- 动态加载 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 首页配置 -->
+                <div id="tab-home" class="tab-content">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">首页配置</h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">主标题</label>
+                                <input type="text" id="home-hero-title" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">副标题</label>
+                                <input type="text" id="home-hero-subtitle" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                            </div>
+                            
+                            <div class="flex justify-end">
+                                <button onclick="saveHome()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">保存修改</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 关于我们 -->
+                <div id="tab-about" class="tab-content">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">关于我们</h2>
+                        
+                        <div class="space-y-6">
+                            <div class="border-b border-gray-200 pb-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">公司简介</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-gray-700 font-medium mb-2">公司故事</label>
+                                        <textarea id="about-story" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 font-medium mb-2">公司使命</label>
+                                        <textarea id="about-mission" rows="2" class="w-full border border-gray-300 rounded-lg px-4 py-2"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 font-medium mb-2">公司愿景</label>
+                                        <textarea id="about-vision" rows="2" class="w-full border border-gray-300 rounded-lg px-4 py-2"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="border-b border-gray-200 pb-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">核心价值观</h3>
+                                <div id="values-container" class="space-y-2">
+                                    <!-- 动态加载 -->
+                                </div>
+                                <button onclick="addValue()" class="mt-3 text-blue-600 hover:text-blue-800 text-sm">+ 添加价值观</button>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">发展历程</h3>
+                                <div id="milestones-container" class="space-y-3">
+                                    <!-- 动态加载 -->
+                                </div>
+                                <button onclick="addMilestone()" class="mt-3 text-blue-600 hover:text-blue-800 text-sm">+ 添加里程碑</button>
+                            </div>
+                            
+                            <div class="flex justify-end pt-4">
+                                <button onclick="saveAbout()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">保存修改</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 账户管理 -->
+                <div id="tab-account" class="tab-content">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">账户管理</h2>
+                        
+                        <div class="max-w-md">
+                            <div class="mb-4">
+                                <label class="block text-gray-700 font-medium mb-2">当前用户名</label>
+                                <input type="text" id="account-username" class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100" readonly>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 font-medium mb-2">新密码</label>
+                                <input type="password" id="account-new-password" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="不修改请留空">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 font-medium mb-2">确认新密码</label>
+                                <input type="password" id="account-confirm-password" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="不修改请留空">
+                            </div>
+                            <p id="account-error" class="text-red-500 text-sm hidden mb-4"></p>
+                            
+                            <button onclick="changePassword()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">修改密码</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
     </div>
 
     <!-- 商户编辑弹窗 -->
@@ -156,18 +314,23 @@
                     <input type="text" id="merchant-name" class="w-full border border-gray-300 rounded-lg px-4 py-2">
                 </div>
                 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-gray-700 font-medium mb-2">城市 *</label>
-                        <input type="text" id="merchant-city" class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 font-medium mb-2">可用券种 *</label>
-                        <select id="merchant-category" class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                            <option value="电影通兑券">电影通兑券</option>
-                            <option value="蛋糕券">蛋糕券</option>
-                            <option value="餐券">餐券</option>
-                        </select>
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">城市 *</label>
+                    <input type="text" id="merchant-city" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">卡券种类 *（可多选）</label>
+                    <div class="flex flex-wrap gap-3 border border-gray-300 rounded-lg p-3">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="merchant-categories" value="电影通兑券" class="mr-2"> 电影通兑券
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="merchant-categories" value="蛋糕券" class="mr-2"> 蛋糕券
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" name="merchant-categories" value="餐饮券" class="mr-2"> 餐饮券
+                        </label>
                     </div>
                 </div>
                 
@@ -190,6 +353,14 @@
                 <div>
                     <label class="block text-gray-700 font-medium mb-2">标签（用逗号分隔）</label>
                     <input type="text" id="merchant-tags" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="大型连锁, 品类齐全">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">状态</label>
+                    <select id="merchant-status" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        <option value="online">上线</option>
+                        <option value="offline">下线</option>
+                    </select>
                 </div>
             </div>
             
@@ -226,8 +397,9 @@
                 </div>
                 
                 <div>
-                    <label class="block text-gray-700 font-medium mb-2">图标Emoji</label>
-                    <input type="text" id="product-image" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="🎁">
+                    <label class="block text-gray-700 font-medium mb-2">图片URL</label>
+                    <input type="text" id="product-image" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="https://example.com/image.jpg">
+                    <p class="text-xs text-gray-500 mt-1">建议使用 400x300 像素的商务图片</p>
                 </div>
             </div>
             
@@ -238,24 +410,158 @@
         </div>
     </div>
 
+    <!-- 批量导入弹窗 -->
+    <div id="import-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
+            <h3 class="text-xl font-bold mb-4">批量导入商户</h3>
+            
+            <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                <h4 class="font-semibold text-blue-900 mb-2">📋 导入格式说明</h4>
+                <p class="text-sm text-blue-800 mb-2">支持两种格式导入：</p>
+                <ul class="text-sm text-blue-800 mb-2 space-y-1">
+                    <li>• <strong>Excel文件</strong>：下载模板，填写后上传</li>
+                    <li>• <strong>粘贴数据</strong>：直接从Excel复制粘贴</li>
+                </ul>
+                <p class="text-sm text-blue-800">数据格式：商户名称,城市,卡券种类,地址,经度,纬度,标签</p>
+                <ul class="text-sm text-blue-800 mt-2 space-y-1">
+                    <li>• 卡券种类可多选，用 | 分隔，如：电影通兑券|餐饮券</li>
+                    <li>• 标签可多选，用 | 分隔</li>
+                    <li>• 经纬度可为空，系统会自动匹配</li>
+                </ul>
+            </div>
+
+            <!-- Excel文件上传 -->
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">上传Excel文件</label>
+                <input type="file" id="import-file" accept=".xlsx,.xls,.csv" class="w-full border border-gray-300 rounded-lg px-4 py-2" onchange="handleFileImport(event)">
+            </div>
+
+            <div class="text-center text-gray-400 mb-4">— 或 —</div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">粘贴数据</label>
+                <textarea id="import-data" rows="8" class="w-full border border-gray-300 rounded-lg px-4 py-2 font-mono text-sm" placeholder="商户名称,城市,卡券种类,地址,经度,纬度,标签"></textarea>
+            </div>
+            
+            <p id="import-error" class="text-red-500 text-sm hidden mb-4"></p>
+            
+            <div class="flex justify-end gap-4">
+                <button onclick="closeImportModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">取消</button>
+                <button onclick="downloadExcelTemplate()" class="px-4 py-2 text-blue-600 hover:text-blue-800">📥 下载Excel模板</button>
+                <button onclick="processImport()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">导入数据</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        let siteData = null;
+        // 账户数据（演示用，实际应后端存储）
+        const ACCOUNTS = {
+            'admin': 'admin123',
+            'manager': 'manager123'
+        };
         
-        // 加载数据
-        async function loadData() {
-            const response = await fetch('../data/content.json');
-            siteData = await response.json();
-            return siteData;
+        let currentUser = localStorage.getItem('admin_user');
+        let siteData = null;
+        let selectedMerchants = new Set();
+        let filteredMerchants = [];
+        
+        // 页面加载检查登录状态
+        document.addEventListener('DOMContentLoaded', () => {
+            if (currentUser) {
+                showAdminPage();
+            } else {
+                showLoginPage();
+            }
+        });
+        
+        // 显示登录页
+        function showLoginPage() {
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('admin-page').classList.add('hidden');
         }
         
-        // 初始化
-        document.addEventListener('DOMContentLoaded', async () => {
+        // 显示管理页
+        function showAdminPage() {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('admin-page').classList.remove('hidden');
+            document.getElementById('current-user').textContent = `当前用户: ${currentUser}`;
+            document.getElementById('account-username').value = currentUser;
+            initAdmin();
+        }
+        
+        // 登录
+        function doLogin() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            if (ACCOUNTS[username] === password) {
+                currentUser = username;
+                localStorage.setItem('admin_user', username);
+                document.getElementById('login-error').classList.add('hidden');
+                showAdminPage();
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        }
+        
+        // 退出
+        function doLogout() {
+            currentUser = null;
+            localStorage.removeItem('admin_user');
+            showLoginPage();
+        }
+        
+        // 修改密码
+        function changePassword() {
+            const newPass = document.getElementById('account-new-password').value;
+            const confirmPass = document.getElementById('account-confirm-password').value;
+            const errorEl = document.getElementById('account-error');
+            
+            if (!newPass) {
+                errorEl.textContent = '请输入新密码';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (newPass !== confirmPass) {
+                errorEl.textContent = '两次输入的密码不一致';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            ACCOUNTS[currentUser] = newPass;
+            errorEl.textContent = '密码修改成功！';
+            errorEl.classList.remove('hidden');
+            errorEl.classList.remove('text-red-500');
+            errorEl.classList.add('text-green-500');
+            
+            document.getElementById('account-new-password').value = '';
+            document.getElementById('account-confirm-password').value = '';
+        }
+        
+        // 初始化管理后台
+        async function initAdmin() {
             await loadData();
             loadCompanyData();
             loadMerchantsList();
             loadProductsList();
             loadHomeData();
-        });
+            loadAboutData();
+        }
+        
+        // 加载数据
+        async function loadData() {
+            const response = await fetch('../data/content.json');
+            siteData = await response.json();
+            // 确保所有商户有status字段和categories数组
+            siteData.merchants.forEach(m => {
+                if (!m.status) m.status = 'online';
+                if (!m.categories) {
+                    // 将旧数据的单category转为categories数组
+                    m.categories = m.category ? [m.category] : [];
+                }
+            });
+        }
         
         // 切换标签页
         function showTab(tab) {
@@ -289,25 +595,150 @@
             siteData.company.phone = document.getElementById('company-phone').value;
             siteData.company.email = document.getElementById('company-email').value;
             siteData.company.address = document.getElementById('company-address').value;
-            
             saveData();
         }
         
         // 加载商户列表
         function loadMerchantsList() {
+            filteredMerchants = [...siteData.merchants];
+            renderMerchantsList();
+            
+            // 初始化城市筛选下拉框
+            const cities = [...new Set(siteData.merchants.map(m => m.city))].sort();
+            const citySelect = document.getElementById('merchant-filter-city');
+            const firstOption = citySelect.options[0];
+            citySelect.innerHTML = '';
+            citySelect.appendChild(firstOption);
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            });
+        }
+        
+        // 筛选商户列表
+        function filterMerchantsList() {
+            const keyword = document.getElementById('merchant-search').value.toLowerCase();
+            const city = document.getElementById('merchant-filter-city').value;
+            const catCheckboxes = document.querySelectorAll('.merchant-cat-filter:checked');
+            const selectedCats = Array.from(catCheckboxes).map(cb => cb.value);
+            
+            filteredMerchants = siteData.merchants.filter(m => {
+                const matchKeyword = !keyword || 
+                    m.name.toLowerCase().includes(keyword) || 
+                    m.address.toLowerCase().includes(keyword) ||
+                    m.city.toLowerCase().includes(keyword);
+                const matchCity = !city || m.city === city;
+                // 卡券种类多选 - 商户的categories与筛选条件有交集
+                const matchCat = selectedCats.length === 0 || 
+                    m.categories.some(cat => selectedCats.includes(cat));
+                return matchKeyword && matchCity && matchCat;
+            });
+            
+            renderMerchantsList();
+        }
+        
+        // 渲染商户列表
+        function renderMerchantsList() {
             const container = document.getElementById('merchants-list');
-            container.innerHTML = siteData.merchants.map(m => `
-                <div class="border border-gray-200 rounded-lg p-4 flex justify-between items-center">
-                    <div>
-                        <h4 class="font-semibold">${m.name}</h4>
-                        <p class="text-sm text-gray-500">${m.city} · ${m.category} · ${m.address}</p>
+            const emptyEl = document.getElementById('merchants-empty');
+            
+            if (filteredMerchants.length === 0) {
+                container.innerHTML = '';
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+            
+            emptyEl.classList.add('hidden');
+            container.innerHTML = filteredMerchants.map(m => {
+                const isOnline = m.status === 'online';
+                const catTags = m.categories.map(cat => `<span class="category-tag">${cat}</span>`).join('');
+                return `
+                <div class="border border-gray-200 rounded-lg p-3 flex items-center justify-between ${isOnline ? '' : 'bg-gray-50'}">
+                    <div class="flex items-center gap-3">
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" value="${m.id}" onchange="toggleMerchant(${m.id})" ${selectedMerchants.has(m.id) ? 'checked' : ''}>
+                        </label>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-semibold ${isOnline ? '' : 'text-gray-500'}">${m.name}</h4>
+                                <span class="text-xs px-2 py-0.5 rounded ${isOnline ? 'merchant-status-online' : 'merchant-status-offline'}">${isOnline ? '上线' : '下线'}</span>
+                            </div>
+                            <p class="text-sm text-gray-500">${m.city} · ${m.address}</p>
+                            <div class="mt-1">${catTags}</div>
+                        </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="editMerchant(${m.id})" class="text-blue-600 hover:text-blue-800 text-sm">编辑</button>
-                        <button onclick="deleteMerchant(${m.id})" class="text-red-600 hover:text-red-800 text-sm">删除</button>
+                        <button onclick="toggleMerchantStatus(${m.id})" class="text-sm px-3 py-1 rounded ${isOnline ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}">${isOnline ? '下线' : '上线'}</button>
+                        <button onclick="editMerchant(${m.id})" class="text-blue-600 hover:text-blue-800 text-sm px-2">编辑</button>
+                        <button onclick="deleteMerchant(${m.id})" class="text-red-600 hover:text-red-800 text-sm px-2">删除</button>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
+            
+            updateSelectedCount();
+        }
+        
+        // 切换商户选择
+        function toggleMerchant(id) {
+            if (selectedMerchants.has(id)) {
+                selectedMerchants.delete(id);
+            } else {
+                selectedMerchants.add(id);
+            }
+            updateSelectedCount();
+        }
+        
+        // 全选/取消全选
+        function toggleSelectAll() {
+            const checkbox = document.getElementById('select-all');
+            if (checkbox.checked) {
+                filteredMerchants.forEach(m => selectedMerchants.add(m.id));
+            } else {
+                filteredMerchants.forEach(m => selectedMerchants.delete(m.id));
+            }
+            renderMerchantsList();
+        }
+        
+        // 更新已选数量
+        function updateSelectedCount() {
+            document.getElementById('selected-count').textContent = `已选 ${selectedMerchants.size} 个`;
+        }
+        
+        // 批量上线
+        function batchOnline() {
+            if (selectedMerchants.size === 0) { alert('请先选择商户'); return; }
+            siteData.merchants.forEach(m => {
+                if (selectedMerchants.has(m.id)) m.status = 'online';
+            });
+            selectedMerchants.clear();
+            document.getElementById('select-all').checked = false;
+            saveData();
+            filterMerchantsList();
+        }
+        
+        // 批量下线
+        function batchOffline() {
+            if (selectedMerchants.size === 0) { alert('请先选择商户'); return; }
+            siteData.merchants.forEach(m => {
+                if (selectedMerchants.has(m.id)) m.status = 'offline';
+            });
+            selectedMerchants.clear();
+            document.getElementById('select-all').checked = false;
+            saveData();
+            filterMerchantsList();
+        }
+        
+        // 切换单个商户状态
+        function toggleMerchantStatus(id) {
+            const m = siteData.merchants.find(x => x.id === id);
+            if (m) {
+                m.status = m.status === 'online' ? 'offline' : 'online';
+                saveData();
+                filterMerchantsList();
+            }
         }
         
         // 打开商户弹窗
@@ -317,11 +748,13 @@
             document.getElementById('merchant-id').value = '';
             document.getElementById('merchant-name').value = '';
             document.getElementById('merchant-city').value = '';
-            document.getElementById('merchant-category').value = '电影通兑券';
             document.getElementById('merchant-address').value = '';
             document.getElementById('merchant-lat').value = '';
             document.getElementById('merchant-lng').value = '';
             document.getElementById('merchant-tags').value = '';
+            document.getElementById('merchant-status').value = 'online';
+            // 清空多选
+            document.querySelectorAll('input[name="merchant-categories"]').forEach(cb => cb.checked = false);
         }
         
         // 关闭商户弹窗
@@ -339,11 +772,16 @@
             document.getElementById('merchant-id').value = m.id;
             document.getElementById('merchant-name').value = m.name;
             document.getElementById('merchant-city').value = m.city;
-            document.getElementById('merchant-category').value = m.category;
             document.getElementById('merchant-address').value = m.address;
-            document.getElementById('merchant-lat').value = m.lat;
-            document.getElementById('merchant-lng').value = m.lng;
-            document.getElementById('merchant-tags').value = m.tags.join(', ');
+            document.getElementById('merchant-lat').value = m.lat || '';
+            document.getElementById('merchant-lng').value = m.lng || '';
+            document.getElementById('merchant-tags').value = m.tags ? m.tags.join(', ') : '';
+            document.getElementById('merchant-status').value = m.status || 'online';
+            
+            // 设置多选
+            document.querySelectorAll('input[name="merchant-categories"]').forEach(cb => {
+                cb.checked = m.categories && m.categories.includes(cb.value);
+            });
         }
         
         // 保存商户
@@ -351,7 +789,6 @@
             const id = document.getElementById('merchant-id').value;
             const name = document.getElementById('merchant-name').value;
             const city = document.getElementById('merchant-city').value;
-            const category = document.getElementById('merchant-category').value;
             const address = document.getElementById('merchant-address').value;
             
             if (!name || !city || !address) {
@@ -359,15 +796,24 @@
                 return;
             }
             
+            // 获取多选的卡券种类
+            const categories = Array.from(document.querySelectorAll('input[name="merchant-categories"]:checked')).map(cb => cb.value);
+            if (categories.length === 0) {
+                alert('请至少选择一种卡券种类');
+                return;
+            }
+            
             const merchantData = {
                 id: id ? parseInt(id) : Date.now(),
                 name,
                 city,
-                category,
+                categories,
+                category: categories[0], // 兼容旧数据，取第一个作为主分类
                 address,
                 lat: parseFloat(document.getElementById('merchant-lat').value) || 0,
                 lng: parseFloat(document.getElementById('merchant-lng').value) || 0,
-                tags: document.getElementById('merchant-tags').value.split(',').map(t => t.trim()).filter(t => t)
+                tags: document.getElementById('merchant-tags').value.split(',').map(t => t.trim()).filter(t => t),
+                status: document.getElementById('merchant-status').value
             };
             
             if (id) {
@@ -386,21 +832,99 @@
         function deleteMerchant(id) {
             if (!confirm('确定要删除这个商户吗？')) return;
             siteData.merchants = siteData.merchants.filter(m => m.id !== id);
+            selectedMerchants.delete(id);
             saveData();
-            loadMerchantsList();
+            filterMerchantsList();
+        }
+        
+        // 批量导入功能
+        function openImportModal() {
+            document.getElementById('import-modal').classList.remove('hidden');
+            document.getElementById('import-data').value = '';
+            document.getElementById('import-error').classList.add('hidden');
+        }
+        
+        function closeImportModal() {
+            document.getElementById('import-modal').classList.add('hidden');
+        }
+        
+        function downloadTemplate() {
+            const template = `商户名称,城市,卡券种类,地址,经度,纬度,标签
+华润万家,北京,餐饮券,北京市朝阳区建国路88号,116.4074,39.9042,大型连锁|品类齐全
+万达影城,北京,电影通兑券,北京市海淀区中关村大街1号,116.3150,39.9845,IMAX|杜比音效
+星巴克,上海,餐饮券|蛋糕券,上海市静安区南京西路1266号,121.4556,31.2285,咖啡|休闲
+好利来,广州,蛋糕券,广州市天河区天河路208号,113.2645,23.1322,生日蛋糕|现烤面包`;
+            
+            const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = '商户导入模板.csv';
+            link.click();
+        }
+        
+        function processImport() {
+            const data = document.getElementById('import-data').value.trim();
+            const errorEl = document.getElementById('import-error');
+            
+            if (!data) {
+                errorEl.textContent = '请输入导入数据';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            const lines = data.split('\n');
+            let successCount = 0;
+            let errorCount = 0;
+            
+            lines.forEach((line, idx) => {
+                if (!line.trim() || idx === 0 && line.includes('商户名称')) return; // 跳过空行和表头
+                
+                const parts = line.split(',');
+                if (parts.length >= 4) {
+                    const merchant = {
+                        id: Date.now() + Math.random(),
+                        name: parts[0].trim(),
+                        city: parts[1].trim(),
+                        categories: parts[2].trim().split('|').filter(c => c),
+                        category: parts[2].trim().split('|')[0],
+                        address: parts[3].trim(),
+                        lng: parseFloat(parts[4]) || 0,
+                        lat: parseFloat(parts[5]) || 0,
+                        tags: parts[6] ? parts[6].trim().split('|').filter(t => t) : [],
+                        status: 'online'
+                    };
+                    
+                    if (merchant.name && merchant.city && merchant.address) {
+                        siteData.merchants.push(merchant);
+                        successCount++;
+                    } else {
+                        errorCount++;
+                    }
+                } else {
+                    errorCount++;
+                }
+            });
+            
+            if (successCount > 0) {
+                saveData();
+                closeImportModal();
+                loadMerchantsList();
+                alert(`导入完成！成功 ${successCount} 条${errorCount > 0 ? `，失败 ${errorCount} 条` : ''}`);
+            } else {
+                errorEl.textContent = '导入失败，请检查数据格式';
+                errorEl.classList.remove('hidden');
+            }
         }
         
         // 加载产品列表
         function loadProductsList() {
             const container = document.getElementById('products-list');
             container.innerHTML = siteData.products.map(p => `
-                <div class="border border-gray-200 rounded-lg p-4 flex justify-between items-center">
-                    <div class="flex items-center gap-4">
-                        <span class="text-2xl">${p.image}</span>
-                        <div>
-                            <h4 class="font-semibold">${p.name}</h4>
-                            <p class="text-sm text-gray-500">${p.description}</p>
-                        </div>
+                <div class="border border-gray-200 rounded-lg p-4 flex items-center gap-4">
+                    <img src="${p.image}" alt="${p.name}" class="w-16 h-16 object-cover rounded-lg">
+                    <div class="flex-1">
+                        <h4 class="font-semibold">${p.name}</h4>
+                        <p class="text-sm text-gray-500">${p.description}</p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="editProduct(${p.id})" class="text-blue-600 hover:text-blue-800 text-sm">编辑</button>
@@ -410,7 +934,7 @@
             `).join('');
         }
         
-        // 打开产品弹窗
+        // 产品相关函数（与之前相同）
         function openProductModal() {
             document.getElementById('product-modal').classList.remove('hidden');
             document.getElementById('product-modal-title').textContent = '添加产品';
@@ -421,16 +945,13 @@
             document.getElementById('product-image').value = '🎁';
         }
         
-        // 关闭产品弹窗
         function closeProductModal() {
             document.getElementById('product-modal').classList.add('hidden');
         }
         
-        // 编辑产品
         function editProduct(id) {
             const p = siteData.products.find(x => x.id === id);
             if (!p) return;
-            
             document.getElementById('product-modal').classList.remove('hidden');
             document.getElementById('product-modal-title').textContent = '编辑产品';
             document.getElementById('product-id').value = p.id;
@@ -440,7 +961,6 @@
             document.getElementById('product-image').value = p.image;
         }
         
-        // 保存产品
         function saveProduct() {
             const id = document.getElementById('product-id').value;
             const name = document.getElementById('product-name').value;
@@ -473,7 +993,6 @@
             loadProductsList();
         }
         
-        // 删除产品
         function deleteProduct(id) {
             if (!confirm('确定要删除这个产品吗？')) return;
             siteData.products = siteData.products.filter(p => p.id !== id);
@@ -481,20 +1000,121 @@
             loadProductsList();
         }
         
-        // 加载首页数据
+        // 首页配置
         function loadHomeData() {
             document.getElementById('home-hero-title').value = siteData.home.hero.title;
             document.getElementById('home-hero-subtitle').value = siteData.home.hero.subtitle;
         }
         
-        // 保存首页
         function saveHome() {
             siteData.home.hero.title = document.getElementById('home-hero-title').value;
             siteData.home.hero.subtitle = document.getElementById('home-hero-subtitle').value;
             saveData();
         }
+
+        // 关于我们管理
+        function loadAboutData() {
+            const about = siteData.about || {};
+            document.getElementById('about-story').value = about.story || '';
+            document.getElementById('about-mission').value = about.mission || '';
+            document.getElementById('about-vision').value = about.vision || '';
+            renderValues();
+            renderMilestones();
+        }
+
+        function renderValues() {
+            const container = document.getElementById('values-container');
+            const values = siteData.about?.values || [];
+            container.innerHTML = values.map((v, i) => `
+                <div class="flex items-center gap-2">
+                    <input type="text" value="${v}" class="flex-1 border border-gray-300 rounded px-3 py-2" onchange="updateValue(${i}, this.value)">
+                    <button onclick="deleteValue(${i})" class="text-red-500 hover:text-red-700 px-2">删除</button>
+                </div>
+            `).join('');
+        }
+
+        function addValue() {
+            if (!siteData.about) siteData.about = {};
+            if (!siteData.about.values) siteData.about.values = [];
+            siteData.about.values.push('');
+            renderValues();
+        }
+
+        function updateValue(index, value) {
+            siteData.about.values[index] = value;
+        }
+
+        function deleteValue(index) {
+            siteData.about.values.splice(index, 1);
+            renderValues();
+        }
+
+        function renderMilestones() {
+            const container = document.getElementById('milestones-container');
+            const milestones = siteData.about?.milestones || [];
+            container.innerHTML = milestones.map((m, i) => `
+                <div class="flex items-center gap-2">
+                    <input type="text" value="${m.year}" placeholder="年份" class="w-24 border border-gray-300 rounded px-3 py-2" onchange="updateMilestone(${i}, 'year', this.value)">
+                    <input type="text" value="${m.event}" placeholder="事件描述" class="flex-1 border border-gray-300 rounded px-3 py-2" onchange="updateMilestone(${i}, 'event', this.value)">
+                    <button onclick="deleteMilestone(${i})" class="text-red-500 hover:text-red-700 px-2">删除</button>
+                </div>
+            `).join('');
+        }
+
+        function addMilestone() {
+            if (!siteData.about) siteData.about = {};
+            if (!siteData.about.milestones) siteData.about.milestones = [];
+            siteData.about.milestones.push({ year: '', event: '' });
+            renderMilestones();
+        }
+
+        function updateMilestone(index, field, value) {
+            siteData.about.milestones[index][field] = value;
+        }
+
+        function deleteMilestone(index) {
+            siteData.about.milestones.splice(index, 1);
+            renderMilestones();
+        }
+
+        function saveAbout() {
+            if (!siteData.about) siteData.about = {};
+            siteData.about.story = document.getElementById('about-story').value;
+            siteData.about.mission = document.getElementById('about-mission').value;
+            siteData.about.vision = document.getElementById('about-vision').value;
+            saveData();
+        }
+
+        // Excel模板下载
+        function downloadExcelTemplate() {
+            const template = `商户名称,城市,卡券种类,地址,经度,纬度,标签
+华润万家,北京,餐饮券,北京市朝阳区建国路88号,116.4074,39.9042,大型连锁|品类齐全
+万达影城,北京,电影通兑券,北京市海淀区中关村大街1号,116.3150,39.9845,IMAX|杜比音效
+星巴克,上海,餐饮券|蛋糕券,上海市静安区南京西路1266号,121.4556,31.2285,咖啡|休闲
+好利来,广州,蛋糕券,广州市天河区天河路208号,113.2645,23.1322,生日蛋糕|现烤面包`;
+            
+            // 使用CSV格式作为通用Excel兼容格式
+            const blob = new Blob(['\uFEFF' + template], { type: 'application/vnd.ms-excel;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = '商户导入模板.xls';
+            link.click();
+        }
+
+        // 处理文件上传导入
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                document.getElementById('import-data').value = content;
+            };
+            reader.readAsText(file);
+        }
         
-        // 保存数据（模拟）
+        // 保存数据
         function saveData() {
             console.log('保存数据:', siteData);
             alert('保存成功！(演示模式：数据未持久化到服务器)');

@@ -42,8 +42,8 @@ async function loadHomeContent() {
     if (productsPreview) {
         productsPreview.innerHTML = data.products.slice(0, 3).map(product => `
             <div class="bg-white rounded-xl overflow-hidden shadow-sm card-hover">
-                <div class="h-48 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                    <span class="text-6xl">${product.image}</span>
+                <div class="h-48 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center overflow-hidden">
+                    <img src="${product.image}" alt="${product.imageAlt || product.name}" class="w-full h-full object-cover">
                 </div>
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-900 mb-2">${product.name}</h3>
@@ -71,8 +71,8 @@ async function loadProducts() {
     if (container) {
         container.innerHTML = data.products.map(product => `
             <div class="bg-white rounded-xl overflow-hidden shadow-sm card-hover">
-                <div class="h-56 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                    <span class="text-7xl">${product.image}</span>
+                <div class="h-56 overflow-hidden">
+                    <img src="${product.image}" alt="${product.imageAlt || product.name}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
                 </div>
                 <div class="p-8">
                     <h3 class="text-2xl font-bold text-gray-900 mb-3">${product.name}</h3>
