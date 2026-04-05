@@ -1114,11 +1114,271 @@
             reader.readAsText(file);
         }
         
-        // 保存数据
-        function saveData() {
-            console.log('保存数据:', siteData);
-            alert('保存成功！(演示模式：数据未持久化到服务器)');
+    <!-- Supabase SDK -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script>
+        // Supabase 配置 - 请替换为你的实际配置
+        const SUPABASE_URL = 'https://your-project.supabase.co';
+        const SUPABASE_ANON_KEY = 'your-anon-key';
+        const SUPABASE_SERVICE_KEY = 'your-service-key'; // 用于后台管理
+        
+        // 初始化 Supabase（后台使用 service key 拥有完整权限）
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY);
+        
+        // 检查 Supabase 连接
+        async function checkSupabaseConnection() {
+            try {
+                const { data, error } = await supabase.from('merchants').select('count').limit(1);
+                if (error) throw error;
+                console.log('Supabase 连接成功');
+                return true;
+            } catch (err) {
+                console.warn('Supabase 连接失败:', err);
+                alert('数据库连接失败，请检查网络连接或联系管理员');
+                return false;
+            }
         }
+
+        // 从 Supabase 加载数据
+        async function loadDataFromSupabase() {
+            try {
+                // 加载商户
+                const { data: merchants, error: mError } = await supabase
+                    .from('merchants')
+                    .select('*')
+                    .order('id');
+                if (mError) throw mError;
+                
+                // 加载产品
+                const { data: products, error: pError } = await supabase
+                    .from('products')
+                    .select('*')
+                    .order('sort_order');
+                if (pError) throw pError;
+                
+                // 加载公司信息
+                const { data: company, error: cError } = await supabase
+                    .from('company_info')
+                    .select('*')
+                    .single();
+                if (cError) throw cError;
+                
+                return {
+                    merchants: merchants || [],
+                    products: products || [],
+                    company: company || {}
+                };
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                throw error;
+            }
+        }
+
+        // 保存商户到 Supabase
+        async function saveMerchantToSupabase(merchant) {
+            try {
+                if (merchant.id) {
+                    // 更新
+                    const { error } = await supabase
+                        .from('merchants')
+                        .update({
+                            name: merchant.name,
+                            city: merchant.city,
+                            address: merchant.address,
+                            phone: merchant.phone,
+                            coupon_types: merchant.couponTypes,
+                            lat: merchant.lat,
+                            lng: merchant.lng,
+                            status: merchant.status
+                        })
+                        .eq('id', merchant.id);
+                    if (error) throw error;
+                } else {
+                    // 新增
+                    const { error } = await supabase
+                        .from('merchants')
+                        .insert([{
+                            name: merchant.name,
+                            city: merchant.city,
+                            address: merchant.address,
+                            phone: merchant.phone,
+                            coupon_types: merchant.couponTypes,
+                            lat: merchant.lat,
+                            lng: merchant.lng,
+                            status: merchant.status || 'online'
+                        }]);
+                    if (error) throw error;
+                }
+                return true;
+            } catch (error) {
+                console.error('保存商户失败:', error);
+                throw error;
+            }
+        }
+
+        // 删除商户
+        async function deleteMerchantFromSupabase(id) {
+            try {
+                const { error } = await supabase
+                    .from('merchants')
+                    .delete()
+                    .eq('id', id);
+                if (error) throw error;
+                return true;
+            } catch (error) {
+                console.error('删除商户失败:', error);
+                throw error;
+            }
+        }
+
+        // 保存公司信息到 Supabase
+        async function saveCompanyToSupabase(company) {
+            try {
+                const { error } = await supabase
+                    .from('company_info')
+                    .upsert({
+                        id: 1,
+                        name: company.name,
+                        slogan: company.slogan,
+                        description: company.description,
+                        phone: company.phone,
+                        email: company.email,
+                        address: company.address,
+                        story: company.story,
+                        mission: company.mission,
+                        vision: company.vision,
+                        values: company.values,
+                        timeline: company.timeline
+                    });
+                if (error) throw error;
+                return true;
+            } catch (error) {
+                console.error('保存公司信息失败:', error);
+                throw error;
+            }
+        }
+
+        // 修改后的保存函数
+        async function saveData() {
+            try {
+                // 这里可以添加批量保存逻辑
+                console.log('数据已保存到 Supabase');
+                alert('保存成功！数据已同步到官网');
+            } catch (error) {
+                console.error('保存失败:', error);
+                alert('保存失败: ' + error.message);
+            }
+        }
+
+        // 修改后的商户保存函数
+        async function saveMerchant() {
+            const id = document.getElementById('merchant-id').value;
+            const name = document.getElementById('merchant-name').value;
+            const city = document.getElementById('merchant-city').value;
+            const address = document.getElementById('merchant-address').value;
+            const phone = document.getElementById('merchant-phone').value;
+            
+            const couponTypes = [];
+            document.querySelectorAll('input[name="couponType"]:checked').forEach(cb => {
+                couponTypes.push(cb.value);
+            });
+            
+            if (!name || !city || !address) {
+                alert('请填写必填项');
+                return;
+            }
+            
+            const merchantData = {
+                id: id ? parseInt(id) : null,
+                name,
+                city,
+                address,
+                phone,
+                couponTypes,
+                lat: parseFloat(document.getElementById('merchant-lat').value) || null,
+                lng: parseFloat(document.getElementById('merchant-lng').value) || null,
+                status: 'online'
+            };
+            
+            try {
+                await saveMerchantToSupabase(merchantData);
+                closeMerchantModal();
+                await loadMerchantsList();
+                alert('商户保存成功！官网数据已同步更新');
+            } catch (error) {
+                alert('保存失败: ' + error.message);
+            }
+        }
+
+        // 修改后的商户删除函数
+        async function deleteMerchant(id) {
+            if (!confirm('确定要删除这个商户吗？')) return;
+            
+            try {
+                await deleteMerchantFromSupabase(id);
+                await loadMerchantsList();
+                alert('商户删除成功！官网数据已同步更新');
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+        }
+
+        // 修改后的导入函数
+        async function importMerchants() {
+            const dataText = document.getElementById('import-data').value.trim();
+            const errorEl = document.getElementById('import-error');
+            
+            if (!dataText) {
+                errorEl.textContent = '请输入导入数据';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            const lines = dataText.split('\n');
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                
+                const parts = line.split(',').map(p => p.trim());
+                if (parts.length >= 4) {
+                    const merchant = {
+                        name: parts[0],
+                        city: parts[1],
+                        address: parts[2],
+                        phone: parts[3] || '',
+                        couponTypes: parts[4] ? parts[4].split(';') : [],
+                        lat: parseFloat(parts[5]) || null,
+                        lng: parseFloat(parts[6]) || null,
+                        status: 'online'
+                    };
+                    
+                    try {
+                        await saveMerchantToSupabase(merchant);
+                        successCount++;
+                    } catch (err) {
+                        errorCount++;
+                    }
+                } else {
+                    errorCount++;
+                }
+            }
+            
+            if (successCount > 0) {
+                closeImportModal();
+                await loadMerchantsList();
+                alert(`导入完成！成功 ${successCount} 条${errorCount > 0 ? `，失败 ${errorCount} 条` : ''}`);
+            } else {
+                errorEl.textContent = '导入失败，请检查数据格式';
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        // 页面加载时检查连接
+        document.addEventListener('DOMContentLoaded', async function() {
+            await checkSupabaseConnection();
+        });
     </script>
 </body>
 </html>

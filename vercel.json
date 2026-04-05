@@ -1,1 +1,4 @@
-{"version":2,"name":"yili-website","builds":[{"src":"**/*.html","use":"@vercel/static"}],"routes":[{"src":"/(.*)","dest":"/$1"}]}
+{
+  "version": 2,
+  "name": "yili-website"
+}

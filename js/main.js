@@ -1,11 +1,122 @@
 // 全局数据存储
 let siteData = null;
 
-// 加载数据
+// Supabase 配置
+const SUPABASE_URL = 'https://your-project.supabase.co';
+const SUPABASE_ANON_KEY = 'your-anon-key';
+
+// 初始化 Supabase 客户端
+let supabase = null;
+if (typeof window !== 'undefined' && window.supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+// 从 Supabase 加载数据
+async function loadDataFromSupabase() {
+    if (!supabase) return null;
+    
+    try {
+        // 加载商户数据
+        const { data: merchants, error: mError } = await supabase
+            .from('merchants')
+            .select('*')
+            .eq('status', 'online')
+            .order('id');
+        
+        if (mError) throw mError;
+        
+        // 加载产品数据
+        const { data: products, error: pError } = await supabase
+            .from('products')
+            .select('*')
+            .order('sort_order');
+        
+        if (pError) throw pError;
+        
+        // 加载公司信息
+        const { data: company, error: cError } = await supabase
+            .from('company_info')
+            .select('*')
+            .single();
+        
+        if (cError) throw cError;
+        
+        // 组装数据
+        return {
+            company: {
+                name: company.name,
+                slogan: company.slogan,
+                description: company.description,
+                phone: company.phone,
+                email: company.email,
+                address: company.address
+            },
+            home: {
+                hero: {
+                    title: '让每一份福利都更有温度',
+                    subtitle: '专业员工福利解决方案，助力企业提升员工满意度',
+                    cta: '了解我们的服务'
+                },
+                features: [
+                    { icon: '🎁', title: '福利方案定制', desc: '根据企业需求，量身定制福利方案' },
+                    { icon: '🏪', title: '全国商户网络', desc: '覆盖全国300+城市的优质商户资源' },
+                    { icon: '📊', title: '智能管理系统', desc: '一站式福利管理平台，数据实时可视' },
+                    { icon: '💝', title: '员工满意度提升', desc: '多元化福利选择，提升员工幸福感' }
+                ],
+                stats: [
+                    { number: '500+', label: '服务企业' },
+                    { number: '100万+', label: '覆盖员工' },
+                    { number: '300+', label: '合作城市' },
+                    { number: '98%', label: '满意度' }
+                ]
+            },
+            products: products.map(p => ({
+                id: p.id,
+                name: p.name,
+                description: p.description,
+                features: p.features || [],
+                image: p.image,
+                imageAlt: p.image_alt
+            })),
+            merchants: merchants.map(m => ({
+                id: m.id,
+                name: m.name,
+                city: m.city,
+                address: m.address,
+                phone: m.phone,
+                couponTypes: m.coupon_types || [],
+                lat: m.lat,
+                lng: m.lng,
+                status: m.status
+            })),
+            about: {
+                story: company.story || '',
+                mission: company.mission || '',
+                vision: company.vision || '',
+                values: company.values || [],
+                timeline: company.timeline || []
+            }
+        };
+    } catch (error) {
+        console.warn('Supabase 加载失败，使用本地数据:', error);
+        return null;
+    }
+}
+
+// 加载数据（优先从 Supabase，失败则使用本地 JSON）
 async function loadData() {
     if (!siteData) {
-        const response = await fetch('data/content.json');
-        siteData = await response.json();
+        // 先尝试从 Supabase 加载
+        const supabaseData = await loadDataFromSupabase();
+        if (supabaseData) {
+            siteData = supabaseData;
+            console.log('已从 Supabase 加载数据');
+        } else {
+            // 回退到本地 JSON
+            const response = await fetch('data/content.json');
+            siteData = await response.json();
+            console.log('已使用本地数据');
+        }
     }
     return siteData;
 }
