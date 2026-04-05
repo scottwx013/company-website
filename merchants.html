@@ -18,18 +18,16 @@
         .modal.active { display: flex; }
         .modal-content { background: white; border-radius: 12px; width: 92%; max-width: 600px; max-height: 85vh; overflow-y: auto; }
         .compact-select { font-size: 13px; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd; background: white; }
-        .merchant-item { padding: 10px 12px; margin-bottom: 8px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .merchant-item { padding: 10px 12px; margin-bottom: 8px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); cursor: pointer; }
+        .merchant-item:hover { background: #f8fafc; }
     </style>
 </head>
 <body class="bg-gray-100">
-    <!-- 导航 -->
     <nav class="nav-blur fixed w-full z-50 border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-3">
             <div class="flex justify-between h-12">
                 <div class="flex items-center">
-                    <a href="index.html">
-                        <img src="assets/logo-purple.jpg" alt="宜礼" style="height:32px;width:auto;object-fit:contain">
-                    </a>
+                    <a href="index.html"><img src="assets/logo-purple.jpg" alt="宜礼" style="height:32px;width:auto;object-fit:contain"></a>
                 </div>
                 <div class="flex items-center space-x-4 text-sm">
                     <a href="index.html" class="text-gray-600 hover:text-blue-600">首页</a>
@@ -39,7 +37,6 @@
         </div>
     </nav>
 
-    <!-- 附近商户标题栏 -->
     <section class="pt-14 bg-gradient-to-r from-blue-900 to-blue-700">
         <div class="px-3 py-2 flex items-center justify-between">
             <div class="flex items-center">
@@ -57,12 +54,10 @@
         </div>
     </section>
 
-    <!-- 提醒文字 -->
     <div class="bg-white px-3 py-1">
         <p class="text-xs text-red-500">*不显示优惠券和点餐商户，不可使用选座积分(券)。</p>
     </div>
 
-    <!-- 筛选栏 -->
     <div class="bg-white px-3 py-2 border-b border-gray-200">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
@@ -81,19 +76,13 @@
         <p id="location-status" class="text-xs text-gray-400 mt-1"></p>
     </div>
 
-    <!-- 商户列表 -->
     <div class="px-2 py-2">
-        <div id="merchants-container">
-            <!-- 动态加载 -->
-        </div>
-
-        <!-- 空状态 -->
+        <div id="merchants-container"></div>
         <div id="empty-state" class="hidden text-center py-10">
             <p class="text-gray-400 text-sm">暂无符合条件的商户</p>
         </div>
     </div>
 
-    <!-- 商户详情弹窗 -->
     <div id="merchant-modal" class="modal">
         <div class="modal-content p-4">
             <div class="flex justify-between items-start mb-3">
@@ -107,103 +96,87 @@
                     </svg>
                 </button>
             </div>
-            
-            <!-- 地图 -->
             <div id="map" class="mb-3"></div>
-            
-            <!-- 导航按钮 -->
             <div class="grid grid-cols-3 gap-2">
-                <a id="nav-baidu" href="#" target="_blank" class="bg-blue-600 text-white text-center text-xs py-2 rounded hover:bg-blue-700">
-                    百度导航
-                </a>
-                <a id="nav-gaode" href="#" target="_blank" class="bg-green-600 text-white text-center text-xs py-2 rounded hover:bg-green-700">
-                    高德导航
-                </a>
-                <a id="nav-tencent" href="#" target="_blank" class="bg-cyan-600 text-white text-center text-xs py-2 rounded hover:bg-cyan-700">
-                    腾讯导航
-                </a>
+                <a id="nav-baidu" href="#" target="_blank" class="bg-blue-600 text-white text-center text-xs py-2 rounded hover:bg-blue-700">百度导航</a>
+                <a id="nav-gaode" href="#" target="_blank" class="bg-green-600 text-white text-center text-xs py-2 rounded hover:bg-green-700">高德导航</a>
+                <a id="nav-tencent" href="#" target="_blank" class="bg-cyan-600 text-white text-center text-xs py-2 rounded hover:bg-cyan-700">腾讯导航</a>
             </div>
         </div>
     </div>
 
     <script>
-        // Supabase 配置
-        const SUPABASE_URL = 'https://ysfmlwdbgwenqtpfntrf.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZm1sd2RiZ3dlbnF0cGZudHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTYxNzUsImV4cCI6MjA5MDk3MjE3NX0.Qnawrj79G8cA6JEMlM2qDV0d20ofZrE4SwxN_K-c0q0';
-        
-        let allMerchants = [];
-        let map = null;
+        var SUPABASE_URL = 'https://ysfmlwdbgwenqtpfntrf.supabase.co';
+        var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZm1sd2RiZ3dlbnF0cGZudHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTYxNzUsImV4cCI6MjA5MDk3MjE3NX0.Qnawrj79G8cA6JEMlM2qDV0d20ofZrE4SwxN_K-c0q0';
+        var allMerchants = [];
+        var map = null;
 
-        // 页面加载完成后执行
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM 加载完成，开始加载商户...');
-            loadMerchants();
-        });
-
-        // 从 Supabase 加载商户
-        async function loadMerchants() {
-            const container = document.getElementById('merchants-container');
-            const countEl = document.getElementById('merchant-count');
-            
+        function loadMerchants() {
+            var container = document.getElementById('merchants-container');
+            var countEl = document.getElementById('merchant-count');
             countEl.textContent = '加载中...';
             
-            try {
-                console.log('发送请求到 Supabase...');
-                const response = await fetch(SUPABASE_URL + '/rest/v1/merchants?select=*', {
-                    method: 'GET',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': 'Bearer ' + SUPABASE_KEY
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', SUPABASE_URL + '/rest/v1/merchants?select=*', true);
+            xhr.setRequestHeader('apikey', SUPABASE_KEY);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var data = JSON.parse(xhr.responseText);
+                        processMerchants(data);
+                    } else {
+                        countEl.textContent = '加载失败';
+                        container.innerHTML = '<div class="text-center py-10 text-red-500">加载失败，请刷新页面重试</div>';
                     }
-                });
-                
-                console.log('收到响应:', response.status);
-                
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status);
                 }
-                
-                const data = await response.json();
-                console.log('获取到商户数据:', data.length, '个');
-                
-                // 处理数据 - 不过滤 status，显示所有商户
-                allMerchants = data.map(function(m) {
-                    var cats = m.coupon_types || (m.category ? [m.category] : []);
-                    return {
-                        id: m.id,
-                        name: m.name,
-                        city: m.city,
-                        address: m.address,
-                        phone: m.phone,
-                        lat: m.lat,
-                        lng: m.lng,
-                        categories: Array.isArray(cats) ? cats : [cats].filter(Boolean)
-                    };
-                });
-                
-                console.log('处理后的商户:', allMerchants.length, '个');
-                
-                // 填充城市筛选
-                const cities = [...new Set(allMerchants.map(m => m.city))].filter(c => c);
-                const citySelect = document.getElementById('city-filter');
-                citySelect.innerHTML = '<option value="all">全部城市</option>' + 
-                    cities.map(city => `<option value="${city}">${city}</option>`).join('');
-                
-                // 渲染商户
-                renderMerchants(allMerchants);
-                
-            } catch (error) {
-                console.error('加载商户失败:', error);
-                countEl.textContent = '加载失败';
-                container.innerHTML = '<div class="text-center py-10"><p class="text-red-500">加载失败: ' + error.message + '</p><p class="text-gray-400 text-xs mt-2">请检查网络连接或刷新页面</p></div>';
-            }
+            };
+            
+            xhr.send();
         }
 
-        // 渲染商户列表
+        function processMerchants(data) {
+            allMerchants = [];
+            for (var i = 0; i < data.length; i++) {
+                var m = data[i];
+                var cats = m.coupon_types || (m.category ? [m.category] : []);
+                if (!Array.isArray(cats)) cats = [cats];
+                allMerchants.push({
+                    id: m.id,
+                    name: m.name,
+                    city: m.city,
+                    address: m.address,
+                    phone: m.phone,
+                    lat: m.lat,
+                    lng: m.lng,
+                    categories: cats
+                });
+            }
+            
+            // 填充城市筛选
+            var cities = [];
+            for (var j = 0; j < allMerchants.length; j++) {
+                var city = allMerchants[j].city;
+                if (city && cities.indexOf(city) === -1) {
+                    cities.push(city);
+                }
+            }
+            
+            var citySelect = document.getElementById('city-filter');
+            var html = '<option value="all">全部城市</option>';
+            for (var k = 0; k < cities.length; k++) {
+                html += '<option value="' + cities[k] + '">' + cities[k] + '</option>';
+            }
+            citySelect.innerHTML = html;
+            
+            renderMerchants(allMerchants);
+        }
+
         function renderMerchants(merchants) {
-            const container = document.getElementById('merchants-container');
-            const emptyState = document.getElementById('empty-state');
-            const countEl = document.getElementById('merchant-count');
+            var container = document.getElementById('merchants-container');
+            var emptyState = document.getElementById('empty-state');
+            var countEl = document.getElementById('merchant-count');
             
             countEl.textContent = merchants.length + ' 家';
             
@@ -215,123 +188,144 @@
             
             emptyState.classList.add('hidden');
             
-            container.innerHTML = merchants.map(m => {
-                const catTags = m.categories.map(cat => 
-                    `<span class="text-xs px-1 py-0.5 rounded mr-1" style="background:#e3f2fd;color:#1976d2">${cat}</span>`
-                ).join('');
+            var html = '';
+            for (var i = 0; i < merchants.length; i++) {
+                var m = merchants[i];
+                var catTags = '';
+                for (var j = 0; j < m.categories.length; j++) {
+                    catTags += '<span class="text-xs px-1 py-0.5 rounded mr-1" style="background:#e3f2fd;color:#1976d2">' + m.categories[j] + '</span>';
+                }
                 
-                return `
-                    <div class="merchant-item" onclick="openMerchantModal(${m.id})">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="font-medium text-gray-900 text-sm">${m.name}</span>
-                            <div class="flex flex-wrap justify-end">${catTags}</div>
-                        </div>
-                        <p class="text-xs text-gray-500 mb-1">${m.city} · ${m.address}</p>
-                        ${m.phone ? `<p class="text-xs text-gray-400">${m.phone}</p>` : ''}
-                    </div>
-                `;
-            }).join('');
+                html += '<div class="merchant-item" onclick="openMerchantModal(' + m.id + ')">';
+                html += '<div class="flex justify-between items-start mb-1">';
+                html += '<span class="font-medium text-gray-900 text-sm">' + m.name + '</span>';
+                html += '<div class="flex flex-wrap justify-end">' + catTags + '</div>';
+                html += '</div>';
+                html += '<p class="text-xs text-gray-500 mb-1">' + m.city + ' · ' + m.address + '</p>';
+                if (m.phone) {
+                    html += '<p class="text-xs text-gray-400">' + m.phone + '</p>';
+                }
+                html += '</div>';
+            }
+            
+            container.innerHTML = html;
         }
 
-        // 筛选商户
         function filterMerchants() {
-            const city = document.getElementById('city-filter').value;
-            const category = document.getElementById('category-filter').value;
+            var city = document.getElementById('city-filter').value;
+            var category = document.getElementById('category-filter').value;
             
-            let filtered = allMerchants;
-            if (city !== 'all') filtered = filtered.filter(m => m.city === city);
-            if (category !== 'all') filtered = filtered.filter(m => m.categories.includes(category));
+            var filtered = [];
+            for (var i = 0; i < allMerchants.length; i++) {
+                var m = allMerchants[i];
+                if (city !== 'all' && m.city !== city) continue;
+                if (category !== 'all' && m.categories.indexOf(category) === -1) continue;
+                filtered.push(m);
+            }
             
             renderMerchants(filtered);
         }
 
-        // 打开商户详情弹窗
         function openMerchantModal(id) {
-            const merchant = allMerchants.find(m => m.id === id);
+            var merchant = null;
+            for (var i = 0; i < allMerchants.length; i++) {
+                if (allMerchants[i].id === id) {
+                    merchant = allMerchants[i];
+                    break;
+                }
+            }
             if (!merchant) return;
             
             document.getElementById('modal-merchant-name').textContent = merchant.name;
             document.getElementById('modal-merchant-address').textContent = merchant.address;
             
-            const lat = merchant.lat;
-            const lng = merchant.lng;
-            const name = encodeURIComponent(merchant.name);
+            var lat = merchant.lat;
+            var lng = merchant.lng;
+            var name = encodeURIComponent(merchant.name);
             
-            document.getElementById('nav-baidu').href = `https://api.map.baidu.com/direction?destination=latlng:${lat},${lng}|name:${name}&mode=driving&output=html`;
-            document.getElementById('nav-gaode').href = `https://uri.amap.com/navigation?to=${lng},${lat},${name}&mode=car&policy=1`;
-            document.getElementById('nav-tencent').href = `https://apis.map.qq.com/uri/v1/routeplan?type=drive&to=${name}&tocoord=${lat},${lng}&referer=fuliyun`;
+            document.getElementById('nav-baidu').href = 'https://api.map.baidu.com/direction?destination=latlng:' + lat + ',' + lng + '|name:' + name + '&mode=driving&output=html';
+            document.getElementById('nav-gaode').href = 'https://uri.amap.com/navigation?to=' + lng + ',' + lat + ',' + name + '&mode=car&policy=1';
+            document.getElementById('nav-tencent').href = 'https://apis.map.qq.com/uri/v1/routeplan?type=drive&to=' + name + '&tocoord=' + lat + ',' + lng + '&referer=fuliyun';
             
             document.getElementById('merchant-modal').classList.add('active');
             
-            setTimeout(() => {
+            setTimeout(function() {
                 initMap(lat, lng, merchant.name);
             }, 100);
         }
 
-        // 初始化地图
         function initMap(lat, lng, name) {
             if (map) map.remove();
-            
             map = L.map('map').setView([lat, lng], 15);
-            
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap'
             }).addTo(map);
-            
             L.marker([lat, lng]).addTo(map).bindPopup(name).openPopup();
         }
 
-        // 关闭弹窗
         function closeModal() {
             document.getElementById('merchant-modal').classList.remove('active');
         }
 
-        // 获取用户位置
         function getLocation() {
-            const statusEl = document.getElementById('location-status');
+            var statusEl = document.getElementById('location-status');
             statusEl.textContent = '定位中...';
             
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const userLat = position.coords.latitude;
-                        const userLng = position.coords.longitude;
-                        statusEl.textContent = '已按距离排序';
-                        sortMerchantsByDistance(userLat, userLng);
-                    },
-                    (error) => {
-                        statusEl.textContent = '定位失败';
-                    }
-                );
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var userLat = position.coords.latitude;
+                    var userLng = position.coords.longitude;
+                    statusEl.textContent = '已按距离排序';
+                    sortByDistance(userLat, userLng);
+                }, function() {
+                    statusEl.textContent = '定位失败';
+                });
             } else {
                 statusEl.textContent = '浏览器不支持定位';
             }
         }
 
-        // 按距离排序商户
-        function sortMerchantsByDistance(userLat, userLng) {
-            let merchants = allMerchants.map(m => {
-                const distance = calculateDistance(userLat, userLng, m.lat, m.lng);
-                return { ...m, distance };
+        function sortByDistance(userLat, userLng) {
+            var sorted = [];
+            for (var i = 0; i < allMerchants.length; i++) {
+                var m = allMerchants[i];
+                var dist = calculateDistance(userLat, userLng, m.lat, m.lng);
+                sorted.push({merchant: m, distance: dist});
+            }
+            
+            sorted.sort(function(a, b) {
+                return a.distance - b.distance;
             });
             
-            merchants.sort((a, b) => a.distance - b.distance);
-            renderMerchants(merchants);
+            var result = [];
+            for (var j = 0; j < sorted.length; j++) {
+                var item = sorted[j].merchant;
+                item.distance = sorted[j].distance;
+                result.push(item);
+            }
+            
+            renderMerchants(result);
         }
 
-        // 计算两点间距离（km）
         function calculateDistance(lat1, lng1, lat2, lng2) {
-            const R = 6371;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLng = (lng2 - lng1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) ** 2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            var R = 6371;
+            var dLat = (lat2 - lat1) * Math.PI / 180;
+            var dLng = (lng2 - lng1) * Math.PI / 180;
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
         }
 
-        // 点击弹窗外部关闭
         document.getElementById('merchant-modal').addEventListener('click', function(e) {
             if (e.target === this) closeModal();
         });
+
+        // 页面加载完成后加载商户
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadMerchants);
+        } else {
+            loadMerchants();
+        }
     </script>
 </body>
 </html>
