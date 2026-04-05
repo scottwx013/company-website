@@ -212,7 +212,8 @@
             
             emptyState.classList.add('hidden');
             container.innerHTML = merchants.map(m => {
-                const catTags = m.categories.map(cat => `<span class="text-xs px-1 py-0.5 rounded mr-1" style="background:#e3f2fd;color:#1976d2">${cat}</span>`).join('');
+                const catTags = (m.categories || []).map(cat => `<span class="text-xs px-1 py-0.5 rounded mr-1" style="background:#e3f2fd;color:#1976d2">${cat}</span>`).join('');
+                const tags = m.tags || m.couponTypes || [];
                 return `
                 <div class="merchant-item" onclick="openMerchantModal(${m.id})">
                     <div class="flex justify-between items-start mb-1">
@@ -222,7 +223,7 @@
                     <p class="text-xs text-gray-500 mb-1">${m.city} · ${m.address}</p>
                     ${showDistance && m.distance ? `<p class="text-xs text-green-600 mb-1">距您 ${m.distance.toFixed(1)}km</p>` : ''}
                     <div class="flex flex-wrap gap-1">
-                        ${m.tags.slice(0,2).map(tag => `<span class="text-xs text-gray-400">${tag}</span>`).join(' · ')}
+                        ${tags.slice(0,2).map(tag => `<span class="text-xs text-gray-400">${tag}</span>`).join(' · ')}
                     </div>
                 </div>
             `}).join('');
