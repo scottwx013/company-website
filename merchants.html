@@ -194,39 +194,56 @@
             });
             
             renderMerchants(allMerchants);
+            console.log('调用 renderMerchants 完成');
         }
 
         // 渲染商户列表 - 紧凑版
         function renderMerchants(merchants, showDistance = false) {
+            console.log('renderMerchants 被调用，商户数量:', merchants.length);
             const container = document.getElementById('merchants-container');
             const emptyState = document.getElementById('empty-state');
             const countEl = document.getElementById('merchant-count');
             
+            console.log('容器元素:', !!container, '空状态元素:', !!emptyState, '计数元素:', !!countEl);
+            
+            if (!container) {
+                console.error('错误: 找不到 merchants-container 元素');
+                return;
+            }
+            
             countEl.textContent = merchants.length;
             
             if (merchants.length === 0) {
+                console.log('商户数量为0，显示空状态');
                 container.innerHTML = '';
                 emptyState.classList.remove('hidden');
                 return;
             }
             
+            console.log('开始渲染', merchants.length, '个商户');
             emptyState.classList.add('hidden');
-            container.innerHTML = merchants.map(m => {
-                const catTags = (m.categories || []).map(cat => `<span class="text-xs px-1 py-0.5 rounded mr-1" style="background:#e3f2fd;color:#1976d2">${cat}</span>`).join('');
-                const tags = m.tags || m.couponTypes || [];
-                return `
-                <div class="merchant-item" onclick="openMerchantModal(${m.id})">
-                    <div class="flex justify-between items-start mb-1">
-                        <span class="font-medium text-gray-900 text-sm">${m.name}</span>
-                        <div class="flex flex-wrap justify-end">${catTags}</div>
+            
+            try {
+                container.innerHTML = merchants.map(m => {
+                    const catTags = (m.categories || []).map(cat => `<span class="text-xs px-1 py-0.5 rounded mr-1" style="background:#e3f2fd;color:#1976d2">${cat}</span>`).join('');
+                    const tags = m.tags || m.couponTypes || [];
+                    return `
+                    <div class="merchant-item" onclick="openMerchantModal(${m.id})">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="font-medium text-gray-900 text-sm">${m.name}</span>
+                            <div class="flex flex-wrap justify-end">${catTags}</div>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-1">${m.city} · ${m.address}</p>
+                        ${showDistance && m.distance ? `<p class="text-xs text-green-600 mb-1">距您 ${m.distance.toFixed(1)}km</p>` : ''}
+                        <div class="flex flex-wrap gap-1">
+                            ${tags.slice(0,2).map(tag => `<span class="text-xs text-gray-400">${tag}</span>`).join(' · ')}
+                        </div>
                     </div>
-                    <p class="text-xs text-gray-500 mb-1">${m.city} · ${m.address}</p>
-                    ${showDistance && m.distance ? `<p class="text-xs text-green-600 mb-1">距您 ${m.distance.toFixed(1)}km</p>` : ''}
-                    <div class="flex flex-wrap gap-1">
-                        ${tags.slice(0,2).map(tag => `<span class="text-xs text-gray-400">${tag}</span>`).join(' · ')}
-                    </div>
-                </div>
-            `}).join('');
+                `}).join('');
+                console.log('渲染完成');
+            } catch (e) {
+                console.error('渲染错误:', e);
+            }
         }
 
         // 筛选商户
