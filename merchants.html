@@ -130,6 +130,28 @@
     </div>
 
     <script>
+        // Supabase 配置
+        const SUPABASE_URL = 'https://ysfmlwdbgwenqtpfntrf.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZm1sd2RiZ3dlbnF0cGZudHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTYxNzUsImV4cCI6MjA5MDk3MjE3NX0.Qnawrj79G8cA6JEMlM2qDV0d20ofZrE4SwxN_K-c0q0';
+        
+        // 直接从 Supabase 获取商户
+        async function getMerchantsFromAPI() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/merchants?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                return { success: true, data };
+            } catch (error) {
+                console.error('获取商户失败:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
         let allMerchants = [];
         let map = null;
 
@@ -139,7 +161,7 @@
             
             let merchants = [];
             try {
-                const result = await getMerchants();
+                const result = await getMerchantsFromAPI();
                 console.log('Supabase 返回:', result);
                 if (result.success && result.data) {
                     merchants = result.data;
