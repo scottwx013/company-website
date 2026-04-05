@@ -62,22 +62,6 @@ async function loadHomeContent() {
             </div>
         `).join('');
     }
-    
-    // 加载案例预览
-    const casesPreview = document.getElementById('cases-preview');
-    if (casesPreview) {
-        casesPreview.innerHTML = data.cases.map(case_ => `
-            <div class="bg-white rounded-xl p-6 shadow-sm card-hover">
-                <div class="text-4xl mb-4">${case_.image}</div>
-                <h3 class="text-lg font-bold text-gray-900 mb-2">${case_.company}</h3>
-                <p class="text-blue-600 text-sm mb-2">${case_.industry} | ${case_.scale}</p>
-                <p class="text-gray-600 text-sm mb-4">${case_.solution}</p>
-                <div class="bg-green-50 text-green-700 text-sm p-3 rounded-lg">
-                    ${case_.result}
-                </div>
-            </div>
-        `).join('');
-    }
 }
 
 // 加载产品列表
