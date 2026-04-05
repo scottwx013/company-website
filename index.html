@@ -199,8 +199,12 @@
     <script src="js/main.js"></script>
     <script>
         // 初始化首页内容
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             if (typeof loadHomeContent === 'function') {
+                // 强制从 API 刷新数据
+                if (typeof loadData === 'function') {
+                    await loadData(true);
+                }
                 loadHomeContent();
             }
         });

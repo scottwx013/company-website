@@ -21,17 +21,23 @@ async function loadDataFromAPI() {
 }
 
 // 加载数据（优先从 API，失败则使用本地 JSON）
-async function loadData() {
-    if (!siteData) {
+// forceRefresh: 强制重新从 API 加载
+async function loadData(forceRefresh = false) {
+    if (!siteData || forceRefresh) {
         // 先尝试从 API 加载
         const apiData = await loadDataFromAPI();
         if (apiData) {
             siteData = apiData;
         } else {
             // 回退到本地 JSON
-            const response = await fetch('data/content.json');
-            siteData = await response.json();
-            console.log('已使用本地数据');
+            try {
+                const response = await fetch('data/content.json');
+                siteData = await response.json();
+                console.log('已使用本地数据');
+            } catch (e) {
+                console.error('加载数据失败:', e);
+                siteData = { merchants: [], products: [], home: { stats: [], features: [] }, about: { values: [], timeline: [] } };
+            }
         }
     }
     return siteData;

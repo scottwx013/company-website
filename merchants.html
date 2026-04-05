@@ -349,7 +349,13 @@
         });
 
         // 加载商户
-        loadMerchants();
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 强制从 API 刷新数据
+            if (typeof loadData === 'function') {
+                await loadData(true);
+            }
+            loadMerchants();
+        });
     </script>
 </body>
 </html>
