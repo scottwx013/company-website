@@ -166,16 +166,22 @@
                 const data = await response.json();
                 console.log('获取到商户数据:', data.length, '个');
                 
-                // 处理数据
-                allMerchants = data.filter(m => m.status !== 'offline').map(m => {
-                    const cats = m.coupon_types || (m.category ? [m.category] : []);
+                // 处理数据 - 不过滤 status，显示所有商户
+                allMerchants = data.map(function(m) {
+                    var cats = m.coupon_types || (m.category ? [m.category] : []);
                     return {
-                        ...m,
+                        id: m.id,
+                        name: m.name,
+                        city: m.city,
+                        address: m.address,
+                        phone: m.phone,
+                        lat: m.lat,
+                        lng: m.lng,
                         categories: Array.isArray(cats) ? cats : [cats].filter(Boolean)
                     };
                 });
                 
-                console.log('处理后的商户:', allMerchants.length);
+                console.log('处理后的商户:', allMerchants.length, '个');
                 
                 // 填充城市筛选
                 const cities = [...new Set(allMerchants.map(m => m.city))].filter(c => c);
@@ -189,7 +195,7 @@
             } catch (error) {
                 console.error('加载商户失败:', error);
                 countEl.textContent = '加载失败';
-                container.innerHTML = `<div class="text-center py-10 text-red-500">加载失败: ${error.message}</div>`;
+                container.innerHTML = '<div class="text-center py-10"><p class="text-red-500">加载失败: ' + error.message + '</p><p class="text-gray-400 text-xs mt-2">请检查网络连接或刷新页面</p></div>';
             }
         }
 
