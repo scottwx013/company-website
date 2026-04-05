@@ -2,11 +2,11 @@
 // 替换以下配置为你的 Supabase 项目信息
 
 const SUPABASE_CONFIG = {
-    // 你的 Supabase 项目 URL (例如: https://abcdefgh12345678.supabase.co)
-    url: 'https://your-project.supabase.co',
+    // 你的 Supabase 项目 URL
+    url: 'https://ysfmlwdbgwenqtpfntrf.supabase.co',
     
     // 匿名公钥 (anon public key)
-    anonKey: 'your-anon-key-here'
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZm1sd2RiZ3dlbnF0cGZudHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTYxNzUsImV4cCI6MjA5MDk3MjE3NX0.Qnawrj79G8cA6JEMlM2qDV0d20ofZrE4SwxN_K-c0q0'
 };
 
 // Supabase 客户端
