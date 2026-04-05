@@ -359,12 +359,14 @@
 
         // 加载商户
         document.addEventListener('DOMContentLoaded', async function() {
-            // 强制从 API 刷新数据
-            if (typeof loadData === 'function') {
-                await loadData(true);
+            // 初始化 Supabase
+            if (typeof initSupabase === 'function') {
+                initSupabase();
             }
             loadMerchants();
         });
     </script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="js/supabase-api.js"></script>
 </body>
 </html>
