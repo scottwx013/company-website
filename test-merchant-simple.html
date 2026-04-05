@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商户测试</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .merchant { border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>商户数据测试</h1>
+    <div id="status">加载中...</div>
+    <div id="merchants"></div>
+    
+    <script>
+        const SUPABASE_URL = 'https://ysfmlwdbgwenqtpfntrf.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZm1sd2RiZ3dlbnF0cGZudHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTYxNzUsImV4cCI6MjA5MDk3MjE3NX0.Qnawrj79G8cA6JEMlM2qDV0d20ofZrE4SwxN_K-c0q0';
+        
+        async function loadMerchants() {
+            const statusDiv = document.getElementById('status');
+            const merchantsDiv = document.getElementById('merchants');
+            
+            try {
+                statusDiv.textContent = '正在连接 Supabase...';
+                
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/merchants?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+                
+                const data = await response.json();
+                
+                statusDiv.innerHTML = `<span class="success">✅ 成功获取 ${data.length} 个商户</span>`;
+                
+                merchantsDiv.innerHTML = data.map(m => `
+                    <div class="merchant">
+                        <strong>${m.name}</strong> <br>
+                        城市: ${m.city} <br>
+                        地址: ${m.address} <br>
+                        分类: ${m.category || m.coupon_types?.join(', ') || '无'}
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<span class="error">❌ 错误: ${error.message}</span>`;
+                console.error(error);
+            }
+        }
+        
+        loadMerchants();
+    </script>
+</body>
+</html>

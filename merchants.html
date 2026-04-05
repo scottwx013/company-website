@@ -10,8 +10,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         body { font-family: 'Noto Sans SC', sans-serif; touch-action: manipulation; }
-        .huawei-blue { color: #0052D9; }
-        .bg-huawei-blue { background-color: #0052D9; }
         .nav-blur { backdrop-filter: blur(10px); background: rgba(255,255,255,0.95); }
         .merchant-card { transition: all 0.2s ease; cursor: pointer; }
         .merchant-card:active { transform: scale(0.98); }
@@ -19,7 +17,6 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
         .modal-content { background: white; border-radius: 12px; width: 92%; max-width: 600px; max-height: 85vh; overflow-y: auto; }
-        /* 紧凑样式 */
         .compact-select { font-size: 13px; padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd; background: white; }
         .merchant-item { padding: 10px 12px; margin-bottom: 8px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
     </style>
@@ -79,7 +76,7 @@
                     <option value="餐饮券">餐饮券</option>
                 </select>
             </div>
-            <span class="text-xs text-gray-500"><span id="merchant-count">0</span> 家</span>
+            <span class="text-xs text-gray-500"><span id="merchant-count">加载中...</span></span>
         </div>
         <p id="location-status" class="text-xs text-gray-400 mt-1"></p>
     </div>
@@ -134,158 +131,111 @@
         const SUPABASE_URL = 'https://ysfmlwdbgwenqtpfntrf.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZm1sd2RiZ3dlbnF0cGZudHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTYxNzUsImV4cCI6MjA5MDk3MjE3NX0.Qnawrj79G8cA6JEMlM2qDV0d20ofZrE4SwxN_K-c0q0';
         
-        // 直接从 Supabase 获取商户
-        async function getMerchantsFromAPI() {
-            try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/merchants?select=*`, {
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`
-                    }
-                });
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
-                return { success: true, data };
-            } catch (error) {
-                console.error('获取商户失败:', error);
-                return { success: false, error: error.message };
-            }
-        }
-
         let allMerchants = [];
         let map = null;
 
-        // 加载商户列表 - 使用 Supabase
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM 加载完成，开始加载商户...');
+            loadMerchants();
+        });
+
+        // 从 Supabase 加载商户
         async function loadMerchants() {
-            console.log('开始从 Supabase 加载商户...');
+            const container = document.getElementById('merchants-container');
+            const countEl = document.getElementById('merchant-count');
             
-            let merchants = [];
+            countEl.textContent = '加载中...';
+            
             try {
-                const result = await getMerchantsFromAPI();
-                console.log('Supabase 返回:', result);
-                if (result.success && result.data) {
-                    merchants = result.data;
-                    console.log('从 Supabase 加载了', merchants.length, '个商户');
-                } else {
-                    console.warn('Supabase 返回失败:', result.error);
-                    // 回退到本地 JSON
-                    const response = await fetch('data/content.json');
-                    const data = await response.json();
-                    merchants = data.merchants || [];
-                }
-            } catch (e) {
-                console.error('Supabase 加载失败:', e);
-                try {
-                    const response = await fetch('data/content.json');
-                    const data = await response.json();
-                    merchants = data.merchants || [];
-                } catch (e2) {
-                    console.error('本地数据也加载失败:', e2);
-                }
-            }
-            
-            console.log('原始商户数据:', merchants);
-            
-            // 只显示启用的商户，并处理多卡券种类
-            allMerchants = merchants
-                .filter(m => m.status !== 'offline')
-                .map(m => {
-                    // 创建新对象，避免修改原始数据
-                    const merchant = { ...m };
-                    // 兼容新旧数据，确保有categories数组
-                    const cats = merchant.coupon_types || merchant.couponTypes || (merchant.category ? [merchant.category] : []);
-                    merchant.categories = Array.isArray(cats) ? cats : [cats].filter(Boolean);
-                    // 取第一个作为主显示分类
-                    merchant.category = merchant.categories[0] || '';
-                    console.log('处理商户:', merchant.name, 'categories:', merchant.categories);
-                    return merchant;
+                console.log('发送请求到 Supabase...');
+                const response = await fetch(SUPABASE_URL + '/rest/v1/merchants?select=*', {
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_KEY
+                    }
                 });
-            
-            console.log('处理后的商户:', allMerchants);
-            
-            // 填充城市筛选（使用innerHTML避免触发onchange）
-            const cities = [...new Set(allMerchants.map(m => m.city))].filter(c => c);
-            console.log('城市列表:', cities);
-            const citySelect = document.getElementById('city-filter');
-            const cityOptionsHtml = '<option value="all">全部城市</option>' + 
-                cities.map(city => `<option value="${city}">${city}</option>`).join('');
-            citySelect.innerHTML = cityOptionsHtml;
-            
-            // 确保DOM更新后再渲染
-            setTimeout(() => {
+                
+                console.log('收到响应:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                
+                const data = await response.json();
+                console.log('获取到商户数据:', data.length, '个');
+                
+                // 处理数据
+                allMerchants = data.filter(m => m.status !== 'offline').map(m => {
+                    const cats = m.coupon_types || (m.category ? [m.category] : []);
+                    return {
+                        ...m,
+                        categories: Array.isArray(cats) ? cats : [cats].filter(Boolean)
+                    };
+                });
+                
+                console.log('处理后的商户:', allMerchants.length);
+                
+                // 填充城市筛选
+                const cities = [...new Set(allMerchants.map(m => m.city))].filter(c => c);
+                const citySelect = document.getElementById('city-filter');
+                citySelect.innerHTML = '<option value="all">全部城市</option>' + 
+                    cities.map(city => `<option value="${city}">${city}</option>`).join('');
+                
+                // 渲染商户
                 renderMerchants(allMerchants);
-                console.log('调用 renderMerchants 完成');
-            }, 0);
+                
+            } catch (error) {
+                console.error('加载商户失败:', error);
+                countEl.textContent = '加载失败';
+                container.innerHTML = `<div class="text-center py-10 text-red-500">加载失败: ${error.message}</div>`;
+            }
         }
 
-        // 渲染商户列表 - 紧凑版
-        function renderMerchants(merchants, showDistance = false) {
-            console.log('renderMerchants 被调用，商户数量:', merchants.length);
+        // 渲染商户列表
+        function renderMerchants(merchants) {
             const container = document.getElementById('merchants-container');
             const emptyState = document.getElementById('empty-state');
             const countEl = document.getElementById('merchant-count');
             
-            console.log('容器元素:', !!container, '空状态元素:', !!emptyState, '计数元素:', !!countEl);
-            
-            if (!container) {
-                console.error('错误: 找不到 merchants-container 元素');
-                return;
-            }
-            
-            countEl.textContent = merchants.length;
+            countEl.textContent = merchants.length + ' 家';
             
             if (merchants.length === 0) {
-                console.log('商户数量为0，显示空状态');
                 container.innerHTML = '';
                 emptyState.classList.remove('hidden');
                 return;
             }
             
-            console.log('开始渲染', merchants.length, '个商户');
             emptyState.classList.add('hidden');
             
-            try {
-                container.innerHTML = merchants.map(m => {
-                    const catTags = (m.categories || []).map(cat => `<span class="text-xs px-1 py-0.5 rounded mr-1" style="background:#e3f2fd;color:#1976d2">${cat}</span>`).join('');
-                    const tags = m.tags || m.couponTypes || [];
-                    return `
+            container.innerHTML = merchants.map(m => {
+                const catTags = m.categories.map(cat => 
+                    `<span class="text-xs px-1 py-0.5 rounded mr-1" style="background:#e3f2fd;color:#1976d2">${cat}</span>`
+                ).join('');
+                
+                return `
                     <div class="merchant-item" onclick="openMerchantModal(${m.id})">
                         <div class="flex justify-between items-start mb-1">
                             <span class="font-medium text-gray-900 text-sm">${m.name}</span>
                             <div class="flex flex-wrap justify-end">${catTags}</div>
                         </div>
                         <p class="text-xs text-gray-500 mb-1">${m.city} · ${m.address}</p>
-                        ${showDistance && m.distance ? `<p class="text-xs text-green-600 mb-1">距您 ${m.distance.toFixed(1)}km</p>` : ''}
-                        <div class="flex flex-wrap gap-1">
-                            ${tags.slice(0,2).map(tag => `<span class="text-xs text-gray-400">${tag}</span>`).join(' · ')}
-                        </div>
+                        ${m.phone ? `<p class="text-xs text-gray-400">${m.phone}</p>` : ''}
                     </div>
-                `}).join('');
-                console.log('渲染完成');
-            } catch (e) {
-                console.error('渲染错误:', e);
-            }
+                `;
+            }).join('');
         }
 
         // 筛选商户
         function filterMerchants() {
-            // 确保数据已加载
-            if (!allMerchants || allMerchants.length === 0) {
-                console.log('筛选时数据未加载，跳过');
-                return;
-            }
-            
             const city = document.getElementById('city-filter').value;
             const category = document.getElementById('category-filter').value;
             
-            console.log('筛选条件:', { city, category, total: allMerchants.length });
-            
             let filtered = allMerchants;
             if (city !== 'all') filtered = filtered.filter(m => m.city === city);
-            // 多卡券种类筛选 - 商户的categories包含所选种类
-            if (category !== 'all') filtered = filtered.filter(m => m.categories && m.categories.includes(category));
+            if (category !== 'all') filtered = filtered.filter(m => m.categories.includes(category));
             
-            console.log('筛选结果:', filtered.length, '个商户');
             renderMerchants(filtered);
         }
 
@@ -297,21 +247,16 @@
             document.getElementById('modal-merchant-name').textContent = merchant.name;
             document.getElementById('modal-merchant-address').textContent = merchant.address;
             
-            // 设置导航链接
             const lat = merchant.lat;
             const lng = merchant.lng;
             const name = encodeURIComponent(merchant.name);
             
-            // 百度地图
             document.getElementById('nav-baidu').href = `https://api.map.baidu.com/direction?destination=latlng:${lat},${lng}|name:${name}&mode=driving&output=html`;
-            // 高德地图
             document.getElementById('nav-gaode').href = `https://uri.amap.com/navigation?to=${lng},${lat},${name}&mode=car&policy=1`;
-            // 腾讯地图
             document.getElementById('nav-tencent').href = `https://apis.map.qq.com/uri/v1/routeplan?type=drive&to=${name}&tocoord=${lat},${lng}&referer=fuliyun`;
             
             document.getElementById('merchant-modal').classList.add('active');
             
-            // 初始化地图
             setTimeout(() => {
                 initMap(lat, lng, merchant.name);
             }, 100);
@@ -365,7 +310,7 @@
             });
             
             merchants.sort((a, b) => a.distance - b.distance);
-            renderMerchants(merchants, true);
+            renderMerchants(merchants);
         }
 
         // 计算两点间距离（km）
@@ -380,23 +325,6 @@
         // 点击弹窗外部关闭
         document.getElementById('merchant-modal').addEventListener('click', function(e) {
             if (e.target === this) closeModal();
-        });
-    </script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="js/supabase-api.js"></script>
-    <script src="js/main.js"></script>
-    <script>
-        // 加载商户
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('页面加载完成，开始初始化...');
-            // 初始化 Supabase
-            if (typeof initSupabase === 'function') {
-                const initialized = initSupabase();
-                console.log('Supabase 初始化:', initialized);
-            } else {
-                console.warn('initSupabase 函数未找到');
-            }
-            loadMerchants();
         });
     </script>
 </body>
