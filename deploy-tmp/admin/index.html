@@ -45,6 +45,9 @@
                 <button onclick="showTab('products')" id="tab-btn-products" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
                     📦 产品管理
                 </button>
+                <button onclick="showTab('cases')" id="tab-btn-cases" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                    💼 案例管理
+                </button>
                 <button onclick="showTab('home')" id="tab-btn-home" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
                     🏠 首页配置
                 </button>
@@ -108,12 +111,20 @@
             <!-- 产品管理 -->
             <div id="tab-products" class="tab-content">
                 <div class="bg-white rounded-xl shadow-sm p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900">产品管理</h2>
-                        <button onclick="openProductModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">+ 添加产品</button>
-                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">产品管理</h2>
                     
                     <div id="products-list" class="space-y-4">
+                        <!-- 动态加载 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 案例管理 -->
+            <div id="tab-cases" class="tab-content">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">案例管理</h2>
+                    
+                    <div id="cases-list" class="space-y-4">
                         <!-- 动态加载 -->
                     </div>
                 </div>
@@ -146,7 +157,7 @@
     <!-- 商户编辑弹窗 -->
     <div id="merchant-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
         <div class="bg-white rounded-xl p-6 w-full max-w-lg max-h-screen overflow-y-auto">
-            <h3 class="text-xl font-bold mb-4" id="merchant-modal-title">添加商户</h3>
+            <h3 class="text-xl font-bold mb-4" id="modal-title">添加商户</h3>
             
             <input type="hidden" id="merchant-id">
             
@@ -162,11 +173,12 @@
                         <input type="text" id="merchant-city" class="w-full border border-gray-300 rounded-lg px-4 py-2">
                     </div>
                     <div>
-                        <label class="block text-gray-700 font-medium mb-2">可用券种 *</label>
+                        <label class="block text-gray-700 font-medium mb-2">类别 *</label>
                         <select id="merchant-category" class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                            <option value="电影通兑券">电影通兑券</option>
-                            <option value="蛋糕券">蛋糕券</option>
-                            <option value="餐券">餐券</option>
+                            <option value="超市">超市</option>
+                            <option value="餐饮">餐饮></option>
+                            <option value="零售">零售</option>
+                            <option value="服务">服务</option>
                         </select>
                     </div>
                 </div>
@@ -200,44 +212,6 @@
         </div>
     </div>
 
-    <!-- 产品编辑弹窗 -->
-    <div id="product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl p-6 w-full max-w-lg max-h-screen overflow-y-auto">
-            <h3 class="text-xl font-bold mb-4" id="product-modal-title">添加产品</h3>
-            
-            <input type="hidden" id="product-id">
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-gray-700 font-medium mb-2">产品名称 *</label>
-                    <input type="text" id="product-name" class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                </div>
-                
-                <div>
-                    <label class="block text-gray-700 font-medium mb-2">产品描述 *</label>
-                    <textarea id="product-description" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2"></textarea>
-                </div>
-                
-                <div>
-                    <label class="block text-gray-700 font-medium mb-2">产品特点（每行一个）</label>
-                    <textarea id="product-features" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="多档位选择
-全国配送
-个性化定制"></textarea>
-                </div>
-                
-                <div>
-                    <label class="block text-gray-700 font-medium mb-2">图标Emoji</label>
-                    <input type="text" id="product-image" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="🎁">
-                </div>
-            </div>
-            
-            <div class="flex justify-end gap-4 mt-6">
-                <button onclick="closeProductModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">取消</button>
-                <button onclick="saveProduct()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">保存</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         let siteData = null;
         
@@ -253,7 +227,6 @@
             await loadData();
             loadCompanyData();
             loadMerchantsList();
-            loadProductsList();
             loadHomeData();
         });
         
@@ -313,11 +286,10 @@
         // 打开商户弹窗
         function openMerchantModal() {
             document.getElementById('merchant-modal').classList.remove('hidden');
-            document.getElementById('merchant-modal-title').textContent = '添加商户';
+            document.getElementById('modal-title').textContent = '添加商户';
             document.getElementById('merchant-id').value = '';
             document.getElementById('merchant-name').value = '';
             document.getElementById('merchant-city').value = '';
-            document.getElementById('merchant-category').value = '电影通兑券';
             document.getElementById('merchant-address').value = '';
             document.getElementById('merchant-lat').value = '';
             document.getElementById('merchant-lng').value = '';
@@ -335,7 +307,7 @@
             if (!m) return;
             
             document.getElementById('merchant-modal').classList.remove('hidden');
-            document.getElementById('merchant-modal-title').textContent = '编辑商户';
+            document.getElementById('modal-title').textContent = '编辑商户';
             document.getElementById('merchant-id').value = m.id;
             document.getElementById('merchant-name').value = m.name;
             document.getElementById('merchant-city').value = m.city;
@@ -390,97 +362,6 @@
             loadMerchantsList();
         }
         
-        // 加载产品列表
-        function loadProductsList() {
-            const container = document.getElementById('products-list');
-            container.innerHTML = siteData.products.map(p => `
-                <div class="border border-gray-200 rounded-lg p-4 flex justify-between items-center">
-                    <div class="flex items-center gap-4">
-                        <span class="text-2xl">${p.image}</span>
-                        <div>
-                            <h4 class="font-semibold">${p.name}</h4>
-                            <p class="text-sm text-gray-500">${p.description}</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="editProduct(${p.id})" class="text-blue-600 hover:text-blue-800 text-sm">编辑</button>
-                        <button onclick="deleteProduct(${p.id})" class="text-red-600 hover:text-red-800 text-sm">删除</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        // 打开产品弹窗
-        function openProductModal() {
-            document.getElementById('product-modal').classList.remove('hidden');
-            document.getElementById('product-modal-title').textContent = '添加产品';
-            document.getElementById('product-id').value = '';
-            document.getElementById('product-name').value = '';
-            document.getElementById('product-description').value = '';
-            document.getElementById('product-features').value = '';
-            document.getElementById('product-image').value = '🎁';
-        }
-        
-        // 关闭产品弹窗
-        function closeProductModal() {
-            document.getElementById('product-modal').classList.add('hidden');
-        }
-        
-        // 编辑产品
-        function editProduct(id) {
-            const p = siteData.products.find(x => x.id === id);
-            if (!p) return;
-            
-            document.getElementById('product-modal').classList.remove('hidden');
-            document.getElementById('product-modal-title').textContent = '编辑产品';
-            document.getElementById('product-id').value = p.id;
-            document.getElementById('product-name').value = p.name;
-            document.getElementById('product-description').value = p.description;
-            document.getElementById('product-features').value = p.features.join('\n');
-            document.getElementById('product-image').value = p.image;
-        }
-        
-        // 保存产品
-        function saveProduct() {
-            const id = document.getElementById('product-id').value;
-            const name = document.getElementById('product-name').value;
-            const description = document.getElementById('product-description').value;
-            const featuresText = document.getElementById('product-features').value;
-            const image = document.getElementById('product-image').value || '🎁';
-            
-            if (!name || !description) {
-                alert('请填写必填项');
-                return;
-            }
-            
-            const productData = {
-                id: id ? parseInt(id) : Date.now(),
-                name,
-                description,
-                features: featuresText.split('\n').map(f => f.trim()).filter(f => f),
-                image
-            };
-            
-            if (id) {
-                const idx = siteData.products.findIndex(x => x.id === parseInt(id));
-                siteData.products[idx] = productData;
-            } else {
-                siteData.products.push(productData);
-            }
-            
-            saveData();
-            closeProductModal();
-            loadProductsList();
-        }
-        
-        // 删除产品
-        function deleteProduct(id) {
-            if (!confirm('确定要删除这个产品吗？')) return;
-            siteData.products = siteData.products.filter(p => p.id !== id);
-            saveData();
-            loadProductsList();
-        }
-        
         // 加载首页数据
         function loadHomeData() {
             document.getElementById('home-hero-title').value = siteData.home.hero.title;
@@ -496,6 +377,8 @@
         
         // 保存数据（模拟）
         function saveData() {
+            // 实际项目中这里需要调用后端 API 保存 JSON 文件
+            // 由于这是纯前端演示，数据只保存在内存中
             console.log('保存数据:', siteData);
             alert('保存成功！(演示模式：数据未持久化到服务器)');
         }
