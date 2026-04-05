@@ -357,17 +357,22 @@
             if (e.target === this) closeModal();
         });
 
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="js/supabase-api.js"></script>
+    <script src="js/main.js"></script>
+    <script>
         // 加载商户
         document.addEventListener('DOMContentLoaded', async function() {
+            console.log('页面加载完成，开始初始化...');
             // 初始化 Supabase
             if (typeof initSupabase === 'function') {
-                initSupabase();
+                const initialized = initSupabase();
+                console.log('Supabase 初始化:', initialized);
+            } else {
+                console.warn('initSupabase 函数未找到');
             }
             loadMerchants();
         });
     </script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="js/supabase-api.js"></script>
-    <script src="js/main.js"></script>
 </body>
 </html>
