@@ -1,4 +1,15 @@
 {
   "version": 2,
-  "name": "yili-website"
+  "name": "yili-website",
+  "functions": {
+    "api/data.js": {
+      "maxDuration": 10
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    }
+  ]
 }
