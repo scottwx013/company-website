@@ -195,24 +195,133 @@
         </div>
     </footer>
 
-    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="js/supabase-api.js"></script>
-    <script src="js/main.js"></script>
     <script>
-        // 初始化首页内容
-        document.addEventListener('DOMContentLoaded', async function() {
-            if (typeof loadHomeContent === 'function') {
-                // 强制从 API 刷新数据
-                if (typeof loadData === 'function') {
-                    await loadData(true);
+        var SUPABASE_URL = 'https://ysfmlwdbgwenqtpfntrf.supabase.co';
+        var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZm1sd2RiZ3dlbnF0cGZudHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTYxNzUsImV4cCI6MjA5MDk3MjE3NX0.Qnawrj79G8cA6JEMlM2qDV0d20ofZrE4SwxN_K-c0q0';
+        
+        // 加载首页配置
+        function loadHomeConfig() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', SUPABASE_URL + '/rest/v1/home_config?select=*', true);
+            xhr.setRequestHeader('apikey', SUPABASE_KEY);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var data = JSON.parse(xhr.responseText);
+                    if (data.length > 0) {
+                        renderHome(data[0]);
+                    }
                 }
-                loadHomeContent();
+            };
+            xhr.send();
+        }
+        
+        // 加载统计数据和特性
+        function loadStatsAndFeatures() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', SUPABASE_URL + '/rest/v1/home_config?select=stats,features', true);
+            xhr.setRequestHeader('apikey', SUPABASE_KEY);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var data = JSON.parse(xhr.responseText);
+                    if (data.length > 0) {
+                        renderStats(data[0].stats || []);
+                        renderFeatures(data[0].features || []);
+                    }
+                }
+            };
+            xhr.send();
+        }
+        
+        // 加载产品
+        function loadProducts() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', SUPABASE_URL + '/rest/v1/products?select=*', true);
+            xhr.setRequestHeader('apikey', SUPABASE_KEY);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var data = JSON.parse(xhr.responseText);
+                    renderProducts(data.slice(0, 3));
+                }
+            };
+            xhr.send();
+        }
+        
+        function renderHome(config) {
+            if (config.hero_title) {
+                document.getElementById('hero-title').textContent = config.hero_title;
             }
-        });
+            if (config.hero_subtitle) {
+                document.getElementById('hero-subtitle').textContent = config.hero_subtitle;
+            }
+        }
+        
+        function renderStats(stats) {
+            var container = document.getElementById('stats-container');
+            if (!container || stats.length === 0) return;
+            
+            var html = '';
+            for (var i = 0; i < stats.length; i++) {
+                html += '<div class="text-center">';
+                html += '<div class="text-4xl md:text-5xl font-bold text-blue-600 mb-2">' + stats[i].number + '</div>';
+                html += '<div class="text-gray-600">' + stats[i].label + '</div>';
+                html += '</div>';
+            }
+            container.innerHTML = html;
+        }
+        
+        function renderFeatures(features) {
+            var container = document.getElementById('features-container');
+            if (!container || features.length === 0) return;
+            
+            var html = '';
+            for (var i = 0; i < features.length; i++) {
+                html += '<div class="bg-white rounded-xl p-8 shadow-sm card-hover">';
+                html += '<div class="text-4xl mb-4">' + features[i].icon + '</div>';
+                html += '<h3 class="text-xl font-bold text-gray-900 mb-3">' + features[i].title + '</h3>';
+                html += '<p class="text-gray-600">' + features[i].desc + '</p>';
+                html += '</div>';
+            }
+            container.innerHTML = html;
+        }
+        
+        function renderProducts(products) {
+            var container = document.getElementById('products-preview');
+            if (!container || products.length === 0) return;
+            
+            var html = '';
+            for (var i = 0; i < products.length; i++) {
+                var p = products[i];
+                html += '<div class="bg-white rounded-xl overflow-hidden shadow-sm card-hover">';
+                html += '<div class="h-48 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center overflow-hidden">';
+                html += '<img src="' + p.image + '" alt="' + (p.image_alt || p.name) + '" class="w-full h-full object-cover">';
+                html += '</div>';
+                html += '<div class="p-6">';
+                html += '<h3 class="text-xl font-bold text-gray-900 mb-2">' + p.name + '</h3>';
+                html += '<p class="text-gray-600 mb-4">' + p.description + '</p>';
+                html += '</div></div>';
+            }
+            container.innerHTML = html;
+        }
         
         function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
+            var menu = document.getElementById('mobile-menu');
             menu.classList.toggle('hidden');
+        }
+        
+        // 页面加载
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                loadHomeConfig();
+                loadStatsAndFeatures();
+                loadProducts();
+            });
+        } else {
+            loadHomeConfig();
+            loadStatsAndFeatures();
+            loadProducts();
         }
     </script>
 </body>

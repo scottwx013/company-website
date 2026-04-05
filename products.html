@@ -122,15 +122,65 @@
         </div>
     </footer>
 
-    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="js/supabase-api.js"></script>
-    <script src="js/main.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof loadProducts === 'function') {
-                loadProducts();
+        var SUPABASE_URL = 'https://ysfmlwdbgwenqtpfntrf.supabase.co';
+        var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZm1sd2RiZ3dlbnF0cGZudHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTYxNzUsImV4cCI6MjA5MDk3MjE3NX0.Qnawrj79G8cA6JEMlM2qDV0d20ofZrE4SwxN_K-c0q0';
+        
+        function loadProducts() {
+            var container = document.getElementById('products-container');
+            if (!container) return;
+            
+            container.innerHTML = '<div class="text-center py-10">加载中...</div>';
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', SUPABASE_URL + '/rest/v1/products?select=*', true);
+            xhr.setRequestHeader('apikey', SUPABASE_KEY);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var data = JSON.parse(xhr.responseText);
+                        renderProducts(data);
+                    } else {
+                        container.innerHTML = '<div class="text-center py-10 text-red-500">加载失败</div>';
+                    }
+                }
+            };
+            
+            xhr.send();
+        }
+        
+        function renderProducts(products) {
+            var container = document.getElementById('products-container');
+            if (!container) return;
+            
+            if (products.length === 0) {
+                container.innerHTML = '<div class="text-center py-10">暂无产品数据</div>';
+                return;
             }
-        });
+            
+            var html = '';
+            for (var i = 0; i < products.length; i++) {
+                var p = products[i];
+                html += '<div class="bg-white rounded-xl overflow-hidden shadow-sm card-hover">';
+                html += '<div class="h-56 overflow-hidden">';
+                html += '<img src="' + p.image + '" alt="' + (p.image_alt || p.name) + '" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">';
+                html += '</div>';
+                html += '<div class="p-8">';
+                html += '<h3 class="text-2xl font-bold text-gray-900 mb-3">' + p.name + '</h3>';
+                html += '<p class="text-gray-600 mb-6">' + p.description + '</p>';
+                html += '</div></div>';
+            }
+            container.innerHTML = html;
+        }
+        
+        // 页面加载
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadProducts);
+        } else {
+            loadProducts();
+        }
     </script>
 </body>
 </html>
