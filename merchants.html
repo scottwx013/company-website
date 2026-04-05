@@ -135,15 +135,28 @@
 
         // 加载商户列表
         async function loadMerchants() {
-            const response = await fetch('data/content.json');
-            const data = await response.json();
+            // 优先从 API 加载
+            let merchants = [];
+            try {
+                const apiRes = await fetch('/api/data?action=merchants');
+                const apiResult = await apiRes.json();
+                if (apiResult.success) {
+                    merchants = apiResult.data;
+                }
+            } catch (e) {
+                console.warn('API 加载失败，使用本地数据');
+                const response = await fetch('data/content.json');
+                const data = await response.json();
+                merchants = data.merchants || [];
+            }
+            
             // 只显示启用的商户，并处理多卡券种类
-            allMerchants = (data.merchants || [])
+            allMerchants = merchants
                 .filter(m => m.status !== 'offline')
                 .map(m => {
                     // 兼容新旧数据，确保有categories数组
                     if (!m.categories) {
-                        m.categories = m.category ? [m.category] : [];
+                        m.categories = m.couponTypes || m.categories || (m.category ? [m.category] : []);
                     }
                     // 取第一个作为主显示分类
                     m.category = m.categories[0] || '';
