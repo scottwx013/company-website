@@ -1103,65 +1103,488 @@
             saveData();
         }
 
-        // Excel模板下载
-        function downloadExcelTemplate() {
-            const template = `商户名称,城市,卡券种类,地址,经度,纬度,标签
-华润万家,北京,餐饮券,北京市朝阳区建国路88号,116.4074,39.9042,大型连锁|品类齐全
-万达影城,北京,电影通兑券,北京市海淀区中关村大街1号,116.3150,39.9845,IMAX|杜比音效
-星巴克,上海,餐饮券|蛋糕券,上海市静安区南京西路1266号,121.4556,31.2285,咖啡|休闲
-好利来,广州,蛋糕券,广州市天河区天河路208号,113.2645,23.1322,生日蛋糕|现烤面包`;
+    <script>
+        // Supabase 配置
+        const SUPABASE_URL = 'https://ysfmlwdbgwenqtpfntrf.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZm1sd2RiZ3dlbnF0cGZudHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTYxNzUsImV4cCI6MjA5MDk3MjE3NX0.Qnawrj79G8cA6JEMlM2qDV0d20ofZrE4SwxN_K-c0q0';
+        
+        // 账户数据（演示用）
+        const ACCOUNTS = {
+            'admin': 'admin123',
+            'manager': 'manager123'
+        };
+        
+        let currentUser = localStorage.getItem('admin_user');
+        let siteData = { merchants: [], products: [], company: {}, about: {}, home: {} };
+        let selectedMerchants = new Set();
+        let filteredMerchants = [];
+        
+        // Supabase 请求辅助函数
+        function supabaseRequest(table, method, body, id) {
+            method = method || 'GET';
+            var url = id 
+                ? SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id
+                : SUPABASE_URL + '/rest/v1/' + table;
             
-            // 使用CSV格式作为通用Excel兼容格式
-            const blob = new Blob(['\uFEFF' + template], { type: 'application/vnd.ms-excel;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = '商户导入模板.xls';
-            link.click();
-        }
-
-        // 处理文件上传导入
-        function handleFileImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const content = e.target.result;
-                document.getElementById('import-data').value = content;
-            };
-            reader.readAsText(file);
+            return new Promise(function(resolve, reject) {
+                var xhr = new XMLHttpRequest();
+                xhr.open(method, url, true);
+                xhr.setRequestHeader('apikey', SUPABASE_KEY);
+                xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+                if (method !== 'GET' && method !== 'DELETE') {
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+                }
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            resolve(xhr.response ? JSON.parse(xhr.response) : null);
+                        } else {
+                            reject(new Error('HTTP ' + xhr.status));
+                        }
+                    }
+                };
+                xhr.send(body ? JSON.stringify(body) : null);
+            });
         }
         
-        // 保存数据到 API
-        async function saveData() {
-            try {
-                console.log('保存数据到服务器:', siteData);
-                alert('保存成功！数据已同步到官网');
-            } catch (error) {
-                console.error('保存失败:', error);
-                alert('保存失败: ' + error.message);
+        // 页面加载检查登录状态
+        document.addEventListener('DOMContentLoaded', function() {
+            if (currentUser) {
+                showAdminPage();
+            } else {
+                showLoginPage();
+            }
+        });
+        
+        function showLoginPage() {
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('admin-page').classList.add('hidden');
+        }
+        
+        function showAdminPage() {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('admin-page').classList.remove('hidden');
+            document.getElementById('current-user').textContent = '当前用户: ' + currentUser;
+            document.getElementById('account-username').value = currentUser;
+            initAdmin();
+        }
+        
+        function doLogin() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            if (ACCOUNTS[username] === password) {
+                currentUser = username;
+                localStorage.setItem('admin_user', username);
+                document.getElementById('login-error').classList.add('hidden');
+                showAdminPage();
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
             }
         }
         
-        // 保存商户到 API
-        async function saveMerchantToAPI(merchant) {
-            const response = await fetch(`${API_BASE}?action=merchant`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(merchant)
-            });
-            const result = await response.json();
-            if (!result.success) throw new Error(result.error);
-            return result.data;
+        function doLogout() {
+            currentUser = null;
+            localStorage.removeItem('admin_user');
+            showLoginPage();
         }
         
-        // 删除商户
-        async function deleteMerchantFromAPI(id) {
-            const response = await fetch(`${API_BASE}?action=merchant&id=${id}`, {
-                method: 'DELETE'
+        function changePassword() {
+            const newPass = document.getElementById('account-new-password').value;
+            const confirmPass = document.getElementById('account-confirm-password').value;
+            const errorEl = document.getElementById('account-error');
+            
+            if (!newPass) {
+                errorEl.textContent = '请输入新密码';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (newPass !== confirmPass) {
+                errorEl.textContent = '两次输入的密码不一致';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            ACCOUNTS[currentUser] = newPass;
+            errorEl.textContent = '密码修改成功！';
+            errorEl.classList.remove('hidden', 'text-red-500');
+            errorEl.classList.add('text-green-500');
+            
+            document.getElementById('account-new-password').value = '';
+            document.getElementById('account-confirm-password').value = '';
+        }
+        
+        // 初始化管理后台
+        async function initAdmin() {
+            await loadData();
+            loadCompanyData();
+            loadMerchantsList();
+            loadProductsList();
+            loadHomeData();
+            loadAboutData();
+        }
+        
+        // 从 Supabase 加载所有数据
+        async function loadData() {
+            try {
+                siteData.merchants = await supabaseRequest('merchants');
+                siteData.products = await supabaseRequest('products');
+                var companyArr = await supabaseRequest('company');
+                siteData.company = companyArr[0] || {};
+                var aboutArr = await supabaseRequest('about');
+                siteData.about = aboutArr[0] || {};
+                var homeArr = await supabaseRequest('home_config');
+                siteData.home = homeArr[0] || {};
+                
+                // 确保商户数据格式正确
+                siteData.merchants.forEach(function(m) {
+                    if (!m.status) m.status = 'online';
+                    if (!m.categories) {
+                        m.categories = m.coupon_types || (m.category ? [m.category] : []);
+                    }
+                });
+            } catch (e) {
+                console.error('加载数据失败:', e);
+                alert('加载数据失败: ' + e.message);
+            }
+        }
+        
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+            document.querySelectorAll('[id^="tab-btn-"]').forEach(function(el) {
+                el.classList.remove('bg-blue-50', 'text-blue-700');
+                el.classList.add('text-gray-700');
             });
-            const result = await response.json();
-            if (!result.success) throw new Error(result.error);
+            
+            document.getElementById('tab-' + tab).classList.add('active');
+            var btn = document.getElementById('tab-btn-' + tab);
+            btn.classList.remove('text-gray-700');
+            btn.classList.add('bg-blue-50', 'text-blue-700');
+        }
+        
+        function loadCompanyData() {
+            document.getElementById('company-name').value = siteData.company.name || '';
+            document.getElementById('company-slogan').value = siteData.company.slogan || '';
+            document.getElementById('company-description').value = siteData.company.description || '';
+            document.getElementById('company-phone').value = siteData.company.phone || '';
+            document.getElementById('company-email').value = siteData.company.email || '';
+            document.getElementById('company-address').value = siteData.company.address || '';
+        }
+        
+        async function saveCompany() {
+            var data = {
+                name: document.getElementById('company-name').value,
+                slogan: document.getElementById('company-slogan').value,
+                description: document.getElementById('company-description').value,
+                phone: document.getElementById('company-phone').value,
+                email: document.getElementById('company-email').value,
+                address: document.getElementById('company-address').value
+            };
+            
+            try {
+                await supabaseRequest('company', 'PATCH', data, 1);
+                alert('保存成功！');
+            } catch (e) {
+                alert('保存失败: ' + e.message);
+            }
+        }
+        
+        function loadMerchantsList() {
+            filteredMerchants = siteData.merchants.slice();
+            renderMerchantsTable();
+            
+            var citySelect = document.getElementById('filter-city');
+            var cities = [];
+            siteData.merchants.forEach(function(m) {
+                if (m.city && cities.indexOf(m.city) === -1) cities.push(m.city);
+            });
+            citySelect.innerHTML = '<option value="">全部城市</option>' + 
+                cities.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+        }
+        
+        function renderMerchantsTable() {
+            var tbody = document.getElementById('merchants-table-body');
+            var html = '';
+            
+            filteredMerchants.forEach(function(m) {
+                var catStr = (m.categories || []).join(', ');
+                var statusClass = m.status === 'online' ? 'merchant-status-online' : 'merchant-status-offline';
+                var statusText = m.status === 'online' ? '营业中' : '已下线';
+                
+                html += '<tr class="border-b">';
+                html += '<td class="px-4 py-3"><input type="checkbox" value="' + m.id + '" onchange="toggleSelectMerchant(' + m.id + ')"></td>';
+                html += '<td class="px-4 py-3">' + m.name + '</td>';
+                html += '<td class="px-4 py-3">' + m.city + '</td>';
+                html += '<td class="px-4 py-3">' + catStr + '</td>';
+                html += '<td class="px-4 py-3"><span class="' + statusClass + ' px-2 py-1 rounded text-xs">' + statusText + '</span></td>';
+                html += '<td class="px-4 py-3">';
+                html += '<button onclick="editMerchant(' + m.id + ')" class="text-blue-600 hover:text-blue-800 mr-2">编辑</button>';
+                html += '<button onclick="deleteMerchant(' + m.id + ')" class="text-red-600 hover:text-red-800">删除</button>';
+                html += '</td></tr>';
+            });
+            
+            tbody.innerHTML = html;
+            document.getElementById('merchants-count').textContent = filteredMerchants.length;
+        }
+        
+        function toggleSelectMerchant(id) {
+            if (selectedMerchants.has(id)) {
+                selectedMerchants.delete(id);
+            } else {
+                selectedMerchants.add(id);
+            }
+        }
+        
+        function filterMerchants() {
+            var city = document.getElementById('filter-city').value;
+            var keyword = document.getElementById('filter-keyword').value.toLowerCase();
+            
+            filteredMerchants = siteData.merchants.filter(function(m) {
+                if (city && m.city !== city) return false;
+                if (keyword && m.name.toLowerCase().indexOf(keyword) === -1) return false;
+                return true;
+            });
+            
+            renderMerchantsTable();
+        }
+        
+        function openMerchantModal(id) {
+            if (id) {
+                var m = siteData.merchants.find(function(x) { return x.id === id; });
+                if (m) {
+                    document.getElementById('merchant-id').value = m.id;
+                    document.getElementById('merchant-name').value = m.name;
+                    document.getElementById('merchant-city').value = m.city;
+                    document.getElementById('merchant-address').value = m.address;
+                    document.getElementById('merchant-phone').value = m.phone || '';
+                    document.getElementById('merchant-lat').value = m.lat || '';
+                    document.getElementById('merchant-lng').value = m.lng || '';
+                    document.getElementById('merchant-status').value = m.status || 'online';
+                    
+                    // 重置所有卡券类型复选框
+                    document.querySelectorAll('input[name="coupon_type"]').forEach(function(cb) {
+                        cb.checked = (m.categories || []).indexOf(cb.value) !== -1;
+                    });
+                }
+            } else {
+                document.getElementById('merchant-form').reset();
+                document.getElementById('merchant-id').value = '';
+            }
+            
+            document.getElementById('merchant-modal').classList.add('active');
+        }
+        
+        function closeMerchantModal() {
+            document.getElementById('merchant-modal').classList.remove('active');
+        }
+        
+        async function saveMerchant() {
+            var id = document.getElementById('merchant-id').value;
+            var categories = [];
+            document.querySelectorAll('input[name="coupon_type"]:checked').forEach(function(cb) {
+                categories.push(cb.value);
+            });
+            
+            var data = {
+                name: document.getElementById('merchant-name').value,
+                city: document.getElementById('merchant-city').value,
+                address: document.getElementById('merchant-address').value,
+                phone: document.getElementById('merchant-phone').value,
+                lat: parseFloat(document.getElementById('merchant-lat').value) || null,
+                lng: parseFloat(document.getElementById('merchant-lng').value) || null,
+                status: document.getElementById('merchant-status').value,
+                coupon_types: categories,
+                category: categories[0] || '',
+                categories: categories
+            };
+            
+            try {
+                if (id) {
+                    await supabaseRequest('merchants', 'PATCH', data, id);
+                    // 更新本地数据
+                    var idx = siteData.merchants.findIndex(function(x) { return x.id == id; });
+                    data.id = parseInt(id);
+                    siteData.merchants[idx] = data;
+                } else {
+                    var result = await supabaseRequest('merchants', 'POST', data);
+                    data.id = result[0].id;
+                    siteData.merchants.push(data);
+                }
+                
+                closeMerchantModal();
+                loadMerchantsList();
+                alert('保存成功！');
+            } catch (e) {
+                alert('保存失败: ' + e.message);
+            }
+        }
+        
+        function editMerchant(id) {
+            openMerchantModal(id);
+        }
+        
+        async function deleteMerchant(id) {
+            if (!confirm('确定要删除该商户吗？')) return;
+            
+            try {
+                await supabaseRequest('merchants', 'DELETE', null, id);
+                siteData.merchants = siteData.merchants.filter(function(m) { return m.id != id; });
+                loadMerchantsList();
+                alert('删除成功！');
+            } catch (e) {
+                alert('删除失败: ' + e.message);
+            }
+        }
+        
+        async function batchDeleteMerchants() {
+            if (selectedMerchants.size === 0) {
+                alert('请先选择要删除的商户');
+                return;
+            }
+            if (!confirm('确定要删除选中的 ' + selectedMerchants.size + ' 个商户吗？')) return;
+            
+            try {
+                var promises = [];
+                selectedMerchants.forEach(function(id) {
+                    promises.push(supabaseRequest('merchants', 'DELETE', null, id));
+                });
+                await Promise.all(promises);
+                
+                siteData.merchants = siteData.merchants.filter(function(m) {
+                    return !selectedMerchants.has(m.id);
+                });
+                selectedMerchants.clear();
+                loadMerchantsList();
+                alert('批量删除成功！');
+            } catch (e) {
+                alert('删除失败: ' + e.message);
+            }
+        }
+        
+        function loadProductsList() {
+            var container = document.getElementById('products-list');
+            if (!container) return;
+            
+            var html = '';
+            siteData.products.forEach(function(p, idx) {
+                html += '<div class="border rounded-lg p-4 mb-4">';
+                html += '<div class="flex justify-between items-start">';
+                html += '<div><h4 class="font-semibold">' + p.name + '</h4><p class="text-gray-600 text-sm">' + p.description + '</p></div>';
+                html += '<button onclick="editProduct(' + idx + ')" class="text-blue-600">编辑</button>';
+                html += '</div></div>';
+            });
+            container.innerHTML = html;
+        }
+        
+        function editProduct(idx) {
+            // 简化版，实际需要弹窗编辑
+            alert('编辑产品功能待完善');
+        }
+        
+        function loadHomeData() {
+            if (siteData.home) {
+                document.getElementById('home-hero-title').value = siteData.home.hero_title || '';
+                document.getElementById('home-hero-subtitle').value = siteData.home.hero_subtitle || '';
+            }
+        }
+        
+        async function saveHome() {
+            var data = {
+                hero_title: document.getElementById('home-hero-title').value,
+                hero_subtitle: document.getElementById('home-hero-subtitle').value
+            };
+            
+            try {
+                await supabaseRequest('home_config', 'PATCH', data, 1);
+                alert('保存成功！');
+            } catch (e) {
+                alert('保存失败: ' + e.message);
+            }
+        }
+        
+        function loadAboutData() {
+            if (siteData.about) {
+                document.getElementById('about-story').value = siteData.about.story || '';
+                document.getElementById('about-mission').value = siteData.about.mission || '';
+                document.getElementById('about-vision').value = siteData.about.vision || '';
+            }
+        }
+        
+        async function saveAbout() {
+            var data = {
+                story: document.getElementById('about-story').value,
+                mission: document.getElementById('about-mission').value,
+                vision: document.getElementById('about-vision').value
+            };
+            
+            try {
+                await supabaseRequest('about', 'PATCH', data, 1);
+                alert('保存成功！');
+            } catch (e) {
+                alert('保存失败: ' + e.message);
+            }
+        }
+        
+        function downloadExcelTemplate() {
+            var template = 'name,city,category,address,phone,lat,lng\n' +
+                '星巴克,北京,餐饮券,北京市朝阳区建国路88号,010-12345678,39.9042,116.4074\n' +
+                '万达影城,上海,电影通兑券,上海市黄浦区南京东路100号,021-87654321,31.2304,121.4737';
+            
+            var blob = new Blob(['\uFEFF' + template], { type: 'text/csv;charset=utf-8' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = '商户导入模板.csv';
+            link.click();
+        }
+        
+        function processImport() {
+            var content = document.getElementById('import-data').value;
+            if (!content.trim()) {
+                alert('请输入导入数据');
+                return;
+            }
+            
+            // 简化版 CSV 解析
+            var lines = content.trim().split('\n');
+            var headers = lines[0].split(',');
+            var merchants = [];
+            
+            for (var i = 1; i < lines.length; i++) {
+                var values = lines[i].split(',');
+                var m = {};
+                for (var j = 0; j < headers.length; j++) {
+                    m[headers[j].trim()] = values[j] ? values[j].trim() : '';
+                }
+                merchants.push(m);
+            }
+            
+            // 批量导入
+            var promises = merchants.map(function(m) {
+                var data = {
+                    name: m.name,
+                    city: m.city,
+                    category: m.category,
+                    coupon_types: m.category ? [m.category] : [],
+                    categories: m.category ? [m.category] : [],
+                    address: m.address,
+                    phone: m.phone,
+                    lat: parseFloat(m.lat) || null,
+                    lng: parseFloat(m.lng) || null,
+                    status: 'online'
+                };
+                return supabaseRequest('merchants', 'POST', data);
+            });
+            
+            Promise.all(promises).then(function() {
+                alert('导入成功！' + merchants.length + ' 条数据');
+                document.getElementById('import-data').value = '';
+                loadData().then(function() {
+                    loadMerchantsList();
+                });
+            }).catch(function(e) {
+                alert('导入失败: ' + e.message);
+            });
         }
     </script>
 </body>
