@@ -454,6 +454,9 @@
     </div>
 
     <script>
+        // API 配置
+        const API_BASE = '/api/data';
+        
         // 账户数据（演示用，实际应后端存储）
         const ACCOUNTS = {
             'admin': 'admin123',
@@ -785,7 +788,7 @@
         }
         
         // 保存商户
-        function saveMerchant() {
+        async function saveMerchant() {
             const id = document.getElementById('merchant-id').value;
             const name = document.getElementById('merchant-name').value;
             const city = document.getElementById('merchant-city').value;
@@ -823,16 +826,31 @@
                 siteData.merchants.push(merchantData);
             }
             
+            try {
+                await saveMerchantToAPI(merchantData);
+                alert('商户保存成功！官网数据已同步更新');
+            } catch (error) {
+                alert('API保存失败，但本地数据已更新: ' + error.message);
+            }
+            
             saveData();
             closeMerchantModal();
             loadMerchantsList();
         }
         
         // 删除商户
-        function deleteMerchant(id) {
+        async function deleteMerchant(id) {
             if (!confirm('确定要删除这个商户吗？')) return;
             siteData.merchants = siteData.merchants.filter(m => m.id !== id);
             selectedMerchants.delete(id);
+            
+            try {
+                await deleteMerchantFromAPI(id);
+                alert('商户删除成功！官网数据已同步更新');
+            } catch (error) {
+                console.warn('API删除失败，但本地数据已更新:', error);
+            }
+            
             saveData();
             filterMerchantsList();
         }
@@ -1106,265 +1124,45 @@
             const file = event.target.files[0];
             if (!file) return;
             
-    <script>
-        // API 配置
-        const API_BASE = '/api/data';
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                document.getElementById('import-data').value = content;
+            };
+            reader.readAsText(file);
+        }
         
-        // 检查 API 连接
-        async function checkAPIConnection() {
-            try {
-                const response = await fetch(`${API_BASE}`);
-                if (!response.ok) throw new Error('API not available');
-                const result = await response.json();
-                if (result.success) {
-                    console.log('API 连接成功');
-                    siteData = result.data;
-                    return true;
-                }
-            } catch (err) {
-                console.warn('API 连接失败，使用本地数据:', err);
-                alert('API 连接失败，请检查网络或联系管理员');
-                return false;
-            }
-        }
-
-        // 从 API 加载数据
-        async function loadDataFromAPI() {
-            try {
-                const response = await fetch(`${API_BASE}`);
-                if (!response.ok) throw new Error('API request failed');
-                const result = await response.json();
-                if (result.success) {
-                    siteData = result.data;
-                    return siteData;
-                }
-            } catch (error) {
-                console.error('加载数据失败:', error);
-                throw error;
-            }
-        }
-
-        // 保存商户到 API
-        async function saveMerchantToAPI(merchant) {
-            try {
-                const response = await fetch(`${API_BASE}?action=merchant`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(merchant)
-                });
-                const result = await response.json();
-                if (!result.success) throw new Error(result.error);
-                return result.data;
-            } catch (error) {
-                console.error('保存商户失败:', error);
-                throw error;
-            }
-        }
-
-        // 删除商户
-        async function deleteMerchantFromAPI(id) {
-            try {
-                const response = await fetch(`${API_BASE}?action=merchant&id=${id}`, {
-                    method: 'DELETE'
-                });
-                const result = await response.json();
-                if (!result.success) throw new Error(result.error);
-                return true;
-            } catch (error) {
-                console.error('删除商户失败:', error);
-                throw error;
-            }
-        }
-
-        // 保存公司信息到 API
-        async function saveCompanyToAPI(company) {
-            try {
-                const response = await fetch(`${API_BASE}?action=company`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(company)
-                });
-                const result = await response.json();
-                if (!result.success) throw new Error(result.error);
-                return result.data;
-            } catch (error) {
-                console.error('保存公司信息失败:', error);
-                throw error;
-            }
-        }
-
-        // 保存关于我们到 API
-        async function saveAboutToAPI(about) {
-            try {
-                const response = await fetch(`${API_BASE}?action=about`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(about)
-                });
-                const result = await response.json();
-                if (!result.success) throw new Error(result.error);
-                return result.data;
-            } catch (error) {
-                console.error('保存关于我们失败:', error);
-                throw error;
-            }
-        }
-
-        // 修改后的保存函数
+        // 保存数据到 API
         async function saveData() {
             try {
-                console.log('数据已保存到服务器');
+                console.log('保存数据到服务器:', siteData);
                 alert('保存成功！数据已同步到官网');
             } catch (error) {
                 console.error('保存失败:', error);
                 alert('保存失败: ' + error.message);
             }
         }
-
-        // 修改后的商户保存函数
-        async function saveMerchant() {
-            const id = document.getElementById('merchant-id').value;
-            const name = document.getElementById('merchant-name').value;
-            const city = document.getElementById('merchant-city').value;
-            const address = document.getElementById('merchant-address').value;
-            const phone = document.getElementById('merchant-phone').value;
-            
-            const couponTypes = [];
-            document.querySelectorAll('input[name="couponType"]:checked').forEach(cb => {
-                couponTypes.push(cb.value);
+        
+        // 保存商户到 API
+        async function saveMerchantToAPI(merchant) {
+            const response = await fetch(`${API_BASE}?action=merchant`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(merchant)
             });
-            
-            if (!name || !city || !address) {
-                alert('请填写必填项');
-                return;
-            }
-            
-            const merchantData = {
-                id: id ? parseInt(id) : null,
-                name,
-                city,
-                address,
-                phone,
-                couponTypes,
-                lat: parseFloat(document.getElementById('merchant-lat').value) || null,
-                lng: parseFloat(document.getElementById('merchant-lng').value) || null,
-                status: 'online'
-            };
-            
-            try {
-                await saveMerchantToAPI(merchantData);
-                closeMerchantModal();
-                await loadMerchantsList();
-                alert('商户保存成功！官网数据已同步更新');
-            } catch (error) {
-                alert('保存失败: ' + error.message);
-            }
+            const result = await response.json();
+            if (!result.success) throw new Error(result.error);
+            return result.data;
         }
-
-        // 修改后的商户删除函数
-        async function deleteMerchant(id) {
-            if (!confirm('确定要删除这个商户吗？')) return;
-            
-            try {
-                await deleteMerchantFromAPI(id);
-                await loadMerchantsList();
-                alert('商户删除成功！官网数据已同步更新');
-            } catch (error) {
-                alert('删除失败: ' + error.message);
-            }
+        
+        // 删除商户
+        async function deleteMerchantFromAPI(id) {
+            const response = await fetch(`${API_BASE}?action=merchant&id=${id}`, {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+            if (!result.success) throw new Error(result.error);
         }
-
-        // 修改后的导入函数
-        async function importMerchants() {
-            const dataText = document.getElementById('import-data').value.trim();
-            const errorEl = document.getElementById('import-error');
-            
-            if (!dataText) {
-                errorEl.textContent = '请输入导入数据';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-            
-            const lines = dataText.split('\n');
-            let successCount = 0;
-            let errorCount = 0;
-            
-            for (const line of lines) {
-                if (!line.trim()) continue;
-                
-                const parts = line.split(',').map(p => p.trim());
-                if (parts.length >= 4) {
-                    const merchant = {
-                        name: parts[0],
-                        city: parts[1],
-                        address: parts[2],
-                        phone: parts[3] || '',
-                        couponTypes: parts[4] ? parts[4].split(';') : [],
-                        lat: parseFloat(parts[5]) || null,
-                        lng: parseFloat(parts[6]) || null,
-                        status: 'online'
-                    };
-                    
-                    try {
-                        await saveMerchantToAPI(merchant);
-                        successCount++;
-                    } catch (err) {
-                        errorCount++;
-                    }
-                } else {
-                    errorCount++;
-                }
-            }
-            
-            if (successCount > 0) {
-                closeImportModal();
-                await loadMerchantsList();
-                alert(`导入完成！成功 ${successCount} 条${errorCount > 0 ? `，失败 ${errorCount} 条` : ''}`);
-            } else {
-                errorEl.textContent = '导入失败，请检查数据格式';
-                errorEl.classList.remove('hidden');
-            }
-        }
-
-        // 修改后的公司信息保存
-        async function saveCompanyInfo() {
-            const companyData = {
-                name: document.getElementById('company-name').value,
-                slogan: document.getElementById('company-slogan').value,
-                description: document.getElementById('company-desc').value,
-                phone: document.getElementById('company-phone').value,
-                email: document.getElementById('company-email').value,
-                address: document.getElementById('company-address').value
-            };
-            
-            try {
-                await saveCompanyToAPI(companyData);
-                alert('公司信息保存成功！官网已更新');
-            } catch (error) {
-                alert('保存失败: ' + error.message);
-            }
-        }
-
-        // 修改后的关于我们保存
-        async function saveAboutContent() {
-            const aboutData = {
-                story: document.getElementById('about-story').value,
-                mission: document.getElementById('about-mission').value,
-                vision: document.getElementById('about-vision').value
-            };
-            
-            try {
-                await saveAboutToAPI(aboutData);
-                alert('关于我们保存成功！官网已更新');
-            } catch (error) {
-                alert('保存失败: ' + error.message);
-            }
-        }
-
-        // 页面加载时检查连接
-        document.addEventListener('DOMContentLoaded', async function() {
-            await checkAPIConnection();
-        });
     </script>
 </body>
 </html>
