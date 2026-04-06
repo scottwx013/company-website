@@ -87,8 +87,8 @@ const defaultData = {
         slogan: "专业员工福利解决方案提供商",
         description: "为企事业单位提供全方位的员工福利解决方案",
         phone: "400-928-9028",
-        email: "contact@yili.com",
-        address: "北京市海淀区中关村科技园"
+        email: "1gift@1gift.cn",
+        address: "江苏省无锡市菱湖大道200号微纳园E2栋"
     },
     about: {
         story: "宜礼成立于2020年，专注于企业员工福利领域，致力于为企业提供全方位的员工福利解决方案。",
@@ -218,6 +218,11 @@ module.exports = (req, res) => {
         if (action === 'home') {
             return res.json({ success: true, data: data.home });
         }
+        if (action === 'messages') {
+            // 返回所有联系表单消息（按时间倒序）
+            const messages = (data.messages || []).sort((a, b) => new Date(b.createTime) - new Date(a.createTime));
+            return res.json({ success: true, data: messages });
+        }
         // 返回全部数据
         return res.json({ success: true, data });
     }
@@ -286,6 +291,23 @@ module.exports = (req, res) => {
             changed = true;
             saveToFile(data);
             return res.json({ success: true, data: data.home });
+        }
+        
+        // 接收联系表单消息
+        if (action === 'contact') {
+            if (!data.messages) data.messages = [];
+            const newMessage = {
+                id: Date.now(),
+                name: body.name,
+                company: body.company,
+                phone: body.phone,
+                content: body.content,
+                createTime: new Date().toISOString(),
+                status: 'unread'
+            };
+            data.messages.push(newMessage);
+            saveToFile(data);
+            return res.json({ success: true, data: newMessage });
         }
         
         return res.json({ success: false, error: 'Unknown action' });

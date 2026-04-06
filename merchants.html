@@ -207,8 +207,8 @@
                 html += '<div class="flex flex-wrap justify-end">' + catTags + '</div>';
                 html += '</div>';
                 html += '<p class="text-xs text-gray-500 mb-1">' + m.city + ' · ' + m.address + '</p>';
-                if (m.phone) {
-                    html += '<p class="text-xs text-gray-400">' + m.phone + '</p>';
+                if (m.distance !== undefined) {
+                    html += '<p class="text-xs text-green-600 font-medium">' + m.distance.toFixed(1) + ' km</p>';
                 }
                 html += '</div>';
             }

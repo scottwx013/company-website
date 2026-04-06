@@ -86,6 +86,9 @@
                     <button onclick="showTab('about')" id="tab-btn-about" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
                         📖 关于我们
                     </button>
+                    <button onclick="showTab('messages')" id="tab-btn-messages" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                        💬 消息管理
+                    </button>
                     <button onclick="showTab('account')" id="tab-btn-account" class="w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
                         🔐 账户管理
                     </button>
@@ -255,9 +258,50 @@
                                 </div>
                             </div>
                             
+                            <!-- 核心价值观 -->
+                            <div class="border-b border-gray-200 pb-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-900">核心价值观</h3>
+                                    <button onclick="addValueItem()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">+ 添加</button>
+                                </div>
+                                <div id="values-container" class="space-y-3">
+                                    <!-- 动态加载 --
+                                </div>
+                            </div>
+                            
+                            <!-- 发展历程 -->
+                            <div class="border-b border-gray-200 pb-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-900">发展历程</h3>
+                                    <button onclick="addTimelineItem()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">+ 添加</button>
+                                </div>
+                                <div id="timeline-container" class="space-y-3">
+                                    <!-- 动态加载 --
+                                </div>
+                            </div>
+                            
                             <div class="flex justify-end pt-4">
                                 <button onclick="saveAbout()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">保存修改</button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 消息管理 -->
+                <div id="tab-messages" class="tab-content">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-900">消息管理</h2>
+                            <button onclick="loadMessages()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">刷新</button>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4">来自"联系我们"页面的在线咨询消息</p>
+                        
+                        <div id="messages-container" class="space-y-4">
+                            <!-- 动态加载 -->
+                        </div>
+                        
+                        <div id="messages-empty" class="hidden text-center py-10 text-gray-500">
+                            暂无消息
                         </div>
                     </div>
                 </div>
@@ -546,6 +590,7 @@
             loadProductsList();
             loadHomeData();
             loadAboutData();
+            loadMessages();
         } catch (e) {
             console.error('初始化失败:', e);
             alert('加载数据失败: ' + e.message);
@@ -1092,15 +1137,133 @@
         document.getElementById('about-story').value = about.story || '';
         document.getElementById('about-mission').value = about.mission || '';
         document.getElementById('about-vision').value = about.vision || '';
+        renderValuesEditor(about.values || []);
+        renderTimelineEditor(about.timeline || []);
+    }
+    
+    // 渲染价值观编辑器
+    function renderValuesEditor(values) {
+        const container = document.getElementById('values-container');
+        if (!container) return;
+        
+        if (values.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 text-sm">暂无价值观，点击"添加"按钮添加</p>';
+            return;
+        }
+        
+        container.innerHTML = values.map(function(v, idx) {
+            const title = typeof v === 'string' ? v : (v.title || '');
+            const desc = typeof v === 'string' ? '' : (v.desc || '');
+            return '<div class="border border-gray-200 rounded-lg p-3 flex items-start gap-3">' +
+                '<div class="flex-1 space-y-2">' +
+                    '<input type="text" class="value-title w-full border border-gray-300 rounded px-3 py-1 text-sm" placeholder="标题" value="' + title + '" data-idx="' + idx + '" onchange="updateValue(' + idx + ')">' +
+                    '<input type="text" class="value-desc w-full border border-gray-300 rounded px-3 py-1 text-sm" placeholder="描述" value="' + desc + '" data-idx="' + idx + '" onchange="updateValue(' + idx + ')">' +
+                '</div>' +
+                '<button onclick="removeValue(' + idx + ')" class="text-red-500 hover:text-red-700 text-sm">删除</button>' +
+            '</div>';
+        }).join('');
+    }
+    
+    function updateValue(idx) {
+        const titleInput = document.querySelector('.value-title[data-idx="' + idx + '"]');
+        const descInput = document.querySelector('.value-desc[data-idx="' + idx + '"]');
+        if (siteData.about.values[idx]) {
+            siteData.about.values[idx] = {
+                title: titleInput.value,
+                desc: descInput.value
+            };
+        }
+    }
+    
+    function addValueItem() {
+        if (!siteData.about.values) siteData.about.values = [];
+        siteData.about.values.push({ title: '', desc: '' });
+        renderValuesEditor(siteData.about.values);
+    }
+    
+    function removeValue(idx) {
+        siteData.about.values.splice(idx, 1);
+        renderValuesEditor(siteData.about.values);
+    }
+    
+    // 渲染发展历程编辑器
+    function renderTimelineEditor(timeline) {
+        const container = document.getElementById('timeline-container');
+        if (!container) return;
+        
+        if (timeline.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 text-sm">暂无历程，点击"添加"按钮添加</p>';
+            return;
+        }
+        
+        container.innerHTML = timeline.map(function(t, idx) {
+            return '<div class="border border-gray-200 rounded-lg p-3 flex items-start gap-3">' +
+                '<div class="flex-1 grid grid-cols-3 gap-2">' +
+                    '<input type="text" class="timeline-year w-full border border-gray-300 rounded px-3 py-1 text-sm" placeholder="年份" value="' + (t.year || '') + '" data-idx="' + idx + '" onchange="updateTimeline(' + idx + ')">' +
+                    '<input type="text" class="timeline-title w-full border border-gray-300 rounded px-3 py-1 text-sm col-span-2" placeholder="标题" value="' + (t.title || '') + '" data-idx="' + idx + '" onchange="updateTimeline(' + idx + ')">' +
+                    '<textarea class="timeline-desc w-full border border-gray-300 rounded px-3 py-1 text-sm col-span-3" rows="2" placeholder="描述" data-idx="' + idx + '" onchange="updateTimeline(' + idx + ')">' + (t.desc || t.event || '') + '</textarea>' +
+                '</div>' +
+                '<button onclick="removeTimeline(' + idx + ')" class="text-red-500 hover:text-red-700 text-sm">删除</button>' +
+            '</div>';
+        }).join('');
+    }
+    
+    function updateTimeline(idx) {
+        const yearInput = document.querySelector('.timeline-year[data-idx="' + idx + '"]');
+        const titleInput = document.querySelector('.timeline-title[data-idx="' + idx + '"]');
+        const descInput = document.querySelector('.timeline-desc[data-idx="' + idx + '"]');
+        if (siteData.about.timeline[idx]) {
+            siteData.about.timeline[idx] = {
+                year: yearInput.value,
+                title: titleInput.value,
+                desc: descInput.value
+            };
+        }
+    }
+    
+    function addTimelineItem() {
+        if (!siteData.about.timeline) siteData.about.timeline = [];
+        siteData.about.timeline.push({ year: '', title: '', desc: '' });
+        renderTimelineEditor(siteData.about.timeline);
+    }
+    
+    function removeTimeline(idx) {
+        siteData.about.timeline.splice(idx, 1);
+        renderTimelineEditor(siteData.about.timeline);
     }
     
     async function saveAbout() {
+        // 从编辑器读取最新数据
+        const values = [];
+        document.querySelectorAll('.value-title').forEach(function(input, idx) {
+            const descInput = document.querySelector('.value-desc[data-idx="' + idx + '"]');
+            if (input.value) {
+                values.push({
+                    title: input.value,
+                    desc: descInput ? descInput.value : ''
+                });
+            }
+        });
+        
+        const timeline = [];
+        document.querySelectorAll('.timeline-year').forEach(function(input, idx) {
+            const titleInput = document.querySelector('.timeline-title[data-idx="' + idx + '"]');
+            const descInput = document.querySelector('.timeline-desc[data-idx="' + idx + '"]');
+            if (input.value && titleInput && titleInput.value) {
+                timeline.push({
+                    year: input.value,
+                    title: titleInput.value,
+                    desc: descInput ? descInput.value : ''
+                });
+            }
+        });
+        
         const data = {
             story: document.getElementById('about-story').value,
             mission: document.getElementById('about-mission').value,
             vision: document.getElementById('about-vision').value,
-            values: siteData.about?.values || [],
-            timeline: siteData.about?.timeline || []
+            values: values,
+            timeline: timeline
         };
         
         try {
@@ -1110,6 +1273,45 @@
         } catch (e) {
             alert('保存失败: ' + e.message);
         }
+    }
+    
+    // ===== 消息管理 =====
+    async function loadMessages() {
+        try {
+            const messages = await apiRequest('messages', 'GET');
+            renderMessages(messages || []);
+        } catch (e) {
+            console.error('加载消息失败:', e);
+        }
+    }
+    
+    function renderMessages(messages) {
+        const container = document.getElementById('messages-container');
+        const emptyEl = document.getElementById('messages-empty');
+        
+        if (!container) return;
+        
+        if (messages.length === 0) {
+            container.innerHTML = '';
+            emptyEl.classList.remove('hidden');
+            return;
+        }
+        
+        emptyEl.classList.add('hidden');
+        container.innerHTML = messages.map(function(m) {
+            const date = new Date(m.createTime).toLocaleString('zh-CN');
+            const statusClass = m.status === 'unread' ? 'border-l-4 border-red-500 bg-red-50' : 'border-l-4 border-green-500';
+            return '<div class="' + statusClass + ' rounded-lg p-4 shadow-sm">' +
+                '<div class="flex justify-between items-start mb-2">' +
+                    '<div>' +
+                        '<h4 class="font-semibold">' + m.name + ' · ' + m.company + '</h4>' +
+                        '<p class="text-sm text-gray-500">' + m.phone + '</p>' +
+                    '</div>' +
+                    '<span class="text-xs text-gray-400">' + date + '</span>' +
+                '</div>' +
+                '<p class="text-gray-700 bg-white rounded p-3 mt-2">' + (m.content || '无咨询内容') + '</p>' +
+            '</div>';
+        }).join('');
     }
     </script>
 </body>

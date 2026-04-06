@@ -31,9 +31,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="index.html" class="flex items-center">
-                        <img src="assets/logo-purple.jpg" alt="宜礼" class="h-10 w-auto">
-                        <span class="ml-3 text-xl font-bold text-gray-900">宜礼</span>
+                    <a href="index.html">
+                        <img src="assets/logo-purple.jpg" alt="宜礼" class="logo-img">
                     </a>
                 </div>
                 <div class="hidden md:flex items-center space-x-8">
@@ -43,6 +42,23 @@
                     <a href="about.html" class="text-gray-600 hover:text-blue-600">关于我们</a>
                     <a href="contact.html" class="text-gray-900 font-medium hover:text-blue-600">联系我们</a>
                 </div>
+                <div class="md:hidden flex items-center">
+                    <button onclick="toggleMobileMenu()" class="text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="index.html" class="block px-3 py-2 text-gray-600">首页</a>
+                <a href="products.html" class="block px-3 py-2 text-gray-600">产品服务</a>
+                <a href="merchants.html" class="block px-3 py-2 text-gray-600">商户网络</a>
+                <a href="about.html" class="block px-3 py-2 text-gray-600">关于我们</a>
+                <a href="contact.html" class="block px-3 py-2 text-gray-900 font-medium">联系我们</a>
             </div>
         </div>
     </nav>
@@ -85,7 +101,7 @@
                             </div>
                             <div class="ml-4">
                                 <h4 class="font-semibold text-gray-900">电子邮箱</h4>
-                                <p class="text-gray-600" id="company-email">contact@fuliyun.com</p>
+                                <p class="text-gray-600" id="company-email">1gift@1gift.cn</p>
                                 <p class="text-gray-500 text-sm">商务合作</p>
                             </div>
                         </div>
@@ -99,7 +115,7 @@
                             </div>
                             <div class="ml-4">
                                 <h4 class="font-semibold text-gray-900">公司地址</h4>
-                                <p class="text-gray-600" id="company-address">北京市海淀区中关村科技园</p>
+                                <p class="text-gray-600" id="company-address">江苏省无锡市菱湖大道200号微纳园E2栋</p>
                                 <p class="text-gray-500 text-sm">欢迎来访</p>
                             </div>
                         </div>
@@ -123,27 +139,29 @@
                         <div class="space-y-6">
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">您的姓名 *</label>
-                                <input type="text" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请输入姓名">
+                                <input type="text" id="form-name" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请输入姓名">
                             </div>
                             
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">公司名称 *</label>
-                                <input type="text" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请输入公司名称">
+                                <input type="text" id="form-company" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请输入公司名称">
                             </div>
                             
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">联系电话 *</label>
-                                <input type="tel" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请输入手机号">
+                                <input type="tel" id="form-phone" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请输入手机号">
                             </div>
                             
                             <div>
                                 <label class="block text-gray-700 font-medium mb-2">咨询内容</label>
-                                <textarea rows="4" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请描述您的需求..."></textarea>
+                                <textarea id="form-content" rows="4" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="请描述您的需求..."></textarea>
                             </div>
                             
-                            <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-4 rounded-lg hover:bg-blue-700 transition">
+                            <button type="submit" id="submit-btn" class="w-full bg-blue-600 text-white font-semibold py-4 rounded-lg hover:bg-blue-700 transition">
                                 提交咨询
                             </button>
+                            
+                            <p id="form-message" class="text-center text-sm hidden"></p>
                         </div>
                     </form>
                 </div>
@@ -161,25 +179,29 @@
     <script>
         const API_BASE = '/api/data';
         
-        function apiRequest(action, callback) {
+        function apiRequest(action, method, body, callback) {
             var xhr = new XMLHttpRequest();
             var url = action ? API_BASE + '?action=' + action : API_BASE;
-            xhr.open('GET', url, true);
+            xhr.open(method || 'GET', url, true);
             xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    var data = JSON.parse(xhr.responseText);
-                    if (data.success && callback) {
-                        callback(data.data);
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        var data = JSON.parse(xhr.responseText);
+                        if (callback) callback(data);
+                    } else {
+                        if (callback) callback({success: false});
                     }
                 }
             };
-            xhr.send();
+            if (body) xhr.send(JSON.stringify(body));
+            else xhr.send();
         }
         
         function loadCompany() {
-            apiRequest('company', function(data) {
-                if (data) {
+            apiRequest('company', 'GET', null, function(res) {
+                if (res.success && res.data) {
+                    var data = res.data;
                     if (data.phone) document.getElementById('company-phone').textContent = data.phone;
                     if (data.email) document.getElementById('company-email').textContent = data.email;
                     if (data.address) document.getElementById('company-address').textContent = data.address;
@@ -189,8 +211,44 @@
         
         function submitForm(e) {
             e.preventDefault();
-            alert('感谢您的咨询！我们的客服人员将在24小时内与您联系。');
-            document.getElementById('contact-form').reset();
+            
+            var btn = document.getElementById('submit-btn');
+            var msg = document.getElementById('form-message');
+            var name = document.getElementById('form-name').value;
+            var company = document.getElementById('form-company').value;
+            var phone = document.getElementById('form-phone').value;
+            var content = document.getElementById('form-content').value;
+            
+            btn.disabled = true;
+            btn.textContent = '提交中...';
+            msg.className = 'text-center text-sm hidden';
+            
+            apiRequest('contact', 'POST', {
+                name: name,
+                company: company,
+                phone: phone,
+                content: content
+            }, function(res) {
+                btn.disabled = false;
+                if (res.success) {
+                    btn.textContent = '提交成功';
+                    msg.textContent = '感谢您的咨询！我们的客服人员将在24小时内与您联系。';
+                    msg.className = 'text-center text-sm text-green-600 mt-4';
+                    document.getElementById('contact-form').reset();
+                    setTimeout(function() {
+                        btn.textContent = '提交咨询';
+                    }, 3000);
+                } else {
+                    btn.textContent = '提交咨询';
+                    msg.textContent = '提交失败，请稍后重试。';
+                    msg.className = 'text-center text-sm text-red-600 mt-4';
+                }
+            });
+        }
+        
+        function toggleMobileMenu() {
+            var menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
         }
         
         // 页面加载
