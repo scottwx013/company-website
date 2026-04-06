@@ -60,26 +60,50 @@ const defaultData = {
         {
             id: 1,
             name: "节日福利套餐",
-            description: "春节、端午、中秋等节日福利一站式解决方案",
+            description: "春节、端午、中秋等节日福利一站式解决方案，多档位选择满足企业不同预算需求",
             features: ["多档位选择", "全国配送", "个性化定制"],
-            image: "https://images.unsplash.com/photo-1586880244406-556ebe35f282?w=400&h=300&fit=crop",
-            imageAlt: "礼品配送"
+            image: "https://images.unsplash.com/photo-1512909006721-3d6018887383?w=400&h=300&fit=crop",
+            imageAlt: "节日福利"
         },
         {
             id: 2,
             name: "员工关怀计划",
-            description: "生日福利、入职周年、婚育礼金等全场景关怀",
+            description: "生日福利、入职周年、婚育礼金等全场景关怀，让员工感受企业温度",
             features: ["自动化发放", "智能提醒", "数据分析"],
-            image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&h=300&fit=crop",
+            image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=300&fit=crop",
             imageAlt: "员工关怀"
         },
         {
             id: 3,
             name: "观影演出服务",
-            description: "全国影院通兑，热门演出票务一站式解决",
+            description: "全国影院通兑，热门演出票务一站式解决，支持在线选座",
             features: ["全国通兑", "在线选座", "企业包场"],
             image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop",
             imageAlt: "影院观影"
+        },
+        {
+            id: 4,
+            name: "蛋糕烘焙礼品",
+            description: "知名蛋糕品牌联名合作，新鲜烘焙配送到家，支持定时送达",
+            features: ["品牌合作", "新鲜配送", "定时送达"],
+            image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop",
+            imageAlt: "蛋糕礼品"
+        },
+        {
+            id: 5,
+            name: "健康体检套餐",
+            description: "全国三甲医院及专业体检机构合作，关爱员工健康",
+            features: ["三甲医院", "报告解读", "健康档案"],
+            image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400&h=300&fit=crop",
+            imageAlt: "健康体检"
+        },
+        {
+            id: 6,
+            name: "团建活动策划",
+            description: "专业团建方案策划与执行，增强团队凝聚力",
+            features: ["方案定制", "全程执行", "效果评估"],
+            image: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&h=300&fit=crop",
+            imageAlt: "团建活动"
         }
     ],
     company: {
