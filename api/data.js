@@ -111,7 +111,7 @@ const defaultData = {
         slogan: "专业员工福利解决方案提供商",
         description: "为企事业单位提供全方位的员工福利解决方案",
         phone: "400-928-9028",
-        email: "1gift@1gift.cn",
+        email: "contact@1gift.co",
         address: "江苏省无锡市菱湖大道200号微纳园E2栋"
     },
     about: {
