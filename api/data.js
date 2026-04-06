@@ -15,13 +15,14 @@ const defaultData = {
     merchants: [
         {
             id: 1,
-            name: "星巴克咖啡",
+            name: "华润万家",
             city: "北京",
             address: "北京市朝阳区建国路88号",
             phone: "010-12345678",
-            couponTypes: ["餐饮券"],
+            categories: ["餐饮券"],
             category: "餐饮券",
-            tags: ["餐饮券"],
+            coupon_types: ["餐饮券"],
+            tags: ["大型连锁", "品类齐全"],
             lat: 39.9042,
             lng: 116.4074,
             status: "online"
@@ -32,11 +33,26 @@ const defaultData = {
             city: "上海",
             address: "上海市黄浦区南京东路100号",
             phone: "021-87654321",
-            couponTypes: ["电影通兑券"],
+            categories: ["电影通兑券"],
             category: "电影通兑券",
-            tags: ["电影通兑券"],
+            coupon_types: ["电影通兑券"],
+            tags: ["IMAX", "杜比音效"],
             lat: 31.2304,
             lng: 121.4737,
+            status: "online"
+        },
+        {
+            id: 3,
+            name: "星巴克",
+            city: "北京",
+            address: "北京市海淀区中关村大街1号",
+            phone: "010-11111111",
+            categories: ["餐饮券"],
+            category: "餐饮券",
+            coupon_types: ["餐饮券"],
+            tags: ["咖啡", "休闲"],
+            lat: 39.9845,
+            lng: 116.3150,
             status: "online"
         }
     ],
@@ -59,19 +75,11 @@ const defaultData = {
         },
         {
             id: 3,
-            name: "观看电影演出",
+            name: "观影演出服务",
             description: "全国影院通兑，热门演出票务一站式解决",
             features: ["全国通兑", "在线选座", "企业包场"],
             image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop",
             imageAlt: "影院观影"
-        },
-        {
-            id: 4,
-            name: "团建活动策划",
-            description: "专业团建方案策划与执行服务",
-            features: ["方案定制", "全程执行", "效果评估"],
-            image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=300&fit=crop",
-            imageAlt: "团建活动"
         }
     ],
     company: {
@@ -83,20 +91,27 @@ const defaultData = {
         address: "北京市海淀区中关村科技园"
     },
     about: {
-        story: "宜礼成立于2020年，专注于企业员工福利领域...",
-        mission: "让每一份福利都更有温度",
-        vision: "成为中国最值得信赖的企业福利服务商",
+        story: "宜礼成立于2020年，专注于企业员工福利领域，致力于为企业提供全方位的员工福利解决方案。",
+        mission: "让每一家企业都能轻松管理员工福利，让每一位员工都能享受到贴心的福利关怀。",
+        vision: "成为中国最值得信赖的企业福利服务平台。",
         values: [
-            { title: "专业", desc: "专注福利领域，提供专业服务" },
-            { title: "创新", desc: "持续创新，引领行业发展" },
-            { title: "诚信", desc: "诚信经营，赢得客户信赖" }
+            { title: "客户至上", desc: "以客户需求为中心，提供优质服务" },
+            { title: "创新驱动", desc: "持续创新，引领行业发展" },
+            { title: "诚信正直", desc: "诚信经营，赢得客户信赖" },
+            { title: "合作共赢", desc: "携手合作伙伴，共创价值" }
         ],
         timeline: [
             { year: "2020", title: "公司成立", desc: "宜礼正式成立" },
-            { year: "2021", title: "产品上线", desc: "首个福利产品上线" }
+            { year: "2021", title: "产品上线", desc: "首个福利产品上线" },
+            { year: "2022", title: "快速发展", desc: "服务客户突破100家" },
+            { year: "2023", title: "全国布局", desc: "业务覆盖全国50+城市" }
         ]
     },
     home: {
+        hero: {
+            title: "让每一份福利都更有温度",
+            subtitle: "专业员工福利解决方案，助力企业提升员工满意度"
+        },
         stats: [
             { number: "500+", label: "服务企业" },
             { number: "100万+", label: "覆盖员工" },
@@ -104,10 +119,10 @@ const defaultData = {
             { number: "99%", label: "满意度" }
         ],
         features: [
-            { icon: "gift", title: "一站式福利", desc: "覆盖节日、生日、体检等全场景" },
-            { icon: "users", title: "专属顾问", desc: "7×24小时专属客户成功经理" },
-            { icon: "shield", title: "品质保障", desc: "严选供应商，品质全程把控" },
-            { icon: "chart", title: "数据洞察", desc: "福利数据分析，优化员工体验" }
+            { icon: "🎁", title: "一站式福利", desc: "覆盖节日、生日、体检等全场景" },
+            { icon: "🏪", title: "全国商户网络", desc: "覆盖全国300+城市的优质商户资源" },
+            { icon: "📊", title: "智能管理系统", desc: "一站式福利管理平台，数据实时可视" },
+            { icon: "💝", title: "员工满意度提升", desc: "多样化选择，满足不同员工需求" }
         ]
     }
 };
@@ -173,10 +188,23 @@ module.exports = (req, res) => {
     // GET 请求 - 读取数据
     if (req.method === 'GET') {
         if (action === 'merchants') {
-            return res.json({ 
-                success: true, 
-                data: type === 'all' ? data.merchants : data.merchants.filter(m => m.status === 'online')
-            });
+            const all = type === 'all' ? data.merchants : data.merchants.filter(m => m.status === 'online');
+            // 返回时过滤掉敏感字段
+            const sanitized = all.map(m => ({
+                id: m.id,
+                name: m.name,
+                city: m.city,
+                address: m.address,
+                phone: m.phone,
+                lat: m.lat,
+                lng: m.lng,
+                categories: m.categories || m.coupon_types || (m.category ? [m.category] : []),
+                category: m.category,
+                coupon_types: m.coupon_types,
+                tags: m.tags,
+                status: m.status
+            }));
+            return res.json({ success: true, data: sanitized });
         }
         if (action === 'products') {
             return res.json({ success: true, data: data.products });

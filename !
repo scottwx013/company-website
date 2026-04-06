@@ -1,0 +1,24 @@
+Retrieving project…
+The `name` property in vercel.json is deprecated (https://vercel.link/name-prop)
+Deploying 1gift/yili-website
+Uploading [--------------------] (0.0B/53.8KB)
+Uploading [=====---------------] (16.1KB/53.8KB)
+Uploading [===========---------] (32.1KB/53.8KB)
+Uploading [=================---] (48.1KB/53.8KB)
+Uploading [====================] (53.8KB/53.8KB)
+Inspect: https://vercel.com/1gift/yili-website/3e6dkkS386z1iLCNxCHEQnW1LgW1 [3s]
+Production: https://yili-website-qql4yv825-1gift.vercel.app [3s]
+Building...
+Building...
+Building: Running build in Washington, D.C., USA (East) – iad1
+Building: Build machine configuration: 4 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Previous build caches not available.
+Building: Downloading 57 deployment files...
+Building: Running "vercel build"
+Building: Vercel CLI 50.38.2
+Building: Build Completed in /vercel/output [155ms]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://yili-website-qql4yv825-1gift.vercel.app [11s]
+Completing...
+Aliased: https://www.1gift.co [11s]

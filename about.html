@@ -125,25 +125,30 @@
     </footer>
 
     <script>
-        var SUPABASE_URL = 'https://ysfmlwdbgwenqtpfntrf.supabase.co';
-        var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZm1sd2RiZ3dlbnF0cGZudHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTYxNzUsImV4cCI6MjA5MDk3MjE3NX0.Qnawrj79G8cA6JEMlM2qDV0d20ofZrE4SwxN_K-c0q0';
+        const API_BASE = '/api/data';
         
-        function loadAbout() {
+        function apiRequest(action, callback) {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', SUPABASE_URL + '/rest/v1/about?select=*', true);
-            xhr.setRequestHeader('apikey', SUPABASE_KEY);
-            xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
-            
+            var url = action ? API_BASE + '?action=' + action : API_BASE;
+            xhr.open('GET', url, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     var data = JSON.parse(xhr.responseText);
-                    if (data.length > 0) {
-                        renderAbout(data[0]);
+                    if (data.success && callback) {
+                        callback(data.data);
                     }
                 }
             };
-            
             xhr.send();
+        }
+        
+        function loadAbout() {
+            apiRequest('about', function(data) {
+                if (data) {
+                    renderAbout(data);
+                }
+            });
         }
         
         function renderAbout(about) {

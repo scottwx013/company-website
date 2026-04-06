@@ -72,7 +72,7 @@
                             </div>
                             <div class="ml-4">
                                 <h4 class="font-semibold text-gray-900">服务热线</h4>
-                                <p class="text-2xl font-bold text-blue-600">400-928-9028</p>
+                                <p class="text-2xl font-bold text-blue-600" id="company-phone">400-928-9028</p>
                                 <p class="text-gray-500 text-sm">工作日 9:00-18:00</p>
                             </div>
                         </div>
@@ -85,7 +85,7 @@
                             </div>
                             <div class="ml-4">
                                 <h4 class="font-semibold text-gray-900">电子邮箱</h4>
-                                <p class="text-gray-600">contact@fuliyun.com</p>
+                                <p class="text-gray-600" id="company-email">contact@fuliyun.com</p>
                                 <p class="text-gray-500 text-sm">商务合作</p>
                             </div>
                         </div>
@@ -99,7 +99,7 @@
                             </div>
                             <div class="ml-4">
                                 <h4 class="font-semibold text-gray-900">公司地址</h4>
-                                <p class="text-gray-600">北京市海淀区中关村科技园</p>
+                                <p class="text-gray-600" id="company-address">北京市海淀区中关村科技园</p>
                                 <p class="text-gray-500 text-sm">欢迎来访</p>
                             </div>
                         </div>
@@ -159,10 +159,45 @@
     </footer>
 
     <script>
+        const API_BASE = '/api/data';
+        
+        function apiRequest(action, callback) {
+            var xhr = new XMLHttpRequest();
+            var url = action ? API_BASE + '?action=' + action : API_BASE;
+            xhr.open('GET', url, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var data = JSON.parse(xhr.responseText);
+                    if (data.success && callback) {
+                        callback(data.data);
+                    }
+                }
+            };
+            xhr.send();
+        }
+        
+        function loadCompany() {
+            apiRequest('company', function(data) {
+                if (data) {
+                    if (data.phone) document.getElementById('company-phone').textContent = data.phone;
+                    if (data.email) document.getElementById('company-email').textContent = data.email;
+                    if (data.address) document.getElementById('company-address').textContent = data.address;
+                }
+            });
+        }
+        
         function submitForm(e) {
             e.preventDefault();
             alert('感谢您的咨询！我们的客服人员将在24小时内与您联系。');
             document.getElementById('contact-form').reset();
+        }
+        
+        // 页面加载
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadCompany);
+        } else {
+            loadCompany();
         }
     </script>
 </body>

@@ -196,65 +196,59 @@
     </footer>
 
     <script>
-        var SUPABASE_URL = 'https://ysfmlwdbgwenqtpfntrf.supabase.co';
-        var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZm1sd2RiZ3dlbnF0cGZudHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTYxNzUsImV4cCI6MjA5MDk3MjE3NX0.Qnawrj79G8cA6JEMlM2qDV0d20ofZrE4SwxN_K-c0q0';
+        const API_BASE = '/api/data';
         
-        // 加载首页配置
-        function loadHomeConfig() {
+        // 通用API请求函数
+        function apiRequest(action, callback) {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', SUPABASE_URL + '/rest/v1/home_config?select=*', true);
-            xhr.setRequestHeader('apikey', SUPABASE_KEY);
-            xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+            var url = action ? API_BASE + '?action=' + action : API_BASE;
+            xhr.open('GET', url, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     var data = JSON.parse(xhr.responseText);
-                    if (data.length > 0) {
-                        renderHome(data[0]);
+                    if (data.success && callback) {
+                        callback(data.data);
                     }
                 }
             };
             xhr.send();
+        }
+        
+        // 加载首页配置
+        function loadHomeConfig() {
+            apiRequest('home', function(data) {
+                if (data && data.hero) {
+                    renderHome(data.hero);
+                }
+            });
         }
         
         // 加载统计数据和特性
         function loadStatsAndFeatures() {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', SUPABASE_URL + '/rest/v1/home_config?select=stats,features', true);
-            xhr.setRequestHeader('apikey', SUPABASE_KEY);
-            xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    var data = JSON.parse(xhr.responseText);
-                    if (data.length > 0) {
-                        renderStats(data[0].stats || []);
-                        renderFeatures(data[0].features || []);
-                    }
+            apiRequest('home', function(data) {
+                if (data) {
+                    renderStats(data.stats || []);
+                    renderFeatures(data.features || []);
                 }
-            };
-            xhr.send();
+            });
         }
         
         // 加载产品
         function loadProducts() {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', SUPABASE_URL + '/rest/v1/products?select=*', true);
-            xhr.setRequestHeader('apikey', SUPABASE_KEY);
-            xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    var data = JSON.parse(xhr.responseText);
+            apiRequest('products', function(data) {
+                if (data) {
                     renderProducts(data.slice(0, 3));
                 }
-            };
-            xhr.send();
+            });
         }
         
-        function renderHome(config) {
-            if (config.hero_title) {
-                document.getElementById('hero-title').textContent = config.hero_title;
+        function renderHome(hero) {
+            if (hero.title) {
+                document.getElementById('hero-title').textContent = hero.title;
             }
-            if (config.hero_subtitle) {
-                document.getElementById('hero-subtitle').textContent = config.hero_subtitle;
+            if (hero.subtitle) {
+                document.getElementById('hero-subtitle').textContent = hero.subtitle;
             }
         }
         
