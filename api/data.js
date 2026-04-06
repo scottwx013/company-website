@@ -83,19 +83,19 @@ const defaultData = {
         },
         {
             id: 4,
-            name: "蛋糕烘焙礼品",
-            description: "知名蛋糕品牌联名合作，新鲜烘焙配送到家，支持定时送达",
-            features: ["品牌合作", "新鲜配送", "定时送达"],
-            image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop",
-            imageAlt: "蛋糕礼品"
+            name: "餐饮补贴方案",
+            description: "企业餐饮福利一站式解决方案，覆盖员工午餐补贴、下午茶福利、团建用餐等多种场景",
+            features: ["灵活补贴", "实时到账", "数据分析"],
+            image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop",
+            imageAlt: "餐饮服务"
         },
         {
             id: 5,
-            name: "健康体检套餐",
-            description: "全国三甲医院及专业体检机构合作，关爱员工健康",
-            features: ["三甲医院", "报告解读", "健康档案"],
-            image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400&h=300&fit=crop",
-            imageAlt: "健康体检"
+            name: "线上活动礼品",
+            description: "数字化礼品解决方案，支持电子卡券、在线抽奖、积分兑换等多种形式",
+            features: ["即时发放", "多样选择", "便捷兑换"],
+            image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop",
+            imageAlt: "数字礼品"
         },
         {
             id: 6,
