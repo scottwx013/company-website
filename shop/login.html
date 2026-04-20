@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 宜礼商城</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-active { border-bottom: 2px solid #7c3aed; color: #7c3aed; }
+        .tab-inactive { border-bottom: 2px solid transparent; color: #6b7280; }
+        .tab-inactive:hover { color: #7c3aed; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航 -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="/shop/" class="flex items-center">
+                    <img src="/assets/logo-purple.jpg" alt="宜礼" class="h-8 w-auto">
+                    <span class="ml-2 text-xl font-bold text-gray-800">商城</span>
+                </a>
+                <a href="/shop/" class="text-gray-600 hover:text-purple-600">
+                    <i class="fas fa-arrow-left mr-1"></i>返回首页
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="max-w-md mx-auto px-4 py-12">
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <!-- 标签切换 -->
+            <div class="flex mb-8">
+                <button id="loginTab" class="flex-1 py-3 text-center font-medium tab-active transition" onclick="switchTab('login')">
+                    登录
+                </button>
+                <button id="registerTab" class="flex-1 py-3 text-center font-medium tab-inactive transition" onclick="switchTab('register')">
+                    注册
+                </button>
+            </div>
+
+            <!-- 登录表单 -->
+            <form id="loginForm" class="fade-in">
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">用户名</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="loginUsername" required
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition"
+                                placeholder="请输入用户名">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">密码</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="password" id="loginPassword" required
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition"
+                                placeholder="请输入密码">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <label class="flex items-center text-gray-600">
+                            <input type="checkbox" id="rememberMe" class="mr-2 text-purple-600 rounded">
+                            记住我
+                        </label>
+                        <a href="#" class="text-purple-600 hover:text-purple-700" onclick="showForgotPassword()">忘记密码？</a>
+                    </div>
+                    <button type="submit" id="loginBtn"
+                        class="w-full py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition flex items-center justify-center">
+                        <span>登录</span>
+                        <i class="fas fa-spinner fa-spin ml-2 hidden" id="loginLoading"></i>
+                    </button>
+                </div>
+            </form>
+
+            <!-- 注册表单 -->
+            <form id="registerForm" class="hidden fade-in">
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">用户名</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="regUsername" required
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition"
+                                placeholder="请设置用户名（2-20位）">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">手机号</label>
+                        <div class="relative">
+                            <i class="fas fa-phone absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="tel" id="regPhone" required
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition"
+                                placeholder="请输入手机号">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">邮箱（选填）</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="email" id="regEmail"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition"
+                                placeholder="请输入邮箱">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">密码</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="password" id="regPassword" required
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition"
+                                placeholder="请设置密码（6位以上）">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">确认密码</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="password" id="regConfirmPassword" required
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition"
+                                placeholder="请再次输入密码">
+                        </div>
+                    </div>
+                    <label class="flex items-start text-sm text-gray-600">
+                        <input type="checkbox" id="agreeTerms" required class="mr-2 mt-1 text-purple-600 rounded">
+                        <span>我已阅读并同意 <a href="#" class="text-purple-600 hover:text-purple-700">用户协议</a> 和 <a href="#" class="text-purple-600 hover:text-purple-700">隐私政策</a></span>
+                    </label>
+                    <button type="submit" id="registerBtn"
+                        class="w-full py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition flex items-center justify-center">
+                        <span>注册</span>
+                        <i class="fas fa-spinner fa-spin ml-2 hidden" id="registerLoading"></i>
+                    </button>
+                </div>
+            </form>
+
+            <!-- 其他登录方式 -->
+            <div class="mt-8">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-200"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-4 bg-white text-gray-500">其他登录方式</span>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-center space-x-6">
+                    <button class="flex flex-col items-center text-gray-500 hover:text-green-600 transition" onclick="showWechatLogin()">
+                        <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-2">
+                            <i class="fab fa-weixin text-xl"></i>
+                        </div>
+                        <span class="text-xs">微信登录</span>
+                    </button>
+                    <button class="flex flex-col items-center text-gray-500 hover:text-blue-600 transition" onclick="showPhoneLogin()">
+                        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
+                            <i class="fas fa-mobile-alt text-xl"></i>
+                        </div>
+                        <span class="text-xs">手机验证码</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 opacity-0 pointer-events-none z-50">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script>
+        // 切换标签
+        function switchTab(tab) {
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+
+            if (tab === 'login') {
+                loginTab.classList.add('tab-active');
+                loginTab.classList.remove('tab-inactive');
+                registerTab.classList.remove('tab-active');
+                registerTab.classList.add('tab-inactive');
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+            } else {
+                registerTab.classList.add('tab-active');
+                registerTab.classList.remove('tab-inactive');
+                loginTab.classList.remove('tab-active');
+                loginTab.classList.add('tab-inactive');
+                registerForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+            }
+        }
+
+        // 显示提示
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            toastMessage.textContent = message;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            
+            if (type === 'error') {
+                toast.classList.remove('bg-gray-800');
+                toast.classList.add('bg-red-600');
+            } else if (type === 'success') {
+                toast.classList.remove('bg-gray-800');
+                toast.classList.add('bg-green-600');
+            }
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+                toast.classList.remove('opacity-100');
+                setTimeout(() => {
+                    toast.classList.remove('bg-red-600', 'bg-green-600');
+                    toast.classList.add('bg-gray-800');
+                }, 300);
+            }, 3000);
+        }
+
+        // 登录表单提交
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            const loginBtn = document.getElementById('loginBtn');
+            const loading = document.getElementById('loginLoading');
+
+            loginBtn.disabled = true;
+            loading.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/data?action=shop_login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    const userData = {
+                        ...result.data,
+                        loginTime: new Date().toISOString()
+                    };
+                    
+                    if (rememberMe) {
+                        localStorage.setItem('shop_user', JSON.stringify(userData));
+                    } else {
+                        sessionStorage.setItem('shop_user', JSON.stringify(userData));
+                    }
+                    
+                    showToast('登录成功！', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/shop/';
+                    }, 1000);
+                } else {
+                    showToast(result.error || '登录失败，请检查用户名和密码', 'error');
+                }
+            } catch (error) {
+                console.error('登录错误:', error);
+                showToast('登录失败，请稍后重试', 'error');
+            } finally {
+                loginBtn.disabled = false;
+                loading.classList.add('hidden');
+            }
+        });
+
+        // 注册表单提交
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const phone = document.getElementById('regPhone').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            const agreeTerms = document.getElementById('agreeTerms').checked;
+            const registerBtn = document.getElementById('registerBtn');
+            const loading = document.getElementById('registerLoading');
+
+            // 验证
+            if (username.length < 2 || username.length > 20) {
+                showToast('用户名长度需在2-20位之间', 'error');
+                return;
+            }
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                showToast('请输入正确的手机号', 'error');
+                return;
+            }
+            if (password.length < 6) {
+                showToast('密码长度至少6位', 'error');
+                return;
+            }
+            if (password !== confirmPassword) {
+                showToast('两次输入的密码不一致', 'error');
+                return;
+            }
+            if (!agreeTerms) {
+                showToast('请阅读并同意用户协议和隐私政策', 'error');
+                return;
+            }
+
+            registerBtn.disabled = true;
+            loading.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/data?action=shop_register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, phone, email })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('注册成功！请登录', 'success');
+                    setTimeout(() => {
+                        switchTab('login');
+                        document.getElementById('loginUsername').value = username;
+                    }, 1000);
+                } else {
+                    showToast(result.error || '注册失败', 'error');
+                }
+            } catch (error) {
+                console.error('注册错误:', error);
+                showToast('注册失败，请稍后重试', 'error');
+            } finally {
+                registerBtn.disabled = false;
+                loading.classList.add('hidden');
+            }
+        });
+
+        // 微信登录
+        function showWechatLogin() {
+            showToast('微信登录功能开发中...', 'info');
+        }
+
+        // 手机验证码登录
+        function showPhoneLogin() {
+            showToast('手机验证码登录功能开发中...', 'info');
+        }
+
+        // 忘记密码
+        function showForgotPassword() {
+            showToast('请联系客服重置密码：400-928-9028', 'info');
+        }
+
+        // 检查是否已登录
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = localStorage.getItem('shop_user') || sessionStorage.getItem('shop_user');
+            if (user) {
+                showToast('您已登录，正在跳转...', 'success');
+                setTimeout(() => {
+                    window.location.href = '/shop/';
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>

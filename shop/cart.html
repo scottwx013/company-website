@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>购物车 - 宜礼商城</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航 -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-14">
+                <a href="index.html" class="flex items-center text-gray-600">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </a>
+                <h1 class="text-lg font-medium">购物车</h1>
+                <button onclick="clearCart()" class="text-sm text-red-500">清空</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 购物车内容 -->
+    <main class="max-w-3xl mx-auto p-4 pb-32">
+        <div id="cartList" class="space-y-3">
+            <!-- 购物车商品将通过JS动态生成 -->
+        </div>
+        
+        <!-- 空状态 -->
+        <div id="emptyState" class="hidden text-center py-20">
+            <i class="fas fa-shopping-cart text-6xl text-gray-200 mb-4"></i>
+            <p class="text-gray-500 mb-4">购物车是空的</p>
+            <a href="index.html" class="inline-block px-6 py-2 bg-purple-600 text-white rounded-full">去逛逛</a>
+        </div>
+    </main>
+
+    <!-- 底部结算栏 -->
+    <div id="checkoutBar" class="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
+        <div class="max-w-3xl mx-auto flex items-center justify-between">
+            <div>
+                <span class="text-gray-600">合计：</span>
+                <span class="text-xl font-bold text-red-500">¥<span id="totalPrice">0</span></span>
+            </div>
+            <button onclick="goToCheckout()" class="px-8 py-3 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition">
+                去结算
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCart();
+        });
+        
+        // 渲染购物车
+        function renderCart() {
+            const cartList = document.getElementById('cartList');
+            const emptyState = document.getElementById('emptyState');
+            const checkoutBar = document.getElementById('checkoutBar');
+            
+            if (cart.length === 0) {
+                cartList.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                checkoutBar.classList.add('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            checkoutBar.classList.remove('hidden');
+            
+            cartList.innerHTML = cart.map((item, index) => `
+                <div class="bg-white rounded-xl p-4 flex gap-4">
+                    <img src="${item.image}" alt="${item.name}" class="w-24 h-24 object-cover rounded-lg bg-gray-100">
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-medium text-gray-800 line-clamp-2">${item.name}</h3>
+                            <button onclick="removeItem(${index})" class="text-gray-400 hover:text-red-500 ml-2">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                        <span class="inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${item.type === 'virtual' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}">
+                            ${item.type === 'virtual' ? '电子卡券' : '实物商品'}
+                        </span>
+                        <div class="flex items-center justify-between mt-3">
+                            <span class="text-lg font-bold text-red-500">¥${item.price}</span>
+                            <div class="flex items-center border rounded-lg">
+                                <button onclick="updateQuantity(${index}, -1)" class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100">
+                                    <i class="fas fa-minus text-xs"></i>
+                                </button>
+                                <span class="w-10 text-center text-sm">${item.quantity}</span>
+                                <button onclick="updateQuantity(${index}, 1)" class="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-gray-100">
+                                    <i class="fas fa-plus text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            updateTotal();
+        }
+        
+        // 更新数量
+        function updateQuantity(index, delta) {
+            cart[index].quantity += delta;
+            if (cart[index].quantity < 1) {
+                cart[index].quantity = 1;
+            }
+            localStorage.setItem('cart', JSON.stringify(cart));
+            renderCart();
+        }
+        
+        // 删除商品
+        function removeItem(index) {
+            if (confirm('确定要删除这个商品吗？')) {
+                cart.splice(index, 1);
+                localStorage.setItem('cart', JSON.stringify(cart));
+                renderCart();
+            }
+        }
+        
+        // 清空购物车
+        function clearCart() {
+            if (cart.length === 0) return;
+            if (confirm('确定要清空购物车吗？')) {
+                cart = [];
+                localStorage.setItem('cart', JSON.stringify(cart));
+                renderCart();
+            }
+        }
+        
+        // 更新总价
+        function updateTotal() {
+            const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            document.getElementById('totalPrice').textContent = total.toFixed(2);
+        }
+        
+        // 去结算
+        function goToCheckout() {
+            if (cart.length === 0) {
+                alert('购物车是空的');
+                return;
+            }
+            window.location.href = 'checkout.html';
+        }
+    </script>
+</body>
+</html>

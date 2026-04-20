@@ -78,7 +78,7 @@ const defaultData = {
             name: "观影演出服务",
             description: "全国影院通兑，热门演出票务一站式解决，支持在线选座",
             features: ["全国通兑", "在线选座", "企业包场"],
-            image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop",
+            image: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=300&fit=crop",
             imageAlt: "影院观影"
         },
         {
@@ -115,8 +115,8 @@ const defaultData = {
         address: "江苏省无锡市菱湖大道200号微纳园E2栋"
     },
     about: {
-        story: "宜礼成立于2020年，专注于企业员工福利领域，致力于为企业提供全方位的员工福利解决方案。",
-        mission: "让每一家企业都能轻松管理员工福利，让每一位员工都能享受到贴心的福利关怀。",
+        story: "宜礼成立于2014年，专注于企业员工福利领域，致力于为企业提供全方位的员工福利解决方案。",
+        mission: "让每一位员工都能享受到贴心的福利关怀。",
         vision: "成为中国最值得信赖的企业福利服务平台。",
         values: [
             { title: "客户至上", desc: "以客户需求为中心，提供优质服务" },
@@ -125,10 +125,10 @@ const defaultData = {
             { title: "合作共赢", desc: "携手合作伙伴，共创价值" }
         ],
         timeline: [
-            { year: "2020", title: "公司成立", desc: "宜礼正式成立" },
-            { year: "2021", title: "产品上线", desc: "首个福利产品上线" },
-            { year: "2022", title: "快速发展", desc: "服务客户突破100家" },
-            { year: "2023", title: "全国布局", desc: "业务覆盖全国50+城市" }
+            { year: "2014", title: "公司成立", desc: "首个福利产品上线" },
+            { year: "2018", title: "快速发展", desc: "服务客户突破300家" },
+            { year: "2020", title: "技术创新", desc: "自主开发，线上线下功能丰富" },
+            { year: "2023", title: "商业布局", desc: "业务覆盖整个江苏省" }
         ]
     },
     home: {
@@ -148,7 +148,54 @@ const defaultData = {
             { icon: "📊", title: "智能管理系统", desc: "一站式福利管理平台，数据实时可视" },
             { icon: "💝", title: "员工满意度提升", desc: "多样化选择，满足不同员工需求" }
         ]
-    }
+    },
+    // ===== 宜礼商城数据 =====
+    shop_users: [],
+    shop_products: [
+        {
+            id: 1,
+            name: "100元京东卡",
+            type: "virtual",
+            category: "电子卡券",
+            price: 95,
+            originalPrice: 100,
+            stock: 999,
+            description: "京东E卡，全场通用，即时到账",
+            images: ["https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=400&fit=crop"],
+            status: "on_sale",
+            createTime: "2026-04-18T00:00:00Z"
+        },
+        {
+            id: 2,
+            name: "200元京东卡",
+            type: "virtual",
+            category: "电子卡券",
+            price: 188,
+            originalPrice: 200,
+            stock: 888,
+            description: "京东E卡，全场通用，即时到账",
+            images: ["https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=400&fit=crop"],
+            status: "on_sale",
+            createTime: "2026-04-18T00:00:00Z"
+        },
+        {
+            id: 3,
+            name: "精美定制礼盒",
+            type: "physical",
+            category: "实物商品",
+            price: 168,
+            originalPrice: 198,
+            stock: 100,
+            description: "包含茶叶、坚果、糕点等，精美包装，适合送礼",
+            images: ["https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&h=400&fit=crop"],
+            status: "on_sale",
+            createTime: "2026-04-18T00:00:00Z"
+        }
+    ],
+    shop_orders: [],
+    shop_order_items: [],
+    shop_logistics: [],
+    shop_virtual_deliveries: []
 };
 
 // 从文件加载数据
@@ -247,6 +294,44 @@ module.exports = (req, res) => {
             const messages = (data.messages || []).sort((a, b) => new Date(b.createTime) - new Date(a.createTime));
             return res.json({ success: true, data: messages });
         }
+        
+        // ===== 商城 API - GET =====
+        if (action === 'shop_products') {
+            const products = data.shop_products.filter(p => p.status === 'on_sale');
+            return res.json({ success: true, data: products });
+        }
+        if (action === 'shop_product') {
+            const id = parseInt(req.query.id);
+            const product = data.shop_products.find(p => p.id === id);
+            if (product) {
+                return res.json({ success: true, data: product });
+            }
+            return res.json({ success: false, error: 'Product not found' });
+        }
+        if (action === 'shop_orders') {
+            const { userId } = req.query;
+            let orders = data.shop_orders;
+            if (userId) {
+                orders = orders.filter(o => o.userId == userId);
+            }
+            const ordersWithItems = orders.map(o => ({
+                ...o,
+                items: data.shop_order_items.filter(i => i.orderId === o.id)
+            }));
+            return res.json({ success: true, data: ordersWithItems });
+        }
+        if (action === 'shop_order_detail') {
+            const { orderId } = req.query;
+            const order = data.shop_orders.find(o => o.id === orderId);
+            if (order) {
+                const items = data.shop_order_items.filter(i => i.orderId === orderId);
+                const logistics = data.shop_logistics.filter(l => l.orderId === orderId);
+                const virtualDeliveries = data.shop_virtual_deliveries.filter(v => v.orderId === orderId);
+                return res.json({ success: true, data: { ...order, items, logistics, virtualDeliveries } });
+            }
+            return res.json({ success: false, error: 'Order not found' });
+        }
+        
         // 返回全部数据
         return res.json({ success: true, data });
     }
@@ -334,6 +419,156 @@ module.exports = (req, res) => {
             return res.json({ success: true, data: newMessage });
         }
         
+        // ===== 商城 API - POST =====
+        // 用户注册
+        if (action === 'shop_register') {
+            const { username, password, phone, email } = req.body;
+            if (data.shop_users.find(u => u.username === username)) {
+                return res.json({ success: false, error: 'Username already exists' });
+            }
+            const newUser = {
+                id: Date.now(),
+                username,
+                password,
+                phone,
+                email,
+                createTime: new Date().toISOString()
+            };
+            data.shop_users.push(newUser);
+            saveToFile(data);
+            return res.json({ success: true, data: { id: newUser.id, username: newUser.username } });
+        }
+        
+        // 用户登录
+        if (action === 'shop_login') {
+            const { username, password } = req.body;
+            const user = data.shop_users.find(u => u.username === username && u.password === password);
+            if (user) {
+                return res.json({ success: true, data: { id: user.id, username: user.username, token: 'token_' + user.id } });
+            }
+            return res.json({ success: false, error: 'Invalid credentials' });
+        }
+        
+        // 创建订单
+        if (action === 'shop_order') {
+            const { userId, items, totalAmount, address, receiverName, receiverPhone } = req.body;
+            const orderId = 'ORD' + Date.now();
+            const order = {
+                id: orderId,
+                userId,
+                totalAmount,
+                status: 'pending',
+                address,
+                receiverName,
+                receiverPhone,
+                createTime: new Date().toISOString(),
+                payTime: null,
+                shipTime: null,
+                completeTime: null
+            };
+            
+            const orderItems = items.map(item => ({
+                id: 'ITEM' + Date.now() + Math.random().toString(36).substr(2, 9),
+                orderId,
+                productId: item.productId,
+                productName: item.productName,
+                productType: item.productType,
+                quantity: item.quantity,
+                price: item.price,
+                totalPrice: item.price * item.quantity
+            }));
+            
+            data.shop_orders.push(order);
+            data.shop_order_items.push(...orderItems);
+            
+            items.forEach(item => {
+                const product = data.shop_products.find(p => p.id === item.productId);
+                if (product) {
+                    product.stock -= item.quantity;
+                }
+            });
+            
+            saveToFile(data);
+            return res.json({ success: true, data: { orderId, status: order.status } });
+        }
+        
+        // 更新订单状态
+        if (action === 'shop_order_status') {
+            const { orderId, status, logisticsInfo, virtualContent } = req.body;
+            const order = data.shop_orders.find(o => o.id === orderId);
+            if (!order) {
+                return res.json({ success: false, error: 'Order not found' });
+            }
+            
+            order.status = status;
+            
+            if (status === 'paid') {
+                order.payTime = new Date().toISOString();
+            } else if (status === 'shipped') {
+                order.shipTime = new Date().toISOString();
+                if (logisticsInfo) {
+                    data.shop_logistics.push({
+                        id: 'LOG' + Date.now(),
+                        orderId,
+                        company: logisticsInfo.company,
+                        trackingNo: logisticsInfo.trackingNo,
+                        createTime: new Date().toISOString(),
+                        updates: []
+                    });
+                }
+                if (virtualContent) {
+                    data.shop_virtual_deliveries.push({
+                        id: 'VIR' + Date.now(),
+                        orderId,
+                        content: virtualContent.content,
+                        images: virtualContent.images || [],
+                        deliverTime: new Date().toISOString()
+                    });
+                }
+            } else if (status === 'completed') {
+                order.completeTime = new Date().toISOString();
+            }
+            
+            saveToFile(data);
+            return res.json({ success: true, data: order });
+        }
+        
+        // 更新物流信息
+        if (action === 'shop_logistics_update') {
+            const { orderId, status, location, description } = req.body;
+            const logistics = data.shop_logistics.find(l => l.orderId === orderId);
+            if (logistics) {
+                logistics.updates.push({
+                    status,
+                    location,
+                    description,
+                    time: new Date().toISOString()
+                });
+                saveToFile(data);
+                return res.json({ success: true, data: logistics });
+            }
+            return res.json({ success: false, error: 'Logistics not found' });
+        }
+        
+        // 后台管理：商品管理
+        if (action === 'shop_product_manage') {
+            if (body.id) {
+                const idx = data.shop_products.findIndex(p => p.id === body.id);
+                if (idx !== -1) {
+                    data.shop_products[idx] = { ...data.shop_products[idx], ...body };
+                    saveToFile(data);
+                    return res.json({ success: true, data: data.shop_products[idx] });
+                }
+            } else {
+                const newId = Math.max(...data.shop_products.map(p => p.id), 0) + 1;
+                const newProduct = { ...body, id: newId, createTime: new Date().toISOString() };
+                data.shop_products.push(newProduct);
+                saveToFile(data);
+                return res.json({ success: true, data: newProduct });
+            }
+            return res.json({ success: false, error: 'Product not found' });
+        }
+        
         return res.json({ success: false, error: 'Unknown action' });
     }
     
@@ -348,6 +583,12 @@ module.exports = (req, res) => {
         if (action === 'product') {
             const id = parseInt(req.query.id);
             data.products = data.products.filter(p => p.id !== id);
+            saveToFile(data);
+            return res.json({ success: true });
+        }
+        if (action === 'shop_product') {
+            const id = parseInt(req.query.id);
+            data.shop_products = data.shop_products.filter(p => p.id !== id);
             saveToFile(data);
             return res.json({ success: true });
         }

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的订单 - 宜礼商城</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .order-card { transition: all 0.3s ease; }
+        .order-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .status-badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-paid { background: #dbeafe; color: #1e40af; }
+        .status-shipped { background: #e0e7ff; color: #3730a3; }
+        .status-completed { background: #d1fae5; color: #065f46; }
+        .status-cancelled { background: #f3f4f6; color: #6b7280; }
+        .tab-active { color: #7c3aed; border-bottom: 2px solid #7c3aed; }
+        .tab-inactive { color: #6b7280; border-bottom: 2px solid transparent; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航 -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="/shop/" class="flex items-center">
+                    <img src="/assets/logo-purple.jpg" alt="宜礼" class="h-8 w-auto">
+                    <span class="ml-2 text-xl font-bold text-gray-800">商城</span>
+                </a>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/shop/" class="p-2 text-gray-600 hover:text-purple-600">
+                        <i class="fas fa-home text-xl"></i>
+                    </a>
+                    <a href="cart.html" class="relative p-2 text-gray-600 hover:text-purple-600">
+                        <i class="fas fa-shopping-cart text-xl"></i>
+                        <span id="cartCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                    </a>
+                    <div id="userSection" class="flex items-center space-x-2">
+                        <a href="login.html" class="text-sm text-purple-600 hover:text-purple-700 font-medium">登录</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <!-- 页面标题 -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">我的订单</h1>
+            <p class="text-gray-500 mt-1">查看和管理您的所有订单</p>
+        </div>
+
+        <!-- 状态筛选标签 -->
+        <div class="bg-white rounded-lg shadow-sm mb-6">
+            <div class="flex overflow-x-auto">
+                <button class="tab-btn tab-active flex-1 py-4 text-sm font-medium whitespace-nowrap transition" data-status="all">
+                    全部订单
+                </button>
+                <button class="tab-btn tab-inactive flex-1 py-4 text-sm font-medium whitespace-nowrap transition" data-status="pending">
+                    待付款
+                </button>
+                <button class="tab-btn tab-inactive flex-1 py-4 text-sm font-medium whitespace-nowrap transition" data-status="paid">
+                    待发货
+                </button>
+                <button class="tab-btn tab-inactive flex-1 py-4 text-sm font-medium whitespace-nowrap transition" data-status="shipped">
+                    待收货
+                </button>
+                <button class="tab-btn tab-inactive flex-1 py-4 text-sm font-medium whitespace-nowrap transition" data-status="completed">
+                    已完成
+                </button>
+            </div>
+        </div>
+
+        <!-- 订单列表 -->
+        <div id="orderList">
+            <!-- 订单卡片将通过JS动态生成 -->
+        </div>
+
+        <!-- 空状态 -->
+        <div id="emptyState" class="hidden text-center py-16">
+            <div class="w-32 h-32 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-clipboard-list text-4xl text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-800 mb-2">暂无订单</h3>
+            <p class="text-gray-500 mb-6">您还没有任何订单，去逛逛吧~</p>
+            <a href="/shop/" class="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                去购物
+            </a>
+        </div>
+
+        <!-- 加载更多 -->
+        <div id="loadMore" class="hidden text-center py-6">
+            <button class="text-gray-500 hover:text-purple-600 transition">
+                加载更多 <i class="fas fa-chevron-down ml-1"></i>
+            </button>
+        </div>
+    </main>
+
+    <!-- 订单详情弹窗 -->
+    <div id="orderDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+                <h2 class="text-lg font-bold">订单详情</h2>
+                <button onclick="closeOrderDetail()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="orderDetailContent" class="p-6">
+                <!-- 详情内容将动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full text-sm z-50 transform transition-all duration-300 opacity-0 pointer-events-none">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let orders = [];
+        let currentStatus = 'all';
+
+        // 状态映射
+        const statusMap = {
+            pending: { text: '待付款', class: 'status-pending', icon: 'fa-clock' },
+            paid: { text: '待发货', class: 'status-paid', icon: 'fa-check-circle' },
+            shipped: { text: '待收货', class: 'status-shipped', icon: 'fa-truck' },
+            completed: { text: '已完成', class: 'status-completed', icon: 'fa-check-double' },
+            cancelled: { text: '已取消', class: 'status-cancelled', icon: 'fa-times-circle' }
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLogin();
+            updateCartBadge();
+            setupEventListeners();
+        });
+
+        // 检查登录状态
+        function checkLogin() {
+            const userStr = localStorage.getItem('shop_user') || sessionStorage.getItem('shop_user');
+            if (!userStr) {
+                showToast('请先登录', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1500);
+                return;
+            }
+            currentUser = JSON.parse(userStr);
+            updateUserSection();
+            loadOrders();
+        }
+
+        // 更新用户区域
+        function updateUserSection() {
+            const userSection = document.getElementById('userSection');
+            if (currentUser) {
+                userSection.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                            <i class="fas fa-user text-purple-600"></i>
+                        </div>
+                        <span class="text-sm text-gray-600 hidden sm:block">${currentUser.username}</span>
+                        <button onclick="logout()" class="text-sm text-red-500 hover:text-red-600">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('shop_user');
+            sessionStorage.removeItem('shop_user');
+            showToast('已退出登录', 'success');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+
+        // 加载订单
+        async function loadOrders() {
+            try {
+                const response = await fetch(`/api/data?action=shop_orders&userId=${currentUser.id}`);
+                const result = await response.json();
+                if (result.success) {
+                    orders = result.data.sort((a, b) => new Date(b.createTime) - new Date(a.createTime));
+                    renderOrders();
+                }
+            } catch (error) {
+                console.error('加载订单失败:', error);
+                showToast('加载订单失败', 'error');
+            }
+        }
+
+        // 渲染订单列表
+        function renderOrders() {
+            const orderList = document.getElementById('orderList');
+            const emptyState = document.getElementById('emptyState');
+            
+            let filteredOrders = orders;
+            if (currentStatus !== 'all') {
+                filteredOrders = orders.filter(o => o.status === currentStatus);
+            }
+
+            if (filteredOrders.length === 0) {
+                orderList.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            orderList.innerHTML = filteredOrders.map(order => {
+                const status = statusMap[order.status] || statusMap.pending;
+                const firstItem = order.items && order.items[0];
+                const itemCount = order.items ? order.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
+                
+                return `
+                    <div class="order-card bg-white rounded-xl shadow-sm mb-4 overflow-hidden">
+                        <div class="px-4 py-3 border-b bg-gray-50 flex justify-between items-center">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <span class="mr-4">订单号: ${order.id}</span>
+                                <span>${formatDate(order.createTime)}</span>
+                            </div>
+                            <span class="status-badge ${status.class}">
+                                <i class="fas ${status.icon} mr-1"></i>${status.text}
+                            </span>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex items-start space-x-4">
+                                ${firstItem ? `
+                                    <img src="${firstItem.image || 'https://via.placeholder.com/80'}" alt="${firstItem.productName}" class="w-20 h-20 object-cover rounded-lg bg-gray-100">
+                                    <div class="flex-1">
+                                        <h3 class="font-medium text-gray-800 mb-1">${firstItem.productName}</h3>
+                                        <p class="text-sm text-gray-500">${order.items.length > 1 ? `等 ${itemCount} 件商品` : `x${firstItem.quantity}`}</p>
+                                        ${order.status === 'shipped' && order.logisticsCompany ? `
+                                            <p class="text-sm text-blue-600 mt-2">
+                                                <i class="fas fa-truck mr-1"></i>${order.logisticsCompany} ${order.trackingNo}
+                                            </p>
+                                        ` : ''}
+                                    </div>
+                                ` : '<div class="text-gray-400">商品信息加载中...</div>'}
+                                <div class="text-right">
+                                    <p class="text-lg font-bold text-gray-800">¥${order.totalAmount}</p>
+                                    <div class="mt-3 space-x-2">
+                                        ${getActionButtons(order)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 获取操作按钮
+        function getActionButtons(order) {
+            const buttons = [];
+            
+            if (order.status === 'pending') {
+                buttons.push(`<button onclick="payOrder('${order.id}')" class="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition">立即支付</button>`);
+                buttons.push(`<button onclick="cancelOrder('${order.id}')" class="px-4 py-2 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition">取消订单</button>`);
+            } else if (order.status === 'shipped') {
+                buttons.push(`<button onclick="confirmReceive('${order.id}')" class="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition">确认收货</button>`);
+            }
+            
+            buttons.push(`<button onclick="viewOrderDetail('${order.id}')" class="px-4 py-2 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition">查看详情</button>`);
+            
+            return buttons.join('');
+        }
+
+        // 查看订单详情
+        async function viewOrderDetail(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+
+            const modal = document.getElementById('orderDetailModal');
+            const content = document.getElementById('orderDetailContent');
+            const status = statusMap[order.status] || statusMap.pending;
+
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <!-- 状态 -->
+                    <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                        <div class="w-12 h-12 rounded-full ${status.class.replace('status-', 'bg-')} bg-opacity-20 flex items-center justify-center mr-4">
+                            <i class="fas ${status.icon} text-2xl ${status.class.replace('status-', 'text-').replace('100', '600').replace('200', '600')}"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-lg">${status.text}</p>
+                            <p class="text-sm text-gray-500">订单号: ${order.id}</p>
+                        </div>
+                    </div>
+
+                    <!-- 收货信息 -->
+                    ${order.receiverName ? `
+                        <div>
+                            <h3 class="font-medium text-gray-800 mb-3">收货信息</h3>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="font-medium">${order.receiverName} ${order.receiverPhone}</p>
+                                <p class="text-gray-500 text-sm mt-1">${order.address}</p>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- 商品列表 -->
+                    <div>
+                        <h3 class="font-medium text-gray-800 mb-3">商品信息</h3>
+                        <div class="space-y-3">
+                            ${order.items.map(item => `
+                                <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                                    <img src="${item.image || 'https://via.placeholder.com/60'}" alt="${item.productName}" class="w-16 h-16 object-cover rounded bg-gray-200">
+                                    <div class="flex-1">
+                                        <p class="font-medium">${item.productName}</p>
+                                        <p class="text-sm text-gray-500">${item.productType === 'virtual' ? '电子卡券' : '实物商品'}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-medium">¥${item.price}</p>
+                                        <p class="text-sm text-gray-500">x${item.quantity}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 金额信息 -->
+                    <div class="border-t pt-4">
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-500">商品总额</span>
+                            <span>¥${order.totalAmount}</span>
+                        </div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-500">运费</span>
+                            <span>¥0</span>
+                        </div>
+                        <div class="flex justify-between font-medium text-lg pt-2 border-t">
+                            <span>实付款</span>
+                            <span class="text-red-500">¥${order.totalAmount}</span>
+                        </div>
+                    </div>
+
+                    <!-- 时间线 -->
+                    <div>
+                        <h3 class="font-medium text-gray-800 mb-3">订单状态</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex items-center text-gray-500">
+                                <i class="fas fa-circle text-xs mr-3 ${order.createTime ? 'text-green-500' : 'text-gray-300'}"></i>
+                                <span>下单时间: ${order.createTime ? formatDate(order.createTime) : '-'}</span>
+                            </div>
+                            ${order.payTime ? `
+                                <div class="flex items-center text-gray-500">
+                                    <i class="fas fa-circle text-xs mr-3 text-green-500"></i>
+                                    <span>支付时间: ${formatDate(order.payTime)}</span>
+                                </div>
+                            ` : ''}
+                            ${order.shipTime ? `
+                                <div class="flex items-center text-gray-500">
+                                    <i class="fas fa-circle text-xs mr-3 text-green-500"></i>
+                                    <span>发货时间: ${formatDate(order.shipTime)}</span>
+                                </div>
+                            ` : ''}
+                            ${order.completeTime ? `
+                                <div class="flex items-center text-gray-500">
+                                    <i class="fas fa-circle text-xs mr-3 text-green-500"></i>
+                                    <span>完成时间: ${formatDate(order.completeTime)}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        // 关闭订单详情
+        function closeOrderDetail() {
+            document.getElementById('orderDetailModal').classList.add('hidden');
+        }
+
+        // 支付订单
+        function payOrder(orderId) {
+            showToast('跳转支付页面...', 'success');
+            // 实际项目中跳转到支付页面
+        }
+
+        // 取消订单
+        async function cancelOrder(orderId) {
+            if (!confirm('确定要取消该订单吗？')) return;
+            
+            try {
+                const response = await fetch('/api/data?action=shop_order_status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId, status: 'cancelled' })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('订单已取消', 'success');
+                    loadOrders();
+                }
+            } catch (error) {
+                showToast('取消失败，请重试', 'error');
+            }
+        }
+
+        // 确认收货
+        async function confirmReceive(orderId) {
+            if (!confirm('确认已收到商品？')) return;
+            
+            try {
+                const response = await fetch('/api/data?action=shop_order_status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId, status: 'completed' })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('确认收货成功', 'success');
+                    loadOrders();
+                }
+            } catch (error) {
+                showToast('操作失败，请重试', 'error');
+            }
+        }
+
+        // 设置事件监听
+        function setupEventListeners() {
+            // 标签切换
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => {
+                        b.classList.remove('tab-active');
+                        b.classList.add('tab-inactive');
+                    });
+                    btn.classList.remove('tab-inactive');
+                    btn.classList.add('tab-active');
+                    currentStatus = btn.dataset.status;
+                    renderOrders();
+                });
+            });
+
+            // 点击弹窗外部关闭
+            document.getElementById('orderDetailModal').addEventListener('click', (e) => {
+                if (e.target.id === 'orderDetailModal') {
+                    closeOrderDetail();
+                }
+            });
+        }
+
+        // 更新购物车徽章
+        function updateCartBadge() {
+            const badge = document.getElementById('cartCount');
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // 显示提示
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            toastMessage.textContent = message;
+            
+            if (type === 'error') toast.classList.add('bg-red-600');
+            else if (type === 'success') toast.classList.add('bg-green-600');
+            
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+                toast.classList.remove('bg-red-600', 'bg-green-600');
+            }, 3000);
+        }
+
+        // 格式化日期
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+        }
+    </script>
+</body>
+</html>
