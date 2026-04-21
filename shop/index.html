@@ -18,13 +18,11 @@
     <nav class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <!-- Logo -->
                 <a href="/" class="flex items-center">
                     <img src="/assets/logo-purple.jpg" alt="宜礼" class="h-8 w-auto">
                     <span class="ml-2 text-xl font-bold text-gray-800">商城</span>
                 </a>
                 
-                <!-- 搜索框 -->
                 <div class="flex-1 max-w-lg mx-8">
                     <div class="relative">
                         <input type="text" id="searchInput" placeholder="搜索商品..." 
@@ -33,7 +31,6 @@
                     </div>
                 </div>
                 
-                <!-- 右侧操作 -->
                 <div class="flex items-center space-x-4">
                     <a href="../index.html" class="text-sm text-gray-600 hover:text-purple-600 font-medium">官网</a>
                     <a href="cart.html" class="relative p-2 text-gray-600 hover:text-purple-600">
@@ -55,51 +52,34 @@
     <div class="bg-white border-b">
         <div class="max-w-7xl mx-auto px-4 py-3">
             <div class="flex space-x-2 overflow-x-auto">
-                <button class="category-btn active px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition" data-category="all">
-                    全部商品
-                </button>
-                <button class="category-btn px-4 py-2 rounded-full text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 whitespace-nowrap transition" data-category="virtual">
-                    电子卡券
-                </button>
-                <button class="category-btn px-4 py-2 rounded-full text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 whitespace-nowrap transition" data-category="physical">
-                    实物商品
-                </button>
+                <button class="category-btn active px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition" data-category="all">全部商品</button>
+                <button class="category-btn px-4 py-2 rounded-full text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 whitespace-nowrap transition" data-category="virtual">电子卡券</button>
+                <button class="category-btn px-4 py-2 rounded-full text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 whitespace-nowrap transition" data-category="physical">实物商品</button>
             </div>
         </div>
     </div>
 
-    <!-- 主要内容 -->
     <main class="max-w-7xl mx-auto px-4 py-8">
-        <!-- 商品列表 -->
-        <div id="productGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            <!-- 商品卡片将通过JS动态生成 -->
-        </div>
-        
-        <!-- 空状态 -->
+        <div id="productGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"></div>
         <div id="emptyState" class="hidden text-center py-20">
             <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
             <p class="text-gray-500">暂无商品</p>
         </div>
     </main>
 
-    <!-- 底部 -->
     <footer class="bg-white border-t mt-12">
-        <div class="max-w-7xl mx-auto px-4 py-8">
-            <div class="text-center text-gray-500 text-sm">
-                <p>&copy; 2026 宜礼商城 - 专业员工福利解决方案</p>
-                <p class="mt-2">客服热线：400-928-9028</p>
-            </div>
+        <div class="max-w-7xl mx-auto px-4 py-8 text-center text-gray-500 text-sm">
+            <p>&copy; 2026 宜礼商城 - 专业员工福利解决方案</p>
+            <p class="mt-2">客服热线：400-928-9028</p>
         </div>
     </footer>
 
+    <script src="shop-data.js"></script>
     <script>
-        // 全局变量
         let products = [];
         let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        let currentUser = JSON.parse(localStorage.getItem('shop_user') || 'null');
         let currentCategory = 'all';
 
-        // 初始化
         document.addEventListener('DOMContentLoaded', () => {
             loadProducts();
             updateCartBadge();
@@ -107,68 +87,51 @@
             setupEventListeners();
         });
 
-        // 加载商品列表
-        async function loadProducts() {
-            try {
-                const response = await fetch('/api/data?action=shop_products');
-                const result = await response.json();
-                if (result.success) {
-                    products = result.data;
-                    renderProducts();
-                }
-            } catch (error) {
-                console.error('加载商品失败:', error);
-            }
+        function loadProducts() {
+            // 使用 shop-data.js 的统一数据层，支持 admin 修改后的本地覆盖
+            products = getProducts();
+            renderProducts();
         }
 
-        // 渲染商品列表
         function renderProducts() {
             const grid = document.getElementById('productGrid');
             const emptyState = document.getElementById('emptyState');
             
-            let filteredProducts = products;
+            let filtered = products;
             if (currentCategory !== 'all') {
-                filteredProducts = products.filter(p => p.type === currentCategory);
+                filtered = products.filter(p => p.type === currentCategory);
             }
             
-            // 搜索过滤
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             if (searchTerm) {
-                filteredProducts = filteredProducts.filter(p => 
+                filtered = filtered.filter(p => 
                     p.name.toLowerCase().includes(searchTerm) || 
                     p.description.toLowerCase().includes(searchTerm)
                 );
             }
             
-            if (filteredProducts.length === 0) {
+            if (filtered.length === 0) {
                 grid.innerHTML = '';
                 emptyState.classList.remove('hidden');
                 return;
             }
             
             emptyState.classList.add('hidden');
-            grid.innerHTML = filteredProducts.map(product => `
-                <div class="product-card bg-white rounded-xl overflow-hidden shadow-sm transition-all duration-300 cursor-pointer" 
-                     onclick="goToProduct(${product.id})">
+            grid.innerHTML = filtered.map(p => `
+                <div class="product-card bg-white rounded-xl overflow-hidden shadow-sm transition-all duration-300 cursor-pointer" onclick="goToProduct(${p.id})">
                     <div class="aspect-square overflow-hidden bg-gray-100">
-                        <img src="${product.images[0]}" alt="${product.name}" 
-                             class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                        <img src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
                     </div>
                     <div class="p-4">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2 py-0.5 text-xs rounded-full ${product.type === 'virtual' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}">
-                                ${product.type === 'virtual' ? '电子卡券' : '实物商品'}
-                            </span>
-                        </div>
-                        <h3 class="font-medium text-gray-800 mb-1 line-clamp-2">${product.name}</h3>
-                        <p class="text-sm text-gray-500 mb-3 line-clamp-1">${product.description}</p>
+                        <span class="px-2 py-0.5 text-xs rounded-full ${p.type === 'virtual' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}">${p.type === 'virtual' ? '电子卡券' : '实物商品'}</span>
+                        <h3 class="font-medium text-gray-800 mb-1 line-clamp-2 mt-2">${p.name}</h3>
+                        <p class="text-sm text-gray-500 mb-3 line-clamp-1">${p.description}</p>
                         <div class="flex items-center justify-between">
                             <div>
-                                <span class="text-lg font-bold text-red-500">¥${product.price}</span>
-                                ${product.originalPrice > product.price ? `<span class="text-sm text-gray-400 line-through ml-2">¥${product.originalPrice}</span>` : ''}
+                                <span class="text-lg font-bold text-red-500">¥${p.price}</span>
+                                ${p.originalPrice > p.price ? `<span class="text-sm text-gray-400 line-through ml-2">¥${p.originalPrice}</span>` : ''}
                             </div>
-                            <button onclick="event.stopPropagation(); addToCart(${product.id})" 
-                                    class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center hover:bg-purple-600 hover:text-white transition">
+                            <button onclick="event.stopPropagation(); addToCart(${p.id})" class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center hover:bg-purple-600 hover:text-white transition">
                                 <i class="fas fa-plus text-sm"></i>
                             </button>
                         </div>
@@ -177,19 +140,17 @@
             `).join('');
         }
 
-        // 跳转到商品详情
         function goToProduct(id) {
             window.location.href = `product.html?id=${id}`;
         }
 
-        // 添加到购物车
         function addToCart(productId) {
             const product = products.find(p => p.id === productId);
             if (!product) return;
             
-            const existingItem = cart.find(item => item.productId === productId);
-            if (existingItem) {
-                existingItem.quantity += 1;
+            const existing = cart.find(item => item.productId === productId);
+            if (existing) {
+                existing.quantity += 1;
             } else {
                 cart.push({
                     productId: product.id,
@@ -203,12 +164,9 @@
             
             localStorage.setItem('cart', JSON.stringify(cart));
             updateCartBadge();
-            
-            // 显示提示
-            showToast('已添加到购物车');
+            showToast('已添加到购物车', 'success');
         }
 
-        // 更新购物车徽章
         function updateCartBadge() {
             const badge = document.getElementById('cartCount');
             const count = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -220,40 +178,33 @@
             }
         }
 
-        // 更新用户区域
         function updateUserSection() {
             const userSection = document.getElementById('userSection');
-            if (currentUser) {
+            const user = getCurrentUser();
+            if (user) {
                 userSection.innerHTML = `
                     <div class="flex items-center space-x-2">
-                        <span class="text-sm text-gray-600">${currentUser.username}</span>
+                        <span class="text-sm text-gray-600">${user.username}</span>
                         <button onclick="logout()" class="text-sm text-red-500 hover:text-red-600">退出</button>
                     </div>
                 `;
             } else {
-                userSection.innerHTML = `
-                    <a href="login.html" class="text-sm text-purple-600 hover:text-purple-700 font-medium">登录</a>
-                `;
+                userSection.innerHTML = `<a href="login.html" class="text-sm text-purple-600 hover:text-purple-700 font-medium">登录</a>`;
             }
         }
 
-        // 退出登录
         function logout() {
-            localStorage.removeItem('shop_user');
-            currentUser = null;
+            clearCurrentUser();
             updateUserSection();
-            showToast('已退出登录');
+            showToast('已退出登录', 'success');
         }
 
-        // 设置事件监听
         function setupEventListeners() {
-            // 分类按钮
             document.querySelectorAll('.category-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.category-btn').forEach(b => {
                         b.classList.remove('active');
                         b.classList.add('bg-gray-100', 'text-gray-600');
-                        b.classList.remove('bg-purple-600', 'text-white');
                     });
                     btn.classList.add('active');
                     btn.classList.remove('bg-gray-100', 'text-gray-600');
@@ -261,18 +212,7 @@
                     renderProducts();
                 });
             });
-            
-            // 搜索
             document.getElementById('searchInput').addEventListener('input', renderProducts);
-        }
-
-        // 显示提示
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full text-sm z-50 animate-fade-in';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
         }
     </script>
 </body>
