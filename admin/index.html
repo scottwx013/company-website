@@ -1934,24 +1934,22 @@
     let filteredShopProducts = [];
     
     function loadShopProducts() {
-        // 从localStorage加载商城商品数据
-        const saved = localStorage.getItem('shop_products');
-        if (saved) {
-            shopProducts = JSON.parse(saved);
-        } else {
-            // 初始化示例商品
-            shopProducts = [
-                { id: 'SP001', name: '京东E卡 100元', type: 'virtual', category: '京东卡', price: 95, originalPrice: 100, stock: 999, status: 'on_sale', image: 'https://via.placeholder.com/200?text=京东E卡', description: '京东E卡电子卡密，充值后可在京东购物使用', sales: 128 },
-                { id: 'SP002', name: '盒马鲜生礼品卡 200元', type: 'virtual', category: '盒马卡', price: 190, originalPrice: 200, stock: 500, status: 'on_sale', image: 'https://via.placeholder.com/200?text=盒马卡', description: '盒马鲜生礼品卡，线上线下通用', sales: 86 },
-                { id: 'SP003', name: '实物礼品礼盒', type: 'physical', category: '实物礼盒', price: 299, originalPrice: 350, stock: 100, status: 'on_sale', image: 'https://via.placeholder.com/200?text=实物礼盒', description: '精美礼品礼盒，内含多种精选商品', sales: 45 }
-            ];
-            saveShopProducts();
+        // 使用统一的 shop-data.js 数据层，和前台共享数据
+        const data = getShopData();
+        shopProducts = data.products;
+        // 如果本地数据为空，初始化默认商品
+        if (shopProducts.length === 0) {
+            shopProducts = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+            data.products = shopProducts;
+            saveShopData(data);
         }
         filterShopProducts();
     }
     
     function saveShopProducts() {
-        localStorage.setItem('shop_products', JSON.stringify(shopProducts));
+        const data = getShopData();
+        data.products = shopProducts;
+        saveShopData(data);
     }
     
     function filterShopProducts() {
@@ -2108,18 +2106,15 @@
     let currentOrderFilter = 'all';
     
     function loadShopOrders() {
-        // 从localStorage加载订单数据
-        const saved = localStorage.getItem('shop_orders');
-        if (saved) {
-            shopOrders = JSON.parse(saved);
-        } else {
-            shopOrders = [];
-        }
+        // 使用统一的 shop-data.js 数据层
+        shopOrders = getShopData().orders;
         filterShopOrders(currentOrderFilter);
     }
     
     function saveShopOrders() {
-        localStorage.setItem('shop_orders', JSON.stringify(shopOrders));
+        const data = getShopData();
+        data.orders = shopOrders;
+        saveShopData(data);
     }
     
     function filterShopOrders(status) {
@@ -2373,6 +2368,7 @@
             '</div>';
         }).join('');
     }
+    <script src="../shop/shop-data.js"></script>
     </script>
 </body>
 </html>
