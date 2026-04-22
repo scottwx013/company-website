@@ -7,6 +7,7 @@
     'use strict';
 
     // ===== 配置 =====
+    // Vercel deploy trigger v2: 2026-04-22
     var SUPABASE_URL = 'https://baoqfrcyoizfjkwiqwbd.supabase.co';
     var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhb3FmcmN5b2l6Zmprd2lxd2JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MTM4MTksImV4cCI6MjA5MjM4OTgxOX0.IDNEll2brUzBKlsIQf0JSiWVUsZ6kPjb1nuYjG9dvhE';
 
