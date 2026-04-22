@@ -1,5 +1,6 @@
 // 宜礼商城 — 统一数据层 (Supabase + localStorage 降级)
 // Phase 1 迁移：优先使用 Supabase 持久化，网络异常时降级到 localStorage
+// 版本: 2026-04-22
 
 const SHOP_DATA_KEY = 'yili_shop_data';
 const LEGACY_SHOP_DATA_KEY = 'yili_shop_data_legacy';
