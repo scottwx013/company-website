@@ -3,10 +3,10 @@
 
 const SUPABASE_CONFIG = {
     // 你的 Supabase 项目 URL
-    url: 'https://your-project.supabase.co',
+    url: 'https://baoqfrcyoizfjkwiqwbd.supabase.co',
     
     // 匿名公钥 (anon public key)
-    anonKey: 'your-anon-key-here',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhb3FmcmN5b2l6Zmprd2lxd2JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MTM4MTksImV4cCI6MjA5MjM4OTgxOX0.IDNEll2brUzBKlsIQf0JSiWVUsZ6kPjb1nuYjG9dvhE',
     
     // 服务角色密钥 (用于后台管理，请妥善保管)
     serviceKey: 'your-service-key-here'

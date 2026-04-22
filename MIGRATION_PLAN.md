@@ -118,10 +118,63 @@
 
 ## 执行记录
 
-### 2026-04-22
-- [ ] 开始 Phase 1.1：编写完整商城数据库 schema
-- [ ] 开始 Phase 1.2：重写 shop-data.js
+### 2026-04-22（Phase 1 启动）
+- [x] 编写完整商城数据库 schema：`supabase-schema-full.sql`
+- [x] 编写底层 Supabase 客户端：`shop/supabase-client.js`
+- [x] 重写 `shop/shop-data.js`：保持 API 兼容，内部接 Supabase
+- [x] 更新所有商城页面引用（index, product, login, checkout, orders, cart, admin）
+- [x] 代码提交 GitHub + Vercel 自动部署
+- [ ] 在 Supabase Dashboard 执行 SQL 创建商城表
+- [ ] 测试注册 → 登录 → 加购 → 下单 → 查订单（全流程）
+- [ ] 验证后台订单管理
 
 ---
 
-**状态**: 🟡 进行中
+## 🚨 你还需要手动完成的步骤
+
+### 步骤 1：登录 Supabase Dashboard
+1. 访问 https://app.supabase.com
+2. 选择项目 `yili-website`（已创建）
+
+### 步骤 2：执行 SQL 创建商城表
+1. 左侧菜单 → **SQL Editor**
+2. 点击 **New query**
+3. 复制 `supabase-schema-full.sql` 全部内容（或粘贴以下核心部分）
+4. 点击 **Run**
+
+> ⚠️ 注意：执行前请确认现有 `merchants`、`products`、`company`、`about`、`home_config` 表中的数据是否需要备份。如果已有数据，SQL 中的 `ON CONFLICT DO NOTHING` 会跳过已存在记录，不会覆盖。
+
+### 步骤 3：验证表是否创建成功
+在 SQL Editor 中执行：
+```sql
+SELECT table_name FROM information_schema.tables 
+WHERE table_schema = 'public' 
+ORDER BY table_name;
+```
+
+应该看到以下表：
+- `about` ✅
+- `admin_login_logs` ✅
+- `company` ✅
+- `contact_messages` ✅
+- `home_config` ✅
+- `merchants` ✅
+- `products` ✅
+- `shop_addresses` ✅
+- `shop_order_items` ✅
+- `shop_orders` ✅
+- `shop_products` ✅
+- `shop_users` ✅
+- `shop_virtual_deliveries` ✅
+
+### 步骤 4：测试全流程
+访问 https://1gift.co/shop/login.html
+1. 注册一个新用户
+2. 登录
+3. 浏览商品 → 加购物车 → 结算 → 下单
+4. 查看订单页面
+5. 换浏览器/换设备登录同一账号，验证数据是否同步
+
+---
+
+**当前状态**: 🟡 Phase 1 代码已部署，等待 SQL 执行 + 测试验证

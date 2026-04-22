@@ -2,8 +2,8 @@
 // 直接使用 fetch 调用 Supabase REST API
 
 const SUPABASE_CONFIG = {
-    url: 'https://ysfmlwdbgwenqtpfntrf.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZm1sd2RiZ3dlbnF0cGZudHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTYxNzUsImV4cCI6MjA5MDk3MjE3NX0.Qnawrj79G8cA6JEMlM2qDV0d20ofZrE4SwxN_K-c0q0'
+    url: 'https://baoqfrcyoizfjkwiqwbd.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhb3FmcmN5b2l6Zmprd2lxd2JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MTM4MTksImV4cCI6MjA5MjM4OTgxOX0.IDNEll2brUzBKlsIQf0JSiWVUsZ6kPjb1nuYjG9dvhE'
 };
 
 // 通用请求函数
