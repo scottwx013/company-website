@@ -282,10 +282,25 @@ function decrementStock(productId, quantity) {
     const client = getSupabaseClient();
     if (client) {
         return client.makeRequest(
-            client.REST_URL + '/rpc/decrement_stock',
-            'POST',
-            { p_product_id: productId, p_quantity: quantity }
-        );
+            client.REST_URL + '/shop_products?id=eq.' + productId + '&select=stock',
+            'GET',
+            null,
+            false
+        ).then(function(result) {
+            if (!result.success || !result.data || result.data.length === 0) {
+                return { success: false, error: '商品不存在' };
+            }
+            var currentStock = result.data[0].stock;
+            if (currentStock < quantity) {
+                return { success: false, error: '库存不足' };
+            }
+            return client.makeRequest(
+                client.REST_URL + '/shop_products?id=eq.' + productId,
+                'PATCH',
+                { stock: currentStock - quantity },
+                false
+            );
+        });
     }
     const data = getFallbackData();
     const product = data.products.find(p => p.id === productId);

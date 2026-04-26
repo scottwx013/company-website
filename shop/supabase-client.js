@@ -410,53 +410,74 @@
             return Promise.resolve({ success: false, error: '请先登录' });
         }
 
-        var orderBody = {
-            id: orderId,
-            user_id: currentUser.id,
-            total_amount: orderData.totalAmount,
-            status: 'pending',
-            receiver_name: orderData.receiverName || currentUser.displayName || currentUser.username,
-            receiver_phone: orderData.receiverPhone || currentUser.phone || '',
-            receiver_address: orderData.address || '',
-            remark: orderData.remark || ''
-        };
+        // 先检查库存是否充足
+        var stockChecks = orderData.items.map(function(item) {
+            return makeRequest(REST_URL + '/shop_products?id=eq.' + item.productId + '&select=stock', 'GET', null, false)
+                .then(function(result) {
+                    if (!result.success || !result.data || result.data.length === 0) {
+                        return { ok: false, error: '商品 ' + item.productName + ' 不存在' };
+                    }
+                    var currentStock = result.data[0].stock;
+                    if (currentStock < item.quantity) {
+                        return { ok: false, error: '商品 ' + item.productName + ' 库存不足（剩余 ' + currentStock + '，需 ' + item.quantity + '）' };
+                    }
+                    return { ok: true, productId: item.productId, currentStock: currentStock, quantity: item.quantity };
+                });
+        });
 
-        return makeRequest(REST_URL + '/shop_orders', 'POST', orderBody, true).then(function(orderResult) {
-            if (!orderResult.success) {
-                return orderResult;
+        return Promise.all(stockChecks).then(function(checkResults) {
+            var failed = checkResults.find(function(r) { return !r.ok; });
+            if (failed) {
+                return { success: false, error: failed.error };
             }
 
-            // 创建订单明细
-            var itemPromises = orderData.items.map(function(item) {
-                var itemBody = {
-                    order_id: orderId,
-                    product_id: item.productId,
-                    product_name: item.productName || '',
-                    product_type: item.productType || 'virtual',
-                    quantity: item.quantity,
-                    unit_price: item.price,
-                    total_price: item.price * item.quantity
-                };
-                return makeRequest(REST_URL + '/shop_order_items', 'POST', itemBody, true);
-            });
+            var orderBody = {
+                id: orderId,
+                user_id: currentUser.id,
+                total_amount: orderData.totalAmount,
+                status: 'pending',
+                receiver_name: orderData.receiverName || currentUser.displayName || currentUser.username,
+                receiver_phone: orderData.receiverPhone || currentUser.phone || '',
+                receiver_address: orderData.address || '',
+                remark: orderData.remark || ''
+            };
 
-            // 扣减库存
-            var stockPromises = orderData.items.map(function(item) {
-                return makeRequest(REST_URL + '/rpc/decrement_stock', 'POST', {
-                    p_product_id: item.productId,
-                    p_quantity: item.quantity
-                }, true);
-            });
+            return makeRequest(REST_URL + '/shop_orders', 'POST', orderBody, true).then(function(orderResult) {
+                if (!orderResult.success) {
+                    return orderResult;
+                }
 
-            return Promise.all(itemPromises.concat(stockPromises)).then(function() {
-                return {
-                    success: true,
-                    data: {
-                        orderId: orderId,
-                        status: 'pending',
-                        totalAmount: orderData.totalAmount
-                    }
-                };
+                // 创建订单明细
+                var itemPromises = orderData.items.map(function(item) {
+                    var itemBody = {
+                        order_id: orderId,
+                        product_id: item.productId,
+                        product_name: item.productName || '',
+                        product_type: item.productType || 'virtual',
+                        quantity: item.quantity,
+                        unit_price: item.price,
+                        total_price: item.price * item.quantity
+                    };
+                    return makeRequest(REST_URL + '/shop_order_items', 'POST', itemBody, true);
+                });
+
+                // 扣减库存
+                var stockPromises = checkResults.map(function(check) {
+                    return makeRequest(REST_URL + '/shop_products?id=eq.' + check.productId, 'PATCH', {
+                        stock: check.currentStock - check.quantity
+                    }, false);
+                });
+
+                return Promise.all(itemPromises.concat(stockPromises)).then(function() {
+                    return {
+                        success: true,
+                        data: {
+                            orderId: orderId,
+                            status: 'pending',
+                            totalAmount: orderData.totalAmount
+                        }
+                    };
+                });
             });
         });
     }
