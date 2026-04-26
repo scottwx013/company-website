@@ -3,6 +3,44 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+
+// ===== 管理员认证配置 =====
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'yili-admin-secret-key-2024';
+const ADMIN_USERS = {
+    'admin': '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
+    'manager': '866485796cfa8d7c0cf7111640205b83076433547577511d81f8030ae99ecea5'
+};
+const TOKEN_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
+
+function sha256(str) {
+    return crypto.createHash('sha256').update(str).digest('hex');
+}
+
+function generateToken(username) {
+    const timestamp = Date.now();
+    const data = `${username}:${timestamp}`;
+    const signature = crypto.createHmac('sha256', ADMIN_SECRET).update(data).digest('hex');
+    return `${data}:${signature}`;
+}
+
+function verifyToken(token) {
+    if (!token) return null;
+    const parts = token.split(':');
+    if (parts.length !== 3) return null;
+    const [username, timestamp, signature] = parts;
+    const data = `${username}:${timestamp}`;
+    const expected = crypto.createHmac('sha256', ADMIN_SECRET).update(data).digest('hex');
+    if (signature !== expected) return null;
+    if (Date.now() - parseInt(timestamp) > TOKEN_EXPIRY) return null;
+    return username;
+}
+
+function getAdminUser(req) {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace('Bearer ', '');
+    return verifyToken(token);
+}
 
 // 内存中的数据缓存
 let memoryData = null;
@@ -325,6 +363,10 @@ module.exports = (req, res) => {
         
         // 后台管理：获取全部商城订单（通过 Supabase service_role 绕过 RLS）
         if (action === 'shop_orders_list') {
+            const adminUser = getAdminUser(req);
+            if (!adminUser) {
+                return res.json({ success: false, error: '未授权，请先登录' });
+            }
             const ordersResult = await supabaseRequest('shop_orders', 'GET', 'order=created_at.desc&limit=1000');
             if (!ordersResult.ok) {
                 return res.json({ success: false, error: '获取订单失败', details: ordersResult.data });
@@ -463,6 +505,24 @@ module.exports = (req, res) => {
         // ===== 商城 API - POST（已废弃或迁移至 Supabase）=====
         if (action === 'shop_register' || action === 'shop_login' || action === 'shop_order') {
             return res.json({ success: false, error: '商城用户/下单 API 已废弃，前台直接调用 Supabase REST API' });
+        }
+        
+        // 管理员登录
+        if (action === 'admin_login') {
+            const { username, password } = req.body;
+            const hash = sha256(password);
+            if (ADMIN_USERS[username] === hash) {
+                const token = generateToken(username);
+                return res.json({ success: true, data: { token, username } });
+            }
+            return res.json({ success: false, error: '用户名或密码错误' });
+        }
+        
+        // 验证管理员 token（后续受保护端点统一检查）
+        const adminUser = getAdminUser(req);
+        const protectedActions = ['shop_orders_list', 'shop_order_status', 'shop_order_ship', 'shop_logistics_update', 'shop_product_manage'];
+        if (protectedActions.includes(action) && !adminUser) {
+            return res.json({ success: false, error: '未授权，请先登录' });
         }
         
         // 后台管理：更新订单状态（通过 Supabase service_role 绕过 RLS）
