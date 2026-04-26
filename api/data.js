@@ -306,7 +306,7 @@ function setCORS(res) {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
     setCORS(res);
     
     // 处理 OPTIONS 预检请求
