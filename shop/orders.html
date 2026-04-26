@@ -117,8 +117,14 @@
         }
 
         function loadOrders() {
-            orders = getOrders(currentUser.id);
-            renderOrders();
+            getOrders(currentUser.id).then(function(data) {
+                orders = data || [];
+                renderOrders();
+            }).catch(function(err) {
+                console.error('加载订单失败:', err);
+                orders = [];
+                renderOrders();
+            });
         }
 
         function renderOrders() {
@@ -188,26 +194,34 @@
 
         function payOrder(orderId) {
             showToast('跳转支付页面...', 'success');
-            // 模拟支付成功
             setTimeout(() => {
-                updateOrderStatus(orderId, 'paid');
-                loadOrders();
-                showToast('支付成功！', 'success');
+                updateOrderStatus(orderId, 'paid').then(function() {
+                    loadOrders();
+                    showToast('支付成功！', 'success');
+                }).catch(function() {
+                    showToast('支付状态更新失败', 'error');
+                });
             }, 1000);
         }
 
         function cancelOrder(orderId) {
             if (!confirm('确定要取消该订单吗？')) return;
-            updateOrderStatus(orderId, 'cancelled');
-            loadOrders();
-            showToast('订单已取消', 'success');
+            updateOrderStatus(orderId, 'cancelled').then(function() {
+                loadOrders();
+                showToast('订单已取消', 'success');
+            }).catch(function() {
+                showToast('取消订单失败', 'error');
+            });
         }
 
         function confirmReceive(orderId) {
             if (!confirm('确认已收到商品？')) return;
-            updateOrderStatus(orderId, 'completed');
-            loadOrders();
-            showToast('确认收货成功', 'success');
+            updateOrderStatus(orderId, 'completed').then(function() {
+                loadOrders();
+                showToast('确认收货成功', 'success');
+            }).catch(function() {
+                showToast('确认收货失败', 'error');
+            });
         }
 
         function setupEventListeners() {

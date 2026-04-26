@@ -75,13 +75,18 @@
         });
         
         function loadProduct() {
-            product = getProductById(productId);
-            if (!product) {
-                showToast('商品不存在', 'error');
-                setTimeout(() => { window.location.href = 'index.html'; }, 1500);
-                return;
-            }
-            renderProduct();
+            getProductById(productId).then(function(data) {
+                product = data;
+                if (!product) {
+                    showToast('商品不存在', 'error');
+                    setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+                    return;
+                }
+                renderProduct();
+            }).catch(function(err) {
+                console.error('加载商品失败:', err);
+                showToast('加载商品失败', 'error');
+            });
         }
         
         function renderProduct() {

@@ -87,7 +87,7 @@
                 <div><label class="block text-sm font-medium text-gray-700 mb-2">手机号</label><input type="tel" id="addrPhone" class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500" placeholder="请输入手机号"></div>
                 <div><label class="block text-sm font-medium text-gray-700 mb-2">详细地址</label><textarea id="addrDetail" rows="3" class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500" placeholder="请输入详细地址（省市区+街道+门牌号）"></textarea></div>
                 <label class="flex items-center"><input type="checkbox" id="addrDefault" class="text-purple-600 rounded mr-2"><span class="text-sm">设为默认地址</span></label>
-                <button onclick="saveAddress()" class="w-full py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition">保存地址</button>
+                <button onclick="saveCheckoutAddress()" class="w-full py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition">保存地址</button>
             </div>
         </div>
     </div>
@@ -193,7 +193,7 @@
         function showAddressModal() { document.getElementById('addressModal').classList.remove('hidden'); }
         function closeAddressModal() { document.getElementById('addressModal').classList.add('hidden'); }
 
-        function saveAddress() {
+        function saveCheckoutAddress() {
             const name = document.getElementById('addrName').value.trim();
             const phone = document.getElementById('addrPhone').value.trim();
             const detail = document.getElementById('addrDetail').value.trim();
@@ -238,15 +238,20 @@
                 remark
             };
 
-            const result = saveOrder(orderData);
-            if (result.success) {
-                localStorage.removeItem('cart');
-                showToast('订单提交成功！', 'success');
-                setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
-            } else {
-                showToast(result.error || '提交失败', 'error');
-            }
-            submitBtn.disabled = false; loading.classList.add('hidden');
+            saveOrder(orderData).then(function(result) {
+                if (result.success) {
+                    localStorage.removeItem('cart');
+                    showToast('订单提交成功！', 'success');
+                    setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
+                } else {
+                    showToast(result.error || '提交失败', 'error');
+                }
+                submitBtn.disabled = false; loading.classList.add('hidden');
+            }).catch(function(err) {
+                console.error('下单异常:', err);
+                showToast('提交异常，请重试', 'error');
+                submitBtn.disabled = false; loading.classList.add('hidden');
+            });
         }
     </script>
 </body>

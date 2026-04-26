@@ -89,9 +89,15 @@
         });
 
         function loadProducts() {
-            // 使用 shop-data.js 的统一数据层，支持 admin 修改后的本地覆盖
-            products = getProducts();
-            renderProducts();
+            // 使用 shop-data.js 的统一数据层（异步，返回 Promise）
+            getProducts().then(function(data) {
+                products = data || [];
+                renderProducts();
+            }).catch(function(err) {
+                console.error('加载商品失败:', err);
+                products = [];
+                renderProducts();
+            });
         }
 
         function renderProducts() {

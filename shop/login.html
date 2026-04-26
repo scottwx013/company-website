@@ -180,15 +180,20 @@
             const loading = document.getElementById('loginLoading');
             loginBtn.disabled = true; loading.classList.remove('hidden');
 
-            const result = loginUser(username, password);
-            if (result.success) {
-                setCurrentUser(result.data, rememberMe);
-                showToast('登录成功！', 'success');
-                setTimeout(() => { window.location.href = redirectUrl; }, 800);
-            } else {
-                showToast(result.error || '登录失败', 'error');
-            }
-            loginBtn.disabled = false; loading.classList.add('hidden');
+            loginUser(username, password).then(function(result) {
+                if (result.success) {
+                    setCurrentUser(result.data, rememberMe);
+                    showToast('登录成功！', 'success');
+                    setTimeout(() => { window.location.href = redirectUrl; }, 800);
+                } else {
+                    showToast(result.error || '登录失败', 'error');
+                }
+                loginBtn.disabled = false; loading.classList.add('hidden');
+            }).catch(function(err) {
+                console.error('登录异常:', err);
+                showToast('登录异常，请重试', 'error');
+                loginBtn.disabled = false; loading.classList.add('hidden');
+            });
         });
 
         // 注册
@@ -210,17 +215,22 @@
             if (!agreeTerms) { showToast('请阅读并同意用户协议和隐私政策', 'error'); return; }
 
             registerBtn.disabled = true; loading.classList.remove('hidden');
-            const result = registerUser({ username, password, phone, email: email || '' });
-            if (result.success) {
-                showToast('注册成功！请登录', 'success');
-                setTimeout(() => {
-                    switchTab('login');
-                    document.getElementById('loginUsername').value = username;
-                }, 1000);
-            } else {
-                showToast(result.error || '注册失败', 'error');
-            }
-            registerBtn.disabled = false; loading.classList.add('hidden');
+            registerUser({ username, password, phone, email: email || '' }).then(function(result) {
+                if (result.success) {
+                    showToast('注册成功！请登录', 'success');
+                    setTimeout(() => {
+                        switchTab('login');
+                        document.getElementById('loginUsername').value = username;
+                    }, 1000);
+                } else {
+                    showToast(result.error || '注册失败', 'error');
+                }
+                registerBtn.disabled = false; loading.classList.add('hidden');
+            }).catch(function(err) {
+                console.error('注册异常:', err);
+                showToast('注册异常，请重试', 'error');
+                registerBtn.disabled = false; loading.classList.add('hidden');
+            });
         });
 
         function showWechatLogin() { showToast('微信登录功能开发中...', 'info'); }
