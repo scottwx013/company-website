@@ -243,56 +243,42 @@
 
     // ===== 商品 API =====
 
+    // 商城商品字段映射（Supabase → 前端统一格式）
+    function mapShopProduct(p) {
+        if (!p) return null;
+        return {
+            id: p.id,
+            name: p.name,
+            type: p.type,
+            category: p.category,
+            price: parseFloat(p.price) || 0,
+            originalPrice: parseFloat(p.original_price) || 0,
+            stock: p.stock || 0,
+            description: p.description || '',
+            image: (p.images && p.images[0]) || p.image || '',
+            images: p.images || [p.image || ''].filter(function(img) { return img; }),
+            status: p.status || 'on_sale',
+            sales: p.sales || 0,
+            features: p.features || [],
+            createTime: p.created_at
+        };
+    }
+
     function getShopProducts() {
-        var url = REST_URL + '/shop_products?status=eq.on_sale&order=sort_order.asc';
+        var url = REST_URL + '/shop_products?status=eq.on_sale&order=id.asc';
         return makeRequest(url, 'GET', null, false).then(function(result) {
-            if (result.success) {
-                var products = Array.isArray(result.data) ? result.data : [];
-                // 转换字段名格式
-                products = products.map(function(p) {
-                    return {
-                        id: p.id,
-                        name: p.name,
-                        type: p.type,
-                        category: p.category,
-                        price: parseFloat(p.price),
-                        originalPrice: p.original_price ? parseFloat(p.original_price) : null,
-                        stock: p.stock,
-                        description: p.description,
-                        images: p.images || [],
-                        status: p.status,
-                        salesCount: p.sales_count || 0,
-                        createTime: p.created_at
-                    };
-                });
-                return { success: true, data: products };
+            if (result.success && result.data) {
+                result.data = result.data.map(mapShopProduct);
             }
             return result;
         });
     }
 
     function getAllShopProducts() {
-        var url = REST_URL + '/shop_products?order=sort_order.asc';
+        var url = REST_URL + '/shop_products?order=id.asc';
         return makeRequest(url, 'GET', null, false).then(function(result) {
-            if (result.success) {
-                var products = Array.isArray(result.data) ? result.data : [];
-                products = products.map(function(p) {
-                    return {
-                        id: p.id,
-                        name: p.name,
-                        type: p.type,
-                        category: p.category,
-                        price: parseFloat(p.price),
-                        originalPrice: p.original_price ? parseFloat(p.original_price) : null,
-                        stock: p.stock,
-                        description: p.description,
-                        images: p.images || [],
-                        status: p.status,
-                        salesCount: p.sales_count || 0,
-                        createTime: p.created_at
-                    };
-                });
-                return { success: true, data: products };
+            if (result.success && result.data) {
+                result.data = result.data.map(mapShopProduct);
             }
             return result;
         });
@@ -302,25 +288,11 @@
         var url = REST_URL + '/shop_products?id=eq.' + id + '&select=*';
         return makeRequest(url, 'GET', null, false).then(function(result) {
             if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-                var p = result.data[0];
-                return {
-                    success: true,
-                    data: {
-                        id: p.id,
-                        name: p.name,
-                        type: p.type,
-                        category: p.category,
-                        price: parseFloat(p.price),
-                        originalPrice: p.original_price ? parseFloat(p.original_price) : null,
-                        stock: p.stock,
-                        description: p.description,
-                        images: p.images || [],
-                        status: p.status,
-                        salesCount: p.sales_count || 0,
-                        createTime: p.created_at
-                    }
-                };
+                return { success: true, data: mapShopProduct(result.data[0]) };
             }
+            return { success: false, error: '商品不存在' };
+        });
+    }
             return { success: false, error: '商品不存在' };
         });
     }

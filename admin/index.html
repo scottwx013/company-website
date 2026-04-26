@@ -1934,22 +1934,20 @@
     let filteredShopProducts = [];
     
     function loadShopProducts() {
-        // 使用统一的 shop-data.js 数据层，和前台共享数据
-        const data = getShopData();
-        shopProducts = data.products;
-        // 如果本地数据为空，初始化默认商品
-        if (shopProducts.length === 0) {
-            shopProducts = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
-            data.products = shopProducts;
-            saveShopData(data);
-        }
-        filterShopProducts();
+        // 从 Supabase 加载商城商品（和前台共享真实数据源）
+        getAllProducts().then(function(products) {
+            shopProducts = products || [];
+            filterShopProducts();
+        }).catch(function(err) {
+            console.error('加载商城商品失败:', err);
+            shopProducts = [];
+            filterShopProducts();
+        });
     }
     
     function saveShopProducts() {
-        const data = getShopData();
-        data.products = shopProducts;
-        saveShopData(data);
+        // 不再使用 localStorage，所有操作直接走 Supabase
+        // 保留函数名避免其他引用报错，实际逻辑已迁移到 saveShopProduct / deleteShopProduct
     }
     
     function filterShopProducts() {
@@ -2049,8 +2047,8 @@
     
     function saveShopProduct() {
         const id = document.getElementById('shop-product-id').value;
-        const data = {
-            id: id || 'SP' + String(Date.now()).slice(-6),
+        const product = {
+            id: id || null,
             name: document.getElementById('shop-product-name').value.trim(),
             type: document.getElementById('shop-product-type').value,
             category: document.getElementById('shop-product-category').value.trim(),
@@ -2063,41 +2061,57 @@
             sales: 0
         };
         
-        if (!data.name || !data.category || !data.price) {
+        if (!product.name || !product.category || !product.price) {
             alert('请填写必填项：名称、分类、售价');
             return;
         }
         
+        // 保留原有销量
         if (id) {
-            const idx = shopProducts.findIndex(function(x) { return x.id === id; });
-            if (idx !== -1) {
-                data.sales = shopProducts[idx].sales;
-                shopProducts[idx] = data;
-            }
-        } else {
-            shopProducts.push(data);
+            const existing = shopProducts.find(function(x) { return String(x.id) === String(id); });
+            if (existing) product.sales = existing.sales || 0;
         }
         
-        saveShopProducts();
-        closeShopProductModal();
-        filterShopProducts();
-        alert('保存成功！');
+        saveProduct(product).then(function(result) {
+            if (result.success) {
+                closeShopProductModal();
+                loadShopProducts();
+                alert('保存成功！');
+            } else {
+                alert('保存失败: ' + (result.error || '未知错误'));
+            }
+        }).catch(function(err) {
+            alert('保存异常: ' + err.message);
+        });
     }
     
     function toggleShopProductStatus(id) {
-        const p = shopProducts.find(function(x) { return x.id === id; });
-        if (p) {
-            p.status = p.status === 'on_sale' ? 'off_sale' : 'on_sale';
-            saveShopProducts();
-            renderShopProducts();
-        }
+        const p = shopProducts.find(function(x) { return String(x.id) === String(id); });
+        if (!p) return;
+        const newStatus = p.status === 'on_sale' ? 'off_sale' : 'on_sale';
+        saveProduct({ ...p, status: newStatus }).then(function(result) {
+            if (result.success) {
+                loadShopProducts();
+            } else {
+                alert('状态更新失败: ' + (result.error || '未知错误'));
+            }
+        }).catch(function(err) {
+            alert('状态更新异常: ' + err.message);
+        });
     }
     
     function deleteShopProduct(id) {
         if (!confirm('确定要删除这个商品吗？')) return;
-        shopProducts = shopProducts.filter(function(p) { return p.id !== id; });
-        saveShopProducts();
-        filterShopProducts();
+        deleteProduct(id).then(function(result) {
+            if (result.success) {
+                loadShopProducts();
+                alert('删除成功！');
+            } else {
+                alert('删除失败: ' + (result.error || '未知错误'));
+            }
+        }).catch(function(err) {
+            alert('删除异常: ' + err.message);
+        });
     }
 
     // ===== 商城订单管理 =====
@@ -2106,9 +2120,19 @@
     let currentOrderFilter = 'all';
     
     function loadShopOrders() {
-        // 使用统一的 shop-data.js 数据层
-        shopOrders = getShopData().orders;
-        filterShopOrders(currentOrderFilter);
+        // 从 Supabase 加载所有订单（通过 Vercel API 代理，避免 RLS 限制）
+        apiRequest('shop_orders_list').then(function(result) {
+            if (result.success) {
+                shopOrders = result.data || [];
+            } else {
+                shopOrders = [];
+            }
+            filterShopOrders(currentOrderFilter);
+        }).catch(function(err) {
+            console.error('加载订单失败:', err);
+            shopOrders = [];
+            filterShopOrders(currentOrderFilter);
+        });
     }
     
     function saveShopOrders() {
