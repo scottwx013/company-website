@@ -669,9 +669,17 @@
                 </div>
                 
                 <div>
-                    <label class="block text-gray-700 font-medium mb-2">商品图片URL</label>
-                    <input type="text" id="shop-product-image" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="https://example.com/image.jpg">
-                    <p class="text-xs text-gray-500 mt-1">建议使用正方形图片 400x400 像素</p>
+                    <label class="block text-gray-700 font-medium mb-2">商品图片</label>
+                    <div class="flex items-center gap-3">
+                        <input type="file" id="shop-product-image-file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange="handleImageUpload(this)">
+                        <button onclick="document.getElementById('shop-product-image-file').click()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm">选择图片</button>
+                        <span id="shop-product-image-status" class="text-sm text-gray-500"></span>
+                    </div>
+                    <input type="text" id="shop-product-image" class="w-full border border-gray-300 rounded-lg px-4 py-2 mt-2" placeholder="图片 URL（上传后自动填充）">
+                    <div id="shop-product-image-preview" class="mt-2 hidden">
+                        <img src="" alt="预览" class="w-24 h-24 object-cover rounded-lg border">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">支持 PNG/JPG/WebP/GIF，建议正方形 400x400 像素，最大 5MB</p>
                 </div>
                 
                 <div>
@@ -2006,11 +2014,14 @@
         document.getElementById('shop-product-stock').value = '999';
         document.getElementById('shop-product-description').value = '';
         document.getElementById('shop-product-image').value = '';
+        document.getElementById('shop-product-image-status').textContent = '';
+        document.getElementById('shop-product-image-preview').classList.add('hidden');
         document.getElementById('shop-product-status').value = 'on_sale';
     }
     
     function closeShopProductModal() {
         document.getElementById('shop-product-modal').classList.add('hidden');
+        document.getElementById('shop-product-image-file').value = '';
     }
     
     function editShopProduct(id) {
@@ -2028,7 +2039,61 @@
         document.getElementById('shop-product-stock').value = p.stock;
         document.getElementById('shop-product-description').value = p.description || '';
         document.getElementById('shop-product-image').value = p.image;
+        document.getElementById('shop-product-image-status').textContent = '';
+        if (p.image) {
+            const preview = document.getElementById('shop-product-image-preview');
+            preview.querySelector('img').src = p.image;
+            preview.classList.remove('hidden');
+        } else {
+            document.getElementById('shop-product-image-preview').classList.add('hidden');
+        }
         document.getElementById('shop-product-status').value = p.status;
+    }
+    
+    async function handleImageUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const statusEl = document.getElementById('shop-product-image-status');
+        const previewEl = document.getElementById('shop-product-image-preview');
+        const urlInput = document.getElementById('shop-product-image');
+        
+        statusEl.textContent = '上传中...';
+        statusEl.className = 'text-sm text-blue-600';
+        
+        try {
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64 = e.target.result.split(',')[1];
+                const mimeType = file.type;
+                
+                try {
+                    const result = await apiRequest('admin_upload_image', 'POST', {
+                        filename: file.name,
+                        base64: base64,
+                        mimeType: mimeType
+                    });
+                    
+                    if (result.success) {
+                        urlInput.value = result.data.url;
+                        previewEl.querySelector('img').src = result.data.url;
+                        previewEl.classList.remove('hidden');
+                        statusEl.textContent = '上传成功';
+                        statusEl.className = 'text-sm text-green-600';
+                    } else {
+                        statusEl.textContent = '上传失败: ' + (result.error || '未知错误');
+                        statusEl.className = 'text-sm text-red-600';
+                    }
+                } catch (err) {
+                    statusEl.textContent = '上传异常: ' + err.message;
+                    statusEl.className = 'text-sm text-red-600';
+                }
+            };
+            reader.readAsDataURL(file);
+        } catch (err) {
+            statusEl.textContent = '读取文件失败: ' + err.message;
+            statusEl.className = 'text-sm text-red-600';
+        }
     }
     
     function saveShopProduct() {

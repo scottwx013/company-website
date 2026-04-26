@@ -558,6 +558,40 @@ module.exports = async (req, res) => {
             return res.json({ success: false, error: '商品管理已迁移至 Supabase，admin 直接调用 Supabase REST API' });
         }
         
+        // 图片上传到 Supabase Storage
+        if (action === 'admin_upload_image') {
+            const { filename, base64, mimeType } = req.body;
+            if (!filename || !base64) {
+                return res.json({ success: false, error: '缺少文件名或图片数据' });
+            }
+            
+            try {
+                const buffer = Buffer.from(base64, 'base64');
+                const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+                const path = 'products/' + Date.now() + '_' + safeName;
+                
+                const uploadRes = await fetch(SUPABASE_URL + '/storage/v1/object/product-images/' + path, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
+                        'Content-Type': mimeType || 'image/png'
+                    },
+                    body: buffer
+                });
+                
+                if (!uploadRes.ok) {
+                    const errText = await uploadRes.text();
+                    return res.json({ success: false, error: '上传失败', details: errText });
+                }
+                
+                const publicUrl = SUPABASE_URL + '/storage/v1/object/public/product-images/' + path;
+                return res.json({ success: true, data: { url: publicUrl, path: path } });
+            } catch (err) {
+                return res.json({ success: false, error: '上传异常: ' + err.message });
+            }
+        }
+        
         return res.json({ success: false, error: 'Unknown action' });
     }
     
