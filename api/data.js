@@ -10,6 +10,29 @@ let memoryData = null;
 // 数据文件路径（使用 /tmp 目录，Vercel 支持写入）
 const DATA_FILE = '/tmp/yili-data.json';
 
+// ===== Supabase 配置（服务端直连，绕过 RLS）=====
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://baoqfrcyoizfjkwiqwbd.supabase.co';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhb3FmcmN5b2l6Zmprd2lxd2JkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjgxMzgxOSwiZXhwIjoyMDkyMzg5ODE5fQ.Ts3bt7sk9nZhyDcuc32rXzK00mwtD1FZWzFKolayJ6I';
+
+async function supabaseRequest(table, method, query, body) {
+    let url = `${SUPABASE_URL}/rest/v1/${table}`;
+    if (query) url += '?' + query;
+    const headers = {
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+    };
+    const response = await fetch(url, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined
+    });
+    let data = null;
+    try { data = await response.json(); } catch(e) { data = null; }
+    return { ok: response.ok, status: response.status, data };
+}
+
 // 默认数据
 const defaultData = {
     merchants: [
@@ -295,41 +318,59 @@ module.exports = (req, res) => {
             return res.json({ success: true, data: messages });
         }
         
-        // ===== 商城 API - GET =====
-        if (action === 'shop_products') {
-            const products = data.shop_products.filter(p => p.status === 'on_sale');
-            return res.json({ success: true, data: products });
+        // ===== 商城 API - 废弃（已迁移至 Supabase）=====
+        if (action === 'shop_products' || action === 'shop_product' || action === 'shop_orders' || action === 'shop_order_detail') {
+            return res.json({ success: false, error: '商城 API 已废弃，前台直接调用 Supabase REST API' });
         }
-        if (action === 'shop_product') {
-            const id = parseInt(req.query.id);
-            const product = data.shop_products.find(p => p.id === id);
-            if (product) {
-                return res.json({ success: true, data: product });
+        
+        // 后台管理：获取全部商城订单（通过 Supabase service_role 绕过 RLS）
+        if (action === 'shop_orders_list') {
+            const ordersResult = await supabaseRequest('shop_orders', 'GET', 'order=created_at.desc&limit=1000');
+            if (!ordersResult.ok) {
+                return res.json({ success: false, error: '获取订单失败', details: ordersResult.data });
             }
-            return res.json({ success: false, error: 'Product not found' });
-        }
-        if (action === 'shop_orders') {
-            const { userId } = req.query;
-            let orders = data.shop_orders;
-            if (userId) {
-                orders = orders.filter(o => o.userId == userId);
-            }
-            const ordersWithItems = orders.map(o => ({
-                ...o,
-                items: data.shop_order_items.filter(i => i.orderId === o.id)
-            }));
+            const orders = ordersResult.data || [];
+            
+            const itemsResult = await supabaseRequest('shop_order_items', 'GET', 'limit=1000');
+            const allItems = itemsResult.data || [];
+            
+            const productsResult = await supabaseRequest('shop_products', 'GET', 'select=id,images&limit=1000');
+            const products = productsResult.data || [];
+            const productMap = {};
+            products.forEach(function(p) { productMap[p.id] = p; });
+            
+            const ordersWithItems = orders.map(function(o) {
+                const orderItems = allItems.filter(function(i) { return i.order_id === o.id; });
+                const items = orderItems.map(function(item) {
+                    const prod = productMap[item.product_id];
+                    return {
+                        productId: item.product_id,
+                        productName: item.product_name,
+                        productType: item.product_type,
+                        quantity: item.quantity,
+                        price: parseFloat(item.unit_price) || 0,
+                        totalPrice: parseFloat(item.total_price) || 0,
+                        image: (prod && prod.images && prod.images[0]) || 'https://via.placeholder.com/200?text=商品'
+                    };
+                });
+                return {
+                    id: o.id,
+                    userId: o.user_id,
+                    totalAmount: parseFloat(o.total_amount) || 0,
+                    status: o.status,
+                    receiverName: o.receiver_name,
+                    receiverPhone: o.receiver_phone,
+                    receiverAddress: o.receiver_address,
+                    remark: o.remark,
+                    createTime: o.created_at,
+                    payTime: o.pay_time,
+                    shipTime: o.ship_time,
+                    completeTime: o.complete_time,
+                    items: items
+                };
+            });
+            
             return res.json({ success: true, data: ordersWithItems });
-        }
-        if (action === 'shop_order_detail') {
-            const { orderId } = req.query;
-            const order = data.shop_orders.find(o => o.id === orderId);
-            if (order) {
-                const items = data.shop_order_items.filter(i => i.orderId === orderId);
-                const logistics = data.shop_logistics.filter(l => l.orderId === orderId);
-                const virtualDeliveries = data.shop_virtual_deliveries.filter(v => v.orderId === orderId);
-                return res.json({ success: true, data: { ...order, items, logistics, virtualDeliveries } });
-            }
-            return res.json({ success: false, error: 'Order not found' });
         }
         
         // 返回全部数据
@@ -419,154 +460,42 @@ module.exports = (req, res) => {
             return res.json({ success: true, data: newMessage });
         }
         
-        // ===== 商城 API - POST =====
-        // 用户注册
-        if (action === 'shop_register') {
-            const { username, password, phone, email } = req.body;
-            if (data.shop_users.find(u => u.username === username)) {
-                return res.json({ success: false, error: 'Username already exists' });
-            }
-            const newUser = {
-                id: Date.now(),
-                username,
-                password,
-                phone,
-                email,
-                createTime: new Date().toISOString()
-            };
-            data.shop_users.push(newUser);
-            saveToFile(data);
-            return res.json({ success: true, data: { id: newUser.id, username: newUser.username } });
+        // ===== 商城 API - POST（已废弃或迁移至 Supabase）=====
+        if (action === 'shop_register' || action === 'shop_login' || action === 'shop_order') {
+            return res.json({ success: false, error: '商城用户/下单 API 已废弃，前台直接调用 Supabase REST API' });
         }
         
-        // 用户登录
-        if (action === 'shop_login') {
-            const { username, password } = req.body;
-            const user = data.shop_users.find(u => u.username === username && u.password === password);
-            if (user) {
-                return res.json({ success: true, data: { id: user.id, username: user.username, token: 'token_' + user.id } });
-            }
-            return res.json({ success: false, error: 'Invalid credentials' });
-        }
-        
-        // 创建订单
-        if (action === 'shop_order') {
-            const { userId, items, totalAmount, address, receiverName, receiverPhone } = req.body;
-            const orderId = 'ORD' + Date.now();
-            const order = {
-                id: orderId,
-                userId,
-                totalAmount,
-                status: 'pending',
-                address,
-                receiverName,
-                receiverPhone,
-                createTime: new Date().toISOString(),
-                payTime: null,
-                shipTime: null,
-                completeTime: null
-            };
-            
-            const orderItems = items.map(item => ({
-                id: 'ITEM' + Date.now() + Math.random().toString(36).substr(2, 9),
-                orderId,
-                productId: item.productId,
-                productName: item.productName,
-                productType: item.productType,
-                quantity: item.quantity,
-                price: item.price,
-                totalPrice: item.price * item.quantity
-            }));
-            
-            data.shop_orders.push(order);
-            data.shop_order_items.push(...orderItems);
-            
-            items.forEach(item => {
-                const product = data.shop_products.find(p => p.id === item.productId);
-                if (product) {
-                    product.stock -= item.quantity;
-                }
-            });
-            
-            saveToFile(data);
-            return res.json({ success: true, data: { orderId, status: order.status } });
-        }
-        
-        // 更新订单状态
-        if (action === 'shop_order_status') {
+        // 后台管理：更新订单状态（通过 Supabase service_role 绕过 RLS）
+        if (action === 'shop_order_status' || action === 'shop_order_ship') {
             const { orderId, status, logisticsInfo, virtualContent } = req.body;
-            const order = data.shop_orders.find(o => o.id === orderId);
-            if (!order) {
-                return res.json({ success: false, error: 'Order not found' });
-            }
             
-            order.status = status;
-            
+            const updateBody = { status: status || 'shipped' };
             if (status === 'paid') {
-                order.payTime = new Date().toISOString();
+                updateBody.pay_time = new Date().toISOString();
             } else if (status === 'shipped') {
-                order.shipTime = new Date().toISOString();
-                if (logisticsInfo) {
-                    data.shop_logistics.push({
-                        id: 'LOG' + Date.now(),
-                        orderId,
-                        company: logisticsInfo.company,
-                        trackingNo: logisticsInfo.trackingNo,
-                        createTime: new Date().toISOString(),
-                        updates: []
-                    });
-                }
-                if (virtualContent) {
-                    data.shop_virtual_deliveries.push({
-                        id: 'VIR' + Date.now(),
-                        orderId,
-                        content: virtualContent.content,
-                        images: virtualContent.images || [],
-                        deliverTime: new Date().toISOString()
-                    });
-                }
+                updateBody.ship_time = new Date().toISOString();
             } else if (status === 'completed') {
-                order.completeTime = new Date().toISOString();
+                updateBody.complete_time = new Date().toISOString();
+            } else if (status === 'cancelled') {
+                updateBody.cancel_time = new Date().toISOString();
             }
             
-            saveToFile(data);
-            return res.json({ success: true, data: order });
+            const result = await supabaseRequest('shop_orders', 'PATCH', 'id=eq.' + encodeURIComponent(orderId), updateBody);
+            if (!result.ok) {
+                return res.json({ success: false, error: '更新订单失败', details: result.data });
+            }
+            
+            return res.json({ success: true, data: { orderId, status: updateBody.status } });
         }
         
-        // 更新物流信息
+        // 物流更新（暂不支持，订单表直接记录 ship_time）
         if (action === 'shop_logistics_update') {
-            const { orderId, status, location, description } = req.body;
-            const logistics = data.shop_logistics.find(l => l.orderId === orderId);
-            if (logistics) {
-                logistics.updates.push({
-                    status,
-                    location,
-                    description,
-                    time: new Date().toISOString()
-                });
-                saveToFile(data);
-                return res.json({ success: true, data: logistics });
-            }
-            return res.json({ success: false, error: 'Logistics not found' });
+            return res.json({ success: false, error: '物流更新暂不支持，请联系开发者' });
         }
         
-        // 后台管理：商品管理
+        // 后台管理：商品管理（已废弃，admin 直接调用 Supabase REST API）
         if (action === 'shop_product_manage') {
-            if (body.id) {
-                const idx = data.shop_products.findIndex(p => p.id === body.id);
-                if (idx !== -1) {
-                    data.shop_products[idx] = { ...data.shop_products[idx], ...body };
-                    saveToFile(data);
-                    return res.json({ success: true, data: data.shop_products[idx] });
-                }
-            } else {
-                const newId = Math.max(...data.shop_products.map(p => p.id), 0) + 1;
-                const newProduct = { ...body, id: newId, createTime: new Date().toISOString() };
-                data.shop_products.push(newProduct);
-                saveToFile(data);
-                return res.json({ success: true, data: newProduct });
-            }
-            return res.json({ success: false, error: 'Product not found' });
+            return res.json({ success: false, error: '商品管理已迁移至 Supabase，admin 直接调用 Supabase REST API' });
         }
         
         return res.json({ success: false, error: 'Unknown action' });
@@ -587,10 +516,7 @@ module.exports = (req, res) => {
             return res.json({ success: true });
         }
         if (action === 'shop_product') {
-            const id = parseInt(req.query.id);
-            data.shop_products = data.shop_products.filter(p => p.id !== id);
-            saveToFile(data);
-            return res.json({ success: true });
+            return res.json({ success: false, error: '商品删除已迁移至 Supabase，admin 直接调用 Supabase REST API' });
         }
         return res.json({ success: false, error: 'Unknown action' });
     }

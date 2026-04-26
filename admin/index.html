@@ -2337,6 +2337,7 @@
         if (!o) return;
         
         const hasVirtual = o.items && o.items.some(function(item) { return item.productType === 'virtual'; });
+        var shipPayload = { orderId: orderId, status: 'shipped' };
         
         if (hasVirtual) {
             const content = document.getElementById('ship-virtual-content').value.trim();
@@ -2344,7 +2345,7 @@
                 alert('请填写卡券内容');
                 return;
             }
-            o.virtualContent = content;
+            shipPayload.virtualContent = { content: content };
         } else {
             const company = document.getElementById('ship-company').value;
             const trackingNo = document.getElementById('ship-tracking-no').value.trim();
@@ -2352,16 +2353,20 @@
                 alert('请填写物流公司和快递单号');
                 return;
             }
-            o.logisticsCompany = company;
-            o.trackingNo = trackingNo;
+            shipPayload.logisticsInfo = { company: company, trackingNo: trackingNo };
         }
         
-        o.status = 'shipped';
-        o.shipTime = new Date().toISOString();
-        saveShopOrders();
-        closeShipModal();
-        filterShopOrders(currentOrderFilter);
-        alert('发货成功！');
+        apiRequest('shop_order_ship', 'POST', shipPayload).then(function(result) {
+            if (result.success) {
+                closeShipModal();
+                loadShopOrders();
+                alert('发货成功！');
+            } else {
+                alert('发货失败: ' + (result.error || '未知错误'));
+            }
+        }).catch(function(err) {
+            alert('发货异常: ' + err.message);
+        });
     }
 
     function renderMessages(messages) {
