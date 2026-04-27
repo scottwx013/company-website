@@ -51,12 +51,18 @@
         </div>
     </main>
 
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-4 z-40">
         <div class="max-w-3xl mx-auto flex gap-3">
             <button onclick="addToCart()" class="flex-1 py-3 border-2 border-purple-600 text-purple-600 rounded-full font-medium hover:bg-purple-50 transition">加入购物车</button>
             <button onclick="buyNow()" class="flex-1 py-3 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition">立即购买</button>
         </div>
     </div>
+
+    <footer class="bg-white border-t mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm text-gray-500">© 2026 宜礼商城 · <a href="privacy.html" class="text-purple-600 hover:text-purple-700">隐私政策</a> · <a href="terms.html" class="text-purple-600 hover:text-purple-700">用户协议</a></p>
+        </div>
+    </footer>
 
     <script src="../js/supabase-client.js"></script>
     <script src="shop-data.js"></script>
@@ -161,5 +167,11 @@
             else { badge.classList.add('hidden'); }
         }
     </script>
+
+    <footer class="bg-white border-t mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm text-gray-500">© 2026 宜礼商城 · <a href="privacy.html" class="text-purple-600 hover:text-purple-700">隐私政策</a> · <a href="terms.html" class="text-purple-600 hover:text-purple-700">用户协议</a></p>
+        </div>
+    </footer>
 </body>
 </html>

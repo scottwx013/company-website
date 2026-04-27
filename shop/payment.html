@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支付确认 - 宜礼商城</title>
+    <meta name="description" content="宜礼商城支付确认">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .pay-method-card { border: 2px solid transparent; transition: all 0.2s; }
+        .pay-method-card.selected { border-color: #7c3aed; background: #faf5ff; }
+        .pay-method-card:hover { border-color: #ddd6fe; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
+            <a href="orders.html" class="text-gray-600 hover:text-purple-600"><i class="fas fa-arrow-left mr-1"></i>我的订单</a>
+            <h1 class="font-bold text-gray-800">支付确认</h1>
+            <div class="w-16"></div>
+        </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto px-4 py-4 pb-32">
+        <!-- 订单信息 -->
+        <div class="bg-white rounded-xl p-4 mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="font-bold text-gray-800">订单信息</h2>
+                <span id="orderId" class="text-sm text-gray-500 font-mono"></span>
+            </div>
+            <div id="orderItems" class="space-y-3"></div>
+            <div class="border-t mt-3 pt-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-500">应付金额</span>
+                    <span id="orderAmount" class="text-2xl font-bold text-red-500"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 支付方式 -->
+        <div class="bg-white rounded-xl p-4 mb-4">
+            <h2 class="font-bold text-gray-800 mb-3">选择支付方式</h2>
+            <div class="space-y-3">
+                <label class="pay-method-card selected flex items-center p-4 rounded-xl cursor-pointer bg-gray-50" data-method="enterprise">
+                    <input type="radio" name="payMethod" value="enterprise" checked class="text-purple-600 mr-4 w-4 h-4">
+                    <div class="flex-1">
+                        <p class="font-medium">企业统一结算</p>
+                        <p class="text-sm text-gray-500">订单将提交至企业福利账户统一结算</p>
+                    </div>
+                    <i class="fas fa-building text-purple-600 text-xl"></i>
+                </label>
+                <label class="pay-method-card flex items-center p-4 rounded-xl cursor-pointer bg-gray-50" data-method="wechat">
+                    <input type="radio" name="payMethod" value="wechat" class="text-purple-600 mr-4 w-4 h-4">
+                    <div class="flex-1">
+                        <p class="font-medium">微信支付</p>
+                        <p class="text-sm text-gray-500">使用微信扫码支付（即将上线）</p>
+                    </div>
+                    <i class="fab fa-weixin text-green-500 text-xl"></i>
+                </label>
+                <label class="pay-method-card flex items-center p-4 rounded-xl cursor-pointer bg-gray-50" data-method="alipay">
+                    <input type="radio" name="payMethod" value="alipay" class="text-purple-600 mr-4 w-4 h-4">
+                    <div class="flex-1">
+                        <p class="font-medium">支付宝</p>
+                        <p class="text-sm text-gray-500">使用支付宝支付（即将上线）</p>
+                    </div>
+                    <i class="fab fa-alipay text-blue-500 text-xl"></i>
+                </label>
+            </div>
+        </div>
+
+        <!-- 支付说明 -->
+        <div class="bg-yellow-50 rounded-xl p-4 mb-4">
+            <div class="flex items-start">
+                <i class="fas fa-info-circle text-yellow-600 mt-0.5 mr-2"></i>
+                <div>
+                    <p class="text-sm text-yellow-800 font-medium">支付说明</p>
+                    <p class="text-sm text-yellow-700 mt-1">当前选择「企业统一结算」，订单将提交至企业福利账户，由企业统一审批结算。您无需即时支付。</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部确认栏 -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t px-4 py-3">
+        <div class="max-w-3xl mx-auto flex items-center justify-between">
+            <div>
+                <span class="text-sm text-gray-500">应付:</span>
+                <span id="footerAmount" class="text-xl font-bold text-red-500 ml-1"></span>
+            </div>
+            <button id="confirmPayBtn" onclick="confirmPayment()" class="px-8 py-3 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition flex items-center">
+                <span>确认支付</span>
+                <i class="fas fa-spinner fa-spin ml-2 hidden" id="payLoading"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="../js/supabase-client.js"></script>
+    <script src="shop-data.js"></script>
+    <script>
+        let orderId = null;
+        let orderData = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            orderId = params.get('orderId');
+            if (!orderId) {
+                showToast('订单信息不存在', 'error');
+                setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
+                return;
+            }
+            loadOrder();
+
+            // 支付方式选择
+            document.querySelectorAll('.pay-method-card input').forEach(input => {
+                input.addEventListener('change', function() {
+                    document.querySelectorAll('.pay-method-card').forEach(card => card.classList.remove('selected'));
+                    this.closest('.pay-method-card').classList.add('selected');
+                });
+            });
+        });
+
+        function loadOrder() {
+            const client = getSupabaseClient();
+            if (client && client.getOrderById) {
+                client.getOrderById(orderId).then(function(result) {
+                    if (result.success && result.data) {
+                        orderData = result.data;
+                        renderOrder();
+                    } else {
+                        loadOrderFallback();
+                    }
+                }).catch(function() {
+                    loadOrderFallback();
+                });
+            } else {
+                loadOrderFallback();
+            }
+        }
+
+        function loadOrderFallback() {
+            const data = getFallbackData();
+            orderData = data.orders.find(o => o.id === orderId);
+            if (!orderData) {
+                showToast('订单不存在', 'error');
+                setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
+                return;
+            }
+            renderOrder();
+        }
+
+        function renderOrder() {
+            document.getElementById('orderId').textContent = orderData.id;
+            document.getElementById('orderAmount').textContent = '¥' + orderData.totalAmount;
+            document.getElementById('footerAmount').textContent = '¥' + orderData.totalAmount;
+
+            const items = orderData.items || [];
+            document.getElementById('orderItems').innerHTML = items.map(item => `
+                <div class="flex items-center space-x-3">
+                    <img src="${item.image || '/assets/logo-purple.jpg'}" alt="${item.productName || item.name}" class="w-14 h-14 object-cover rounded-lg bg-gray-100">
+                    <div class="flex-1">
+                        <h3 class="font-medium text-gray-800 text-sm">${item.productName || item.name}</h3>
+                        <p class="text-xs text-gray-500">x${item.quantity}</p>
+                    </div>
+                    <span class="font-medium text-sm">¥${(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+            `).join('');
+        }
+
+        function confirmPayment() {
+            const selectedMethod = document.querySelector('input[name="payMethod"]:checked').value;
+
+            if (selectedMethod === 'wechat' || selectedMethod === 'alipay') {
+                showToast('微信支付/支付宝即将上线，请选择企业统一结算', 'info');
+                return;
+            }
+
+            const btn = document.getElementById('confirmPayBtn');
+            const loading = document.getElementById('payLoading');
+            btn.disabled = true;
+            loading.classList.remove('hidden');
+
+            const client = getSupabaseClient();
+            if (client && client.updateShopOrderStatus) {
+                client.updateShopOrderStatus(orderId, 'paid', { payMethod: 'enterprise' }).then(function(result) {
+                    handlePayResult(result);
+                }).catch(function(err) {
+                    console.error('支付失败:', err);
+                    handlePayResult({ success: false, error: '支付异常' });
+                });
+            } else {
+                // fallback: 直接更新 localStorage
+                const data = getFallbackData();
+                const order = data.orders.find(o => o.id === orderId);
+                if (order) {
+                    order.status = 'paid';
+                    order.paidAt = new Date().toISOString();
+                    order.payMethod = 'enterprise';
+                    saveFallbackData(data);
+                }
+                handlePayResult({ success: true });
+            }
+        }
+
+        function handlePayResult(result) {
+            const btn = document.getElementById('confirmPayBtn');
+            const loading = document.getElementById('payLoading');
+            btn.disabled = false;
+            loading.classList.add('hidden');
+
+            if (result.success) {
+                showToast('支付成功！', 'success');
+                setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
+            } else {
+                showToast(result.error || '支付失败，请重试', 'error');
+            }
+        }
+    </script>
+
+    <footer class="bg-white border-t mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm text-gray-500">© 2026 宜礼商城 · <a href="privacy.html" class="text-purple-600 hover:text-purple-700">隐私政策</a> · <a href="terms.html" class="text-purple-600 hover:text-purple-700">用户协议</a></p>
+        </div>
+    </footer>
+</body>
+</html>

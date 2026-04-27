@@ -193,15 +193,7 @@
         }
 
         function payOrder(orderId) {
-            showToast('跳转支付页面...', 'success');
-            setTimeout(() => {
-                updateOrderStatus(orderId, 'paid').then(function() {
-                    loadOrders();
-                    showToast('支付成功！', 'success');
-                }).catch(function() {
-                    showToast('支付状态更新失败', 'error');
-                });
-            }, 1000);
+            window.location.href = 'payment.html?orderId=' + encodeURIComponent(orderId);
         }
 
         function cancelOrder(orderId) {

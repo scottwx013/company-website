@@ -241,8 +241,8 @@
             saveOrder(orderData).then(function(result) {
                 if (result.success) {
                     localStorage.removeItem('cart');
-                    showToast('订单提交成功！', 'success');
-                    setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
+                    showToast('订单创建成功！', 'success');
+                    setTimeout(() => { window.location.href = 'payment.html?orderId=' + encodeURIComponent(result.data.orderId || result.data.id); }, 1500);
                 } else {
                     showToast(result.error || '提交失败', 'error');
                 }
@@ -254,5 +254,11 @@
             });
         }
     </script>
+
+    <footer class="bg-white border-t mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm text-gray-500">© 2026 宜礼商城 · <a href="privacy.html" class="text-purple-600 hover:text-purple-700">隐私政策</a> · <a href="terms.html" class="text-purple-600 hover:text-purple-700">用户协议</a></p>
+        </div>
+    </footer>
 </body>
 </html>
