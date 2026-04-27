@@ -434,11 +434,11 @@
                     }
 
                     // 检查是否有失败的
-                    var failed = stockResult.data.find(function(r) { return !r.success; });
+                    var failed = stockResult.data.find(function(r) { return !r.out_success; });
                     if (failed) {
                         // 扣减失败，删除订单回滚
                         return makeRequest(REST_URL + '/shop_orders?id=eq.' + encodeURIComponent(orderId), 'DELETE', null, true).then(function() {
-                            return { success: false, error: failed.error_message || '库存不足' };
+                            return { success: false, error: failed.out_error_message || '库存不足' };
                         });
                     }
 
