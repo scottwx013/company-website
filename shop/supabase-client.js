@@ -382,65 +382,67 @@
             return Promise.resolve({ success: false, error: '请先登录' });
         }
 
-        // 先检查库存是否充足
-        var stockChecks = orderData.items.map(function(item) {
-            return makeRequest(REST_URL + '/shop_products?id=eq.' + item.productId + '&select=stock', 'GET', null, false)
-                .then(function(result) {
-                    if (!result.success || !result.data || result.data.length === 0) {
-                        return { ok: false, error: '商品 ' + item.productName + ' 不存在' };
-                    }
-                    var currentStock = result.data[0].stock;
-                    if (currentStock < item.quantity) {
-                        return { ok: false, error: '商品 ' + item.productName + ' 库存不足（剩余 ' + currentStock + '，需 ' + item.quantity + '）' };
-                    }
-                    return { ok: true, productId: item.productId, currentStock: currentStock, quantity: item.quantity };
-                });
-        });
+        // 步骤1：创建订单（pending）
+        var orderBody = {
+            id: orderId,
+            user_id: currentUser.id,
+            total_amount: orderData.totalAmount,
+            status: 'pending',
+            receiver_name: orderData.receiverName || currentUser.displayName || currentUser.username,
+            receiver_phone: orderData.receiverPhone || currentUser.phone || '',
+            receiver_address: orderData.address || '',
+            remark: orderData.remark || ''
+        };
 
-        return Promise.all(stockChecks).then(function(checkResults) {
-            var failed = checkResults.find(function(r) { return !r.ok; });
-            if (failed) {
-                return { success: false, error: failed.error };
+        return makeRequest(REST_URL + '/shop_orders', 'POST', orderBody, true).then(function(orderResult) {
+            if (!orderResult.success) {
+                return orderResult;
             }
 
-            var orderBody = {
-                id: orderId,
-                user_id: currentUser.id,
-                total_amount: orderData.totalAmount,
-                status: 'pending',
-                receiver_name: orderData.receiverName || currentUser.displayName || currentUser.username,
-                receiver_phone: orderData.receiverPhone || currentUser.phone || '',
-                receiver_address: orderData.address || '',
-                remark: orderData.remark || ''
-            };
+            // 步骤2：创建订单明细
+            var itemPromises = orderData.items.map(function(item) {
+                var itemBody = {
+                    order_id: orderId,
+                    product_id: item.productId,
+                    product_name: item.productName || '',
+                    product_type: item.productType || 'virtual',
+                    quantity: item.quantity,
+                    unit_price: item.price,
+                    total_price: item.price * item.quantity
+                };
+                return makeRequest(REST_URL + '/shop_order_items', 'POST', itemBody, true);
+            });
 
-            return makeRequest(REST_URL + '/shop_orders', 'POST', orderBody, true).then(function(orderResult) {
-                if (!orderResult.success) {
-                    return orderResult;
-                }
-
-                // 创建订单明细
-                var itemPromises = orderData.items.map(function(item) {
-                    var itemBody = {
-                        order_id: orderId,
+            return Promise.all(itemPromises).then(function() {
+                // 步骤3：批量原子扣减库存（RPC）
+                var itemsForRpc = orderData.items.map(function(item) {
+                    return {
                         product_id: item.productId,
-                        product_name: item.productName || '',
-                        product_type: item.productType || 'virtual',
-                        quantity: item.quantity,
-                        unit_price: item.price,
-                        total_price: item.price * item.quantity
+                        quantity: item.quantity
                     };
-                    return makeRequest(REST_URL + '/shop_order_items', 'POST', itemBody, true);
                 });
 
-                // 扣减库存
-                var stockPromises = checkResults.map(function(check) {
-                    return makeRequest(REST_URL + '/shop_products?id=eq.' + check.productId, 'PATCH', {
-                        stock: check.currentStock - check.quantity
-                    }, false);
-                });
+                var rpcUrl = REST_URL + '/rpc/decrement_stock_batch';
+                return makeRequest(rpcUrl, 'POST', {
+                    p_items: itemsForRpc
+                }, false).then(function(stockResult) {
+                    if (!stockResult.success || !stockResult.data) {
+                        // 扣减失败，删除订单回滚
+                        return makeRequest(REST_URL + '/shop_orders?id=eq.' + encodeURIComponent(orderId), 'DELETE', null, true).then(function() {
+                            return { success: false, error: stockResult.error || '库存扣减失败' };
+                        });
+                    }
 
-                return Promise.all(itemPromises.concat(stockPromises)).then(function() {
+                    // 检查是否有失败的
+                    var failed = stockResult.data.find(function(r) { return !r.success; });
+                    if (failed) {
+                        // 扣减失败，删除订单回滚
+                        return makeRequest(REST_URL + '/shop_orders?id=eq.' + encodeURIComponent(orderId), 'DELETE', null, true).then(function() {
+                            return { success: false, error: failed.error_message || '库存不足' };
+                        });
+                    }
+
+                    // 全部成功
                     return {
                         success: true,
                         data: {
