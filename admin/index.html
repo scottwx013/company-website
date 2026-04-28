@@ -464,6 +464,26 @@
                             <button onclick="loadShopOrders()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">刷新</button>
                         </div>
 
+                        <!-- 统计卡片 -->
+                        <div class="grid grid-cols-4 gap-4 mb-6">
+                            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                                <p class="text-sm text-blue-600 font-medium">今日订单</p>
+                                <p class="text-2xl font-bold text-blue-800 mt-1" id="stat-today-orders">0</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                                <p class="text-sm text-green-600 font-medium">今日销售额</p>
+                                <p class="text-2xl font-bold text-green-800 mt-1" id="stat-today-sales">¥0</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 border border-yellow-200">
+                                <p class="text-sm text-yellow-600 font-medium">待发货</p>
+                                <p class="text-2xl font-bold text-yellow-800 mt-1" id="stat-pending-ship">0</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
+                                <p class="text-sm text-red-600 font-medium">库存预警</p>
+                                <p class="text-2xl font-bold text-red-800 mt-1" id="stat-stock-alert">0</p>
+                            </div>
+                        </div>
+
                         <!-- 状态筛选 -->
                         <div class="bg-gray-50 rounded-lg p-3 mb-4 flex gap-2 overflow-x-auto">
                             <button onclick="filterShopOrders('all')" id="order-filter-all" class="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white">全部</button>
@@ -471,6 +491,7 @@
                             <button onclick="filterShopOrders('paid')" id="order-filter-paid" class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">待发货</button>
                             <button onclick="filterShopOrders('shipped')" id="order-filter-shipped" class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">待收货</button>
                             <button onclick="filterShopOrders('completed')" id="order-filter-completed" class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">已完成</button>
+                            <button onclick="filterShopOrders('refunded')" id="order-filter-refunded" class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300">退款/售后</button>
                         </div>
 
                         <div id="shop-orders-list" class="space-y-4">
@@ -751,6 +772,33 @@
             <div class="flex justify-end gap-4 mt-6">
                 <button onclick="closeShipModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">取消</button>
                 <button onclick="confirmShip()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">确认发货</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 退款弹窗 -->
+    <div id="refund-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">订单退款</h3>
+            
+            <input type="hidden" id="refund-order-id">
+            
+            <div class="space-y-4 mb-4">
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">退款原因 *</label>
+                    <textarea id="refund-reason" rows="3" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="请填写退款原因..."></textarea>
+                </div>
+                <div class="bg-yellow-50 rounded-lg p-3">
+                    <p class="text-sm text-yellow-800">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        退款后订单状态将变更为"已退款"，此操作不可撤销。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-4 mt-6">
+                <button onclick="closeRefundModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">取消</button>
+                <button onclick="confirmRefund()" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">确认退款</button>
             </div>
         </div>
     </div>
@@ -2217,7 +2265,7 @@
         renderShopOrders();
     }
     
-    function renderShopOrders() {
+        function renderShopOrders() {
         const container = document.getElementById('shop-orders-list');
         const emptyEl = document.getElementById('shop-orders-empty');
         
@@ -2236,7 +2284,8 @@
             paid: { text: '待发货', class: 'bg-blue-100 text-blue-700' },
             shipped: { text: '待收货', class: 'bg-purple-100 text-purple-700' },
             completed: { text: '已完成', class: 'bg-green-100 text-green-700' },
-            cancelled: { text: '已取消', class: 'bg-gray-100 text-gray-500' }
+            cancelled: { text: '已取消', class: 'bg-gray-100 text-gray-500' },
+            refunded: { text: '已退款', class: 'bg-red-100 text-red-700' }
         };
         
         container.innerHTML = filteredShopOrders.map(function(o) {
@@ -2244,6 +2293,21 @@
             const firstItem = o.items && o.items[0];
             const itemCount = o.items ? o.items.reduce(function(sum, item) { return sum + item.quantity; }, 0) : 0;
             const date = new Date(o.createTime).toLocaleString('zh-CN');
+            
+            // 判断可操作按钮
+            let actionButtons = '<button onclick="viewShopOrder(\'' + o.id + '\')" class="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 rounded hover:bg-blue-50">查看详情</button>';
+            
+            if (o.status === 'paid') {
+                actionButtons += '<button onclick="openShipModal(\'' + o.id + '\')" class="bg-blue-600 text-white text-sm px-3 py-1 rounded hover:bg-blue-700 ml-2">发货</button>';
+                actionButtons += '<button onclick="openRefundModal(\'' + o.id + '\')" class="bg-red-100 text-red-600 text-sm px-3 py-1 rounded hover:bg-red-200 ml-2">退款</button>';
+            } else if (o.status === 'shipped') {
+                actionButtons += '<button onclick="confirmReceipt(\'' + o.id + '\')" class="bg-green-100 text-green-600 text-sm px-3 py-1 rounded hover:bg-green-200 ml-2">确认收货</button>';
+                actionButtons += '<button onclick="openRefundModal(\'' + o.id + '\')" class="bg-red-100 text-red-600 text-sm px-3 py-1 rounded hover:bg-red-200 ml-2">退款</button>';
+            } else if (o.status === 'pending') {
+                actionButtons += '<button onclick="cancelOrderAdmin(\'' + o.id + '\')" class="bg-gray-100 text-gray-600 text-sm px-3 py-1 rounded hover:bg-gray-200 ml-2">取消</button>';
+            } else if (o.status === 'completed') {
+                actionButtons += '<button onclick="openRefundModal(\'' + o.id + '\')" class="bg-red-100 text-red-600 text-sm px-3 py-1 rounded hover:bg-red-200 ml-2">退款</button>';
+            }
             
             return '<div class="border border-gray-200 rounded-xl p-4 hover:shadow-sm transition">' +
                 '<div class="flex justify-between items-start mb-3">' +
@@ -2266,15 +2330,15 @@
                 '<div class="flex justify-between items-center pt-3 border-t">' +
                     '<div class="text-sm text-gray-500">' +
                         '<p>' + o.receiverName + ' · ' + o.receiverPhone + '</p>' +
-                        '<p class="truncate max-w-xs">' + o.address + '</p>' +
+                        '<p class="truncate max-w-xs">' + (o.receiverAddress || o.address) + '</p>' +
                     '</div>' +
-                    '<div class="flex gap-2">' +
-                        '<button onclick="viewShopOrder(\'' + o.id + '\')" class="text-blue-600 hover:text-blue-800 text-sm px-3 py-1 rounded hover:bg-blue-50">查看详情</button>' +
-                        (o.status === 'paid' ? '<button onclick="openShipModal(\'' + o.id + '\')" class="bg-blue-600 text-white text-sm px-3 py-1 rounded hover:bg-blue-700">发货</button>' : '') +
-                    '</div>' +
+                    '<div class="flex gap-2">' + actionButtons + '</div>' +
                 '</div>' +
             '</div>';
         }).join('');
+        
+        // 更新统计
+        updateOrderStats();
     }
     
     function viewShopOrder(id) {
@@ -2382,6 +2446,38 @@
         document.getElementById('ship-modal').classList.add('hidden');
     }
     
+    function updateOrderStats() {
+        if (!shopOrders || shopOrders.length === 0) return;
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const todayOrders = shopOrders.filter(function(o) {
+            return new Date(o.createTime) >= today;
+        });
+        
+        const todaySales = todayOrders.reduce(function(sum, o) {
+            return sum + (parseFloat(o.totalAmount) || 0);
+        }, 0);
+        
+        const pendingShip = shopOrders.filter(function(o) {
+            return o.status === 'paid';
+        }).length;
+        
+        // 库存预警（从商品数据获取）
+        let stockAlert = 0;
+        if (shopProducts) {
+            stockAlert = shopProducts.filter(function(p) {
+                return p.stock <= 10;
+            }).length;
+        }
+        
+        document.getElementById('stat-today-orders').textContent = todayOrders.length;
+        document.getElementById('stat-today-sales').textContent = '¥' + todaySales.toFixed(2);
+        document.getElementById('stat-pending-ship').textContent = pendingShip;
+        document.getElementById('stat-stock-alert').textContent = stockAlert;
+    }
+
     function confirmShip() {
         const orderId = document.getElementById('ship-order-id').value;
         const o = shopOrders.find(function(x) { return x.id === orderId; });
@@ -2417,6 +2513,66 @@
             }
         }).catch(function(err) {
             alert('发货异常: ' + err.message);
+        });
+    }
+
+    function cancelOrderAdmin(orderId) {
+        if (!confirm('确定要取消该订单吗？')) return;
+        apiRequest('shop_order_status', 'POST', { orderId: orderId, status: 'cancelled' }).then(function(result) {
+            if (result.success) {
+                loadShopOrders();
+                alert('订单已取消');
+            } else {
+                alert('取消失败: ' + (result.error || '未知错误'));
+            }
+        }).catch(function(err) {
+            alert('取消异常: ' + err.message);
+        });
+    }
+
+    function confirmReceipt(orderId) {
+        if (!confirm('确认将该订单标记为已完成吗？')) return;
+        apiRequest('shop_order_status', 'POST', { orderId: orderId, status: 'completed' }).then(function(result) {
+            if (result.success) {
+                loadShopOrders();
+                alert('订单已完成');
+            } else {
+                alert('操作失败: ' + (result.error || '未知错误'));
+            }
+        }).catch(function(err) {
+            alert('操作异常: ' + err.message);
+        });
+    }
+
+    function openRefundModal(orderId) {
+        document.getElementById('refund-modal').classList.remove('hidden');
+        document.getElementById('refund-order-id').value = orderId;
+        document.getElementById('refund-reason').value = '';
+    }
+
+    function closeRefundModal() {
+        document.getElementById('refund-modal').classList.add('hidden');
+    }
+
+    function confirmRefund() {
+        const orderId = document.getElementById('refund-order-id').value;
+        const reason = document.getElementById('refund-reason').value.trim();
+        if (!reason) {
+            alert('请填写退款原因');
+            return;
+        }
+        if (!confirm('确定要退款吗？此操作不可撤销。')) return;
+
+        apiRequest('shop_order_status', 'POST', { orderId: orderId, status: 'refunded' }).then(function(result) {
+            if (result.success) {
+                closeRefundModal();
+                loadShopOrders();
+                alert('退款成功');
+            } else {
+                alert('退款失败: ' + (result.error || '未知错误'));
+            }
+        }).catch(function(err) {
+            alert('退款异常: ' + err.message);
         });
     }
 

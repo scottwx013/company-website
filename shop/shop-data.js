@@ -334,6 +334,7 @@ function getOrders(userId) {
                         cancelTime: o.cancelled_at,
                         logisticsCompany: o.logistics_company,
                         trackingNo: o.tracking_no,
+                        virtualContent: o.virtual_content,
                         payMethod: o.pay_method,
                         remark: o.remark
                     };

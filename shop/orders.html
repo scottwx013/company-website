@@ -15,6 +15,7 @@
         .status-shipped { background: #e0e7ff; color: #3730a3; }
         .status-completed { background: #d1fae5; color: #065f46; }
         .status-cancelled { background: #f3f4f6; color: #6b7280; }
+        .status-refunded { background: #fee2e2; color: #991b1b; }
         .tab-active { color: #7c3aed; border-bottom: 2px solid #7c3aed; }
         .tab-inactive { color: #6b7280; border-bottom: 2px solid transparent; }
     </style>
@@ -81,7 +82,8 @@
             paid: { text: '待发货', class: 'status-paid', icon: 'fa-check-circle' },
             shipped: { text: '待收货', class: 'status-shipped', icon: 'fa-truck' },
             completed: { text: '已完成', class: 'status-completed', icon: 'fa-check-double' },
-            cancelled: { text: '已取消', class: 'status-cancelled', icon: 'fa-times-circle' }
+            cancelled: { text: '已取消', class: 'status-cancelled', icon: 'fa-times-circle' },
+            refunded: { text: '已退款', class: 'status-refunded', icon: 'fa-undo' }
         };
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -188,8 +190,169 @@
         function viewOrderDetail(orderId) {
             const order = orders.find(o => o.id === orderId);
             if (!order) return;
-            // 简单用 alert 展示详情，后续可改成弹窗
-            alert(`订单详情\n订单号：${order.id}\n状态：${statusMap[order.status]?.text || order.status}\n金额：¥${order.totalAmount}\n收货人：${order.receiverName}\n地址：${order.address}\n备注：${order.remark || '无'}`);
+            
+            const status = statusMap[order.status] || statusMap.pending;
+            
+            // 构建物流信息HTML
+            let logisticsHtml = '';
+            if (order.status === 'shipped' || order.status === 'completed') {
+                if (order.logisticsCompany && order.trackingNo) {
+                    logisticsHtml = `
+                        <div class="bg-blue-50 rounded-lg p-3 mb-3">
+                            <h4 class="font-medium text-blue-900 mb-2">📦 物流信息</h4>
+                            <p class="text-sm text-blue-800">${order.logisticsCompany} · 单号: ${order.trackingNo}</p>
+                        </div>`;
+                } else if (order.virtualContent) {
+                    logisticsHtml = `
+                        <div class="bg-green-50 rounded-lg p-3 mb-3">
+                            <h4 class="font-medium text-green-900 mb-2">🎫 卡券内容</h4>
+                            <pre class="text-sm text-green-800 whitespace-pre-wrap font-mono bg-white p-2 rounded">${order.virtualContent}</pre>
+                        </div>`;
+                }
+            }
+            
+            // 构建售后入口
+            let afterSaleHtml = '';
+            if (order.status === 'paid' || order.status === 'shipped' || order.status === 'completed') {
+                afterSaleHtml = `
+                    <div class="border-t pt-3 mt-3">
+                        <h4 class="font-medium mb-2">🛎️ 售后服务</h4>
+                        <div class="flex gap-2">
+                            <button onclick="openRefundModal('${order.id}')" class="px-3 py-1.5 bg-red-100 text-red-600 text-sm rounded hover:bg-red-200 transition">申请退款</button>
+                            <a href="tel:400-928-9028" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-sm rounded hover:bg-gray-200 transition">联系客服</a>
+                        </div>
+                    </div>`;
+            }
+            
+            const modalHtml = `
+                <div id="orderDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+                        <div class="p-4 border-b flex justify-between items-center">
+                            <h3 class="font-bold text-lg">订单详情</h3>
+                            <button onclick="closeOrderDetailModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="font-mono text-sm text-gray-500">${order.id}</span>
+                                <span class="status-badge ${status.class} text-xs"><i class="fas ${status.icon} mr-1"></i>${status.text}</span>
+                            </div>
+                            <div class="text-sm text-gray-500 mb-3">下单时间: ${formatDate(order.createTime)}</div>
+                            
+                            <div class="border-t py-3">
+                                <h4 class="font-medium mb-2">商品清单</h4>
+                                ${order.items ? order.items.map(item => `
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <img src="${item.image || 'https://via.placeholder.com/80'}" class="w-14 h-14 object-cover rounded bg-gray-100">
+                                        <div class="flex-1">
+                                            <p class="font-medium text-sm">${item.productName}</p>
+                                            <p class="text-xs text-gray-500">${item.productType === 'virtual' ? '电子卡券' : '实物商品'} · x${item.quantity}</p>
+                                        </div>
+                                        <span class="font-medium">¥${item.price}</span>
+                                    </div>
+                                `).join('') : ''}
+                            </div>
+                            
+                            <div class="border-t py-3">
+                                <h4 class="font-medium mb-2">收货信息</h4>
+                                <p class="text-sm">${order.receiverName || order.receiver_name} · ${order.receiverPhone || order.receiver_phone}</p>
+                                <p class="text-sm text-gray-500">${order.receiverAddress || order.address}</p>
+                            </div>
+                            
+                            ${logisticsHtml}
+                            ${afterSaleHtml}
+                            
+                            <div class="border-t pt-3 mt-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-medium">订单金额</span>
+                                    <span class="text-xl font-bold text-purple-600">¥${order.totalAmount}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            // 移除已有的弹窗
+            const existingModal = document.getElementById('orderDetailModal');
+            if (existingModal) existingModal.remove();
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeOrderDetailModal() {
+            const modal = document.getElementById('orderDetailModal');
+            if (modal) modal.remove();
+        }
+
+        function openRefundModal(orderId) {
+            closeOrderDetailModal();
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            
+            const modalHtml = `
+                <div id="refundModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-xl max-w-sm w-full">
+                        <div class="p-4 border-b">
+                            <h3 class="font-bold text-lg">申请退款</h3>
+                        </div>
+                        <div class="p-4">
+                            <p class="text-sm text-gray-500 mb-3">订单号: ${orderId}</p>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium mb-1">退款原因 *</label>
+                                <textarea id="refundReason" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="请填写退款原因..."></textarea>
+                            </div>
+                            <div class="bg-yellow-50 rounded-lg p-3 mb-3">
+                                <p class="text-xs text-yellow-800">提交后客服将在1-3个工作日内处理您的申请</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="closeRefundModal()" class="flex-1 py-2 border border-gray-300 rounded-lg text-sm">取消</button>
+                                <button onclick="submitRefund('${orderId}')" class="flex-1 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">提交申请</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeRefundModal() {
+            const modal = document.getElementById('refundModal');
+            if (modal) modal.remove();
+        }
+
+        function submitRefund(orderId) {
+            const reason = document.getElementById('refundReason').value.trim();
+            if (!reason) {
+                showToast('请填写退款原因', 'error');
+                return;
+            }
+            closeRefundModal();
+            showToast('退款申请已提交，客服将尽快处理', 'success');
+        }
+
+        function showToast(message, type = 'info') {
+            const existingToast = document.getElementById('pageToast');
+            if (existingToast) existingToast.remove();
+            
+            const toast = document.createElement('div');
+            toast.id = 'pageToast';
+            toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 opacity-0 pointer-events-none z-50 text-white';
+            toast.textContent = message;
+            
+            if (type === 'error') toast.classList.add('bg-red-600');
+            else if (type === 'success') toast.classList.add('bg-green-600');
+            else toast.classList.add('bg-gray-800');
+            
+            document.body.appendChild(toast);
+            requestAnimationFrame(function() {
+                toast.classList.remove('opacity-0');
+                toast.classList.add('opacity-100');
+            });
+            
+            setTimeout(function() {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 3000);
         }
 
         function payOrder(orderId) {

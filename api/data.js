@@ -408,6 +408,9 @@ module.exports = async (req, res) => {
                     payTime: o.pay_time,
                     shipTime: o.ship_time,
                     completeTime: o.complete_time,
+                    logisticsCompany: o.logistics_company,
+                    trackingNo: o.tracking_no,
+                    virtualContent: o.virtual_content,
                     items: items
                 };
             });
@@ -538,6 +541,17 @@ module.exports = async (req, res) => {
                 updateBody.complete_time = new Date().toISOString();
             } else if (status === 'cancelled') {
                 updateBody.cancel_time = new Date().toISOString();
+            }
+            
+            // 保存物流信息
+            if (logisticsInfo && logisticsInfo.company && logisticsInfo.trackingNo) {
+                updateBody.logistics_company = logisticsInfo.company;
+                updateBody.tracking_no = logisticsInfo.trackingNo;
+            }
+            
+            // 保存虚拟商品内容
+            if (virtualContent && virtualContent.content) {
+                updateBody.virtual_content = virtualContent.content;
             }
             
             const result = await supabaseRequest('shop_orders', 'PATCH', 'id=eq.' + encodeURIComponent(orderId), updateBody);
