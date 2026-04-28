@@ -2304,6 +2304,7 @@
                 actionButtons += '<button onclick="confirmReceipt(\'' + o.id + '\')" class="bg-green-100 text-green-600 text-sm px-3 py-1 rounded hover:bg-green-200 ml-2">确认收货</button>';
                 actionButtons += '<button onclick="openRefundModal(\'' + o.id + '\')" class="bg-red-100 text-red-600 text-sm px-3 py-1 rounded hover:bg-red-200 ml-2">退款</button>';
             } else if (o.status === 'pending') {
+                actionButtons += '<button onclick="confirmPayment(\'' + o.id + '\')" class="bg-green-600 text-white text-sm px-3 py-1 rounded hover:bg-green-700 ml-2">确认收款</button>';
                 actionButtons += '<button onclick="cancelOrderAdmin(\'' + o.id + '\')" class="bg-gray-100 text-gray-600 text-sm px-3 py-1 rounded hover:bg-gray-200 ml-2">取消</button>';
             } else if (o.status === 'completed') {
                 actionButtons += '<button onclick="openRefundModal(\'' + o.id + '\')" class="bg-red-100 text-red-600 text-sm px-3 py-1 rounded hover:bg-red-200 ml-2">退款</button>';
@@ -2527,6 +2528,20 @@
             }
         }).catch(function(err) {
             alert('取消异常: ' + err.message);
+        });
+    }
+
+    function confirmPayment(orderId) {
+        if (!confirm('确定已收到该订单的款项吗？确认后将变为「待发货」状态。')) return;
+        apiRequest('shop_order_status', 'POST', { orderId: orderId, status: 'paid' }).then(function(result) {
+            if (result.success) {
+                loadShopOrders();
+                alert('收款确认成功，订单已标记为待发货');
+            } else {
+                alert('确认收款失败: ' + (result.error || '未知错误'));
+            }
+        }).catch(function(err) {
+            alert('操作异常: ' + err.message);
         });
     }
 
