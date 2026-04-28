@@ -28,3 +28,43 @@ jobs:
 
       - name: Deploy to Production
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  test:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright
+        run: |
+          npm install playwright
+          npx playwright install chromium
+
+      - name: Wait for deployment
+        run: sleep 15
+
+      - name: Run E2E tests
+        env:
+          TEST_URL: https://yili-mall.vercel.app
+        run: node test/e2e/full-flow.test.js
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-screenshots
+          path: /tmp/openclaw/test-screenshots/
+          if-no-files-found: ignore
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: /tmp/openclaw/test-report.txt
+          if-no-files-found: ignore
