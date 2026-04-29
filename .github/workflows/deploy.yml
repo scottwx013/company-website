@@ -50,7 +50,7 @@ jobs:
 
       - name: Run E2E tests
         env:
-          TEST_URL: https://yili-mall.vercel.app
+          TEST_URL: https://mall.1gift.co
         run: node test/e2e/full-flow.test.js
 
       - name: Upload test artifacts
