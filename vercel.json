@@ -1,23 +1,21 @@
 {
   "version": 2,
   "outputDirectory": ".",
-  "redirects": [
+  "routes": [
     {
-      "source": "/:path*",
+      "src": "/(.*)",
       "has": [
         {
           "type": "host",
           "value": "mall.1gift.co"
         }
       ],
-      "destination": "https://1gift.co/shop/:path*",
-      "permanent": true
-    }
-  ],
-  "rewrites": [
+      "dest": "https://1gift.co/shop/$1",
+      "status": 308
+    },
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
     }
   ],
   "headers": [
