@@ -4,72 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>宜礼 - 专业员工福利解决方案</title>
-    <meta name="description" content="宜礼为企业提供专业员工福利解决方案，涵盖礼品卡券、节日福利、员工关怀等一站式福利服务。">
-    <meta name="keywords" content="员工福利,企业福利,礼品卡券,节日福利,员工关怀">
+    <meta name="description" content="宜礼为企业提供专业的员工福利解决方案，包括节日福利、员工关怀、观影演出、团建活动等多元化福利服务。">
+    <meta name="keywords" content="员工福利,企业福利,节日福利,员工关怀,福利平台,企业礼品">
     <meta property="og:title" content="宜礼 - 专业员工福利解决方案">
-    <meta property="og:description" content="宜礼为企业提供专业员工福利解决方案，涵盖礼品卡券、节日福利、员工关怀等一站式福利服务。">
+    <meta property="og:description" content="宜礼为企业提供专业的员工福利解决方案，包括节日福利、员工关怀、观影演出、团建活动等多元化福利服务。">
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://1gift.co/">
+    <link rel="canonical" href="https://1gift.co/">
+    <script>
+        // mall.1gift.co 域名自动跳转到商城
+        if (location.hostname === 'mall.1gift.co' || location.hostname === 'www.mall.1gift.co') {
+            var target = 'https://1gift.co/shop' + location.pathname + location.search + location.hash;
+            location.replace(target);
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Noto Sans SC', sans-serif; }
-        .huawei-red { color: #CF0A2C; }
-        .huawei-blue { color: #0052D9; }
-        .bg-huawei-blue { background-color: #0052D9; }
-        .bg-huawei-red { background-color: #CF0A2C; }
-        .gradient-hero {
-            background: linear-gradient(135deg, #001529 0%, #002B4F 50%, #004080 100%);
-        }
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-        .nav-blur {
-            backdrop-filter: blur(10px);
-            background: rgba(255,255,255,0.95);
-        }
-        .logo-img {
-            height: 40px;
-            width: auto;
-            object-fit: contain;
-            transition: transform 0.2s ease;
-        }
-        .logo-img:hover {
-            transform: scale(1.02);
-        }
+        .hero-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .float-animation { animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     </style>
 </head>
 <body class="bg-gray-50">
-    <!-- 导航 -->
-    <nav class="nav-blur fixed w-full z-50 border-b border-gray-200">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-md fixed w-full z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
+            <div class="flex justify-between items-center h-16">
                 <div class="flex items-center">
-                    <a href="index.html" class="flex items-center">
-                        <img src="assets/logo-purple.jpg" alt="宜礼" class="logo-img">
+                    <a href="/" class="flex items-center">
+                        <img src="/assets/logo-purple.jpg" alt="宜礼" class="h-8 w-auto">
+                        <span class="ml-2 text-xl font-bold text-purple-700">宜礼</span>
                     </a>
                 </div>
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="index.html" class="text-gray-900 font-medium hover:text-blue-600">首页</a>
-                    <a href="products.html" class="text-gray-600 hover:text-blue-600">产品服务</a>
-                    <a href="merchants.html" class="text-gray-600 hover:text-blue-600">商户网络</a>
+                <div class="hidden md:flex space-x-8">
+                    <a href="/" class="text-purple-600 font-medium">首页</a>
+                    <a href="products.html" class="text-gray-600 hover:text-purple-600">产品服务</a>
+                    <a href="merchants.html" class="text-gray-600 hover:text-purple-600">商户网络</a>
                     <a href="shop/index.html" class="text-gray-600 hover:text-purple-600">商城</a>
-                    <a href="about.html" class="text-gray-600 hover:text-blue-600">关于我们</a>
-                    <a href="contact.html" class="text-gray-600 hover:text-blue-600">联系我们</a>
+                    <a href="about.html" class="text-gray-600 hover:text-purple-600">关于我们</a>
+                    <a href="contact.html" class="text-gray-600 hover:text-purple-600">联系我们</a>
                 </div>
-                <div class="md:hidden flex items-center">
+                <div class="md:hidden">
                     <button onclick="toggleMobileMenu()" class="text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                        </svg>
+                        <i class="fas fa-bars text-xl"></i>
                     </button>
                 </div>
             </div>
         </div>
         <!-- 移动端菜单 -->
         <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
-            <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="index.html" class="block px-3 py-2 text-gray-900 font-medium">首页</a>
+            <div class="px-4 py-2">
+                <a href="/" class="block px-3 py-2 text-purple-600 font-medium">首页</a>
                 <a href="products.html" class="block px-3 py-2 text-gray-600">产品服务</a>
                 <a href="merchants.html" class="block px-3 py-2 text-gray-600">商户网络</a>
                 <a href="shop/index.html" class="block px-3 py-2 text-gray-600">商城</a>
@@ -79,100 +69,147 @@
         </div>
     </nav>
 
-    <!-- Hero 区域 -->
-    <section class="gradient-hero pt-32 pb-20 lg:pt-40 lg:pb-32">
+    <!-- Hero区域 -->
+    <section class="hero-gradient text-white pt-32 pb-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                <h1 class="text-4xl md:text-6xl font-bold text-white mb-6" id="hero-title">
-                    让每一份福利都更有温度
-                </h1>
-                <p class="text-xl md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto" id="hero-subtitle">
-                    专业员工福利解决方案，助力企业提升员工满意度
-                </p>
-                <div class="flex justify-center gap-4">
-                    <a href="products.html" class="bg-white text-blue-900 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition">
-                        了解我们的服务
-                    </a>
-                    <a href="contact.html" class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-blue-900 transition">
-                        免费咨询
-                    </a>
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-bold mb-6">
+                        让每一份福利都更有温度
+                    </h1>
+                    <p class="text-xl mb-8 text-purple-100">
+                        专业员工福利解决方案，助力企业提升员工满意度
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <a href="products.html" class="bg-white text-purple-700 px-8 py-3 rounded-lg font-medium hover:bg-purple-50 transition">
+                            了解我们的服务
+                        </a>
+                        <a href="contact.html" class="border-2 border-white text-white px-8 py-3 rounded-lg font-medium hover:bg-white hover:text-purple-700 transition">
+                            免费咨询
+                        </a>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <img src="/assets/hero-image.svg" alt="员工福利" class="w-full float-animation">
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 统计数据 -->
-    <section class="py-16 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8" id="stats-container">
-                <!-- 动态加载 -->
-            </div>
-        </div>
-    </section>
-
-    <!-- 核心优势 -->
-    <section class="py-20 bg-gray-50">
+    <!-- 为什么选择宜礼 -->
+    <section class="py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">为什么选择宜礼</h2>
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">为什么选择宜礼</h2>
                 <p class="text-gray-600 text-lg">全方位服务，让福利管理更简单</p>
             </div>
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8" id="features-container">
-                <!-- 动态加载 -->
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white rounded-xl p-8 card-hover">
+                    <div class="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
+                        <i class="fas fa-gift text-2xl text-purple-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">丰富多样的福利选择</h3>
+                    <p class="text-gray-600">涵盖节日福利、员工关怀、观影演出、团建活动等多元化福利方案</p>
+                </div>
+                <div class="bg-white rounded-xl p-8 card-hover">
+                    <div class="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
+                        <i class="fas fa-handshake text-2xl text-purple-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">优质的商户网络</h3>
+                    <p class="text-gray-600">与众多知名品牌合作，为员工提供高品质的福利体验</p>
+                </div>
+                <div class="bg-white rounded-xl p-8 card-hover">
+                    <div class="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
+                        <i class="fas fa-chart-line text-2xl text-purple-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">专业的服务团队</h3>
+                    <p class="text-gray-600">专属客户经理全程跟进，确保福利方案顺利实施</p>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- 产品预览 -->
-    <section class="py-20 bg-white">
+    <!-- 产品与服务 -->
+    <section class="py-20 bg-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">产品与服务</h2>
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">产品与服务</h2>
                 <p class="text-gray-600 text-lg">多元化福利方案，满足不同企业需求</p>
             </div>
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="products-preview">
-                <!-- 动态加载 -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white rounded-xl overflow-hidden card-hover">
+                    <div class="h-48 bg-purple-50 flex items-center justify-center">
+                        <i class="fas fa-calendar-alt text-5xl text-purple-400"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-2">节日福利</h3>
+                        <p class="text-gray-600 text-sm">春节、中秋、端午等传统节日福利方案</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl overflow-hidden card-hover">
+                    <div class="h-48 bg-purple-50 flex items-center justify-center">
+                        <i class="fas fa-heart text-5xl text-purple-400"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-2">员工关怀</h3>
+                        <p class="text-gray-600 text-sm">生日福利、健康关怀、家庭日等员工关爱方案</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl overflow-hidden card-hover">
+                    <div class="h-48 bg-purple-50 flex items-center justify-center">
+                        <i class="fas fa-film text-5xl text-purple-400"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-2">观影演出</h3>
+                        <p class="text-gray-600 text-sm">电影票、演出票、文化活动等娱乐福利</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl overflow-hidden card-hover">
+                    <div class="h-48 bg-purple-50 flex items-center justify-center">
+                        <i class="fas fa-users text-5xl text-purple-400"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-2">团建活动</h3>
+                        <p class="text-gray-600 text-sm">户外拓展、团队建设、趣味运动会等活动</p>
+                    </div>
+                </div>
             </div>
             <div class="text-center mt-12">
-                <a href="products.html" class="inline-flex items-center text-blue-600 font-semibold text-lg hover:text-blue-800">
+                <a href="products.html" class="inline-block bg-purple-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-purple-700 transition">
                     查看全部产品
-                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
                 </a>
             </div>
         </div>
     </section>
 
-
-    <section class="py-20 bg-huawei-blue">
+    <!-- CTA区域 -->
+    <section class="py-20">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">开始提升您的员工福利体验</h2>
-            <p class="text-blue-100 text-xl mb-10">立即联系我们，获取专属福利解决方案</p>
-            <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <a href="contact.html" class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition">
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">开始提升您的员工福利体验</h2>
+            <p class="text-gray-600 text-lg mb-8">立即联系我们，获取专属福利解决方案</p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="contact.html" class="bg-purple-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-purple-700 transition">
                     预约演示
                 </a>
-                <span class="text-blue-100 flex items-center justify-center">
-                    或拨打 400-928-9028
-                </span>
+                <span class="text-gray-500 py-3">或拨打 400-928-9028</span>
             </div>
         </div>
     </section>
 
     <!-- 页脚 -->
-    <footer class="bg-gray-900 text-gray-300 py-12">
+    <footer class="bg-gray-900 text-white py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8">
                 <div>
-                    <a href="index.html" class="flex items-center mb-4">
-                        <img src="assets/logo-purple.jpg" alt="宜礼" style="height:32px;width:auto;object-fit:contain">
-                    </a>
-                    <p class="text-sm">专业员工福利解决方案提供商</p>
+                    <div class="flex items-center mb-4">
+                        <img src="/assets/logo-purple.jpg" alt="宜礼" class="h-8 w-auto">
+                        <span class="ml-2 text-xl font-bold">宜礼</span>
+                    </div>
+                    <p class="text-gray-400">专业员工福利解决方案提供商</p>
                 </div>
                 <div>
-                    <h4 class="text-white font-semibold mb-4">产品服务</h4>
-                    <ul class="space-y-2 text-sm">
+                    <h4 class="text-lg font-semibold mb-4">产品服务</h4>
+                    <ul class="space-y-2 text-gray-400">
                         <li><a href="products.html" class="hover:text-white">节日福利</a></li>
                         <li><a href="products.html" class="hover:text-white">员工关怀</a></li>
                         <li><a href="products.html" class="hover:text-white">观影演出</a></li>
@@ -180,151 +217,33 @@
                     </ul>
                 </div>
                 <div>
-                    <h4 class="text-white font-semibold mb-4">关于我们</h4>
-                    <ul class="space-y-2 text-sm">
+                    <h4 class="text-lg font-semibold mb-4">关于我们</h4>
+                    <ul class="space-y-2 text-gray-400">
                         <li><a href="about.html" class="hover:text-white">公司介绍</a></li>
                         <li><a href="merchants.html" class="hover:text-white">商户网络</a></li>
                         <li><a href="contact.html" class="hover:text-white">联系我们</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4 class="text-white font-semibold mb-4">联系方式</h4>
-                    <ul class="space-y-2 text-sm">
+                    <h4 class="text-lg font-semibold mb-4">联系方式</h4>
+                    <ul class="space-y-2 text-gray-400">
                         <li>电话：400-928-9028</li>
                         <li>邮箱：contact@1gift.co</li>
                         <li>地址：江苏省无锡市菱湖大道200号微纳园E2栋</li>
                     </ul>
                 </div>
             </div>
-            <div class="border-t border-gray-800 mt-12 pt-8 text-center text-sm">
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
                 <p>&copy; 2024 宜礼. 保留所有权利.</p>
             </div>
         </div>
     </footer>
 
     <script>
-        const API_BASE = '/api/data';
-        
-        // 通用API请求函数
-        function apiRequest(action, callback) {
-            var xhr = new XMLHttpRequest();
-            var url = action ? API_BASE + '?action=' + action : API_BASE;
-            xhr.open('GET', url, true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    var data = JSON.parse(xhr.responseText);
-                    if (data.success && callback) {
-                        callback(data.data);
-                    }
-                }
-            };
-            xhr.send();
-        }
-        
-        // 加载首页配置
-        function loadHomeConfig() {
-            apiRequest('home', function(data) {
-                if (data && data.hero) {
-                    renderHome(data.hero);
-                }
-            });
-        }
-        
-        // 加载统计数据和特性
-        function loadStatsAndFeatures() {
-            apiRequest('home', function(data) {
-                if (data) {
-                    renderStats(data.stats || []);
-                    renderFeatures(data.features || []);
-                }
-            });
-        }
-        
-        // 加载产品
-        function loadProducts() {
-            apiRequest('products', function(data) {
-                if (data) {
-                    renderProducts(data.slice(0, 3));
-                }
-            });
-        }
-        
-        function renderHome(hero) {
-            if (hero.title) {
-                document.getElementById('hero-title').textContent = hero.title;
-            }
-            if (hero.subtitle) {
-                document.getElementById('hero-subtitle').textContent = hero.subtitle;
-            }
-        }
-        
-        function renderStats(stats) {
-            var container = document.getElementById('stats-container');
-            if (!container || stats.length === 0) return;
-            
-            var html = '';
-            for (var i = 0; i < stats.length; i++) {
-                html += '<div class="text-center">';
-                html += '<div class="text-4xl md:text-5xl font-bold text-blue-600 mb-2">' + stats[i].number + '</div>';
-                html += '<div class="text-gray-600">' + stats[i].label + '</div>';
-                html += '</div>';
-            }
-            container.innerHTML = html;
-        }
-        
-        function renderFeatures(features) {
-            var container = document.getElementById('features-container');
-            if (!container || features.length === 0) return;
-            
-            var html = '';
-            for (var i = 0; i < features.length; i++) {
-                html += '<div class="bg-white rounded-xl p-8 shadow-sm card-hover">';
-                html += '<div class="text-4xl mb-4">' + features[i].icon + '</div>';
-                html += '<h3 class="text-xl font-bold text-gray-900 mb-3">' + features[i].title + '</h3>';
-                html += '<p class="text-gray-600">' + features[i].desc + '</p>';
-                html += '</div>';
-            }
-            container.innerHTML = html;
-        }
-        
-        function renderProducts(products) {
-            var container = document.getElementById('products-preview');
-            if (!container || products.length === 0) return;
-            
-            var html = '';
-            for (var i = 0; i < products.length; i++) {
-                var p = products[i];
-                html += '<div class="bg-white rounded-xl overflow-hidden shadow-sm card-hover">';
-                html += '<div class="h-48 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center overflow-hidden">';
-                html += '<img src="' + p.image + '" alt="' + (p.image_alt || p.name) + '" class="w-full h-full object-cover">';
-                html += '</div>';
-                html += '<div class="p-6">';
-                html += '<h3 class="text-xl font-bold text-gray-900 mb-2">' + p.name + '</h3>';
-                html += '<p class="text-gray-600 mb-4">' + p.description + '</p>';
-                html += '</div></div>';
-            }
-            container.innerHTML = html;
-        }
-        
         function toggleMobileMenu() {
-            var menu = document.getElementById('mobile-menu');
+            const menu = document.getElementById('mobile-menu');
             menu.classList.toggle('hidden');
-        }
-        
-        // 页面加载
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                loadHomeConfig();
-                loadStatsAndFeatures();
-                loadProducts();
-            });
-        } else {
-            loadHomeConfig();
-            loadStatsAndFeatures();
-            loadProducts();
         }
     </script>
 </body>
-</html>>
 </html>
