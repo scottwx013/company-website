@@ -254,7 +254,7 @@
             grid.innerHTML = featured.map(p => `
                 <div class="featured-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer" onclick="goToProduct(${p.id})">
                     <div class="aspect-square overflow-hidden bg-gray-100 relative">
-                        <img src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                        <img src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" loading="lazy">
                         <span class="absolute top-2 left-2 px-2 py-0.5 text-xs rounded-full bg-red-500 text-white">精选</span>
                     </div>
                     <div class="p-3">
@@ -297,7 +297,7 @@
             grid.innerHTML = filtered.map(p => `
                 <div class="product-card bg-white rounded-xl overflow-hidden shadow-sm transition-all duration-300 cursor-pointer" onclick="goToProduct(${p.id})">
                     <div class="aspect-square overflow-hidden bg-gray-100">
-                        <img src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                        <img src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" loading="lazy">
                     </div>
                     <div class="p-4">
                         <span class="px-2 py-0.5 text-xs rounded-full ${p.type === 'virtual' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}">${p.type === 'virtual' ? '电子卡券' : '实物商品'}</span>
