@@ -16,6 +16,22 @@
         .category-btn.active { background: #7c3aed; color: white; }
         .cart-badge { animation: bounce 0.3s; }
         @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+
+        /* Banner */
+        .banner-container { position: relative; overflow: hidden; border-radius: 16px; }
+        .banner-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.6s ease; display: flex; align-items: center; justify-content: center; }
+        .banner-slide.active { opacity: 1; position: relative; }
+        .banner-dots { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }
+        .banner-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.3s; }
+        .banner-dot.active { background: white; width: 24px; border-radius: 4px; }
+
+        /* Category */
+        .category-card { transition: all 0.3s; cursor: pointer; }
+        .category-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+
+        /* Featured */
+        .featured-card { transition: all 0.3s; }
+        .featured-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -53,6 +69,85 @@
         </div>
     </nav>
 
+    <!-- Banner 轮播 -->
+    <section class="max-w-7xl mx-auto px-4 pt-4">
+        <div class="banner-container h-48 md:h-64">
+            <div class="banner-slide active h-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 md:px-16">
+                <div class="max-w-lg">
+                    <h2 class="text-2xl md:text-4xl font-bold mb-2">企业福利首选平台</h2>
+                    <p class="text-purple-100 text-sm md:text-base">一站式员工福利解决方案，覆盖电子卡券与实物礼品</p>
+                    <button onclick="scrollToProducts()" class="mt-4 px-6 py-2 bg-white text-purple-600 rounded-full font-medium text-sm hover:bg-purple-50 transition">立即选购</button>
+                </div>
+            </div>
+            <div class="banner-slide h-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 md:px-16">
+                <div class="max-w-lg">
+                    <h2 class="text-2xl md:text-4xl font-bold mb-2">电子卡券即时到账</h2>
+                    <p class="text-blue-100 text-sm md:text-base">电影票、购物卡、餐饮券，员工即买即用，无需等待</p>
+                    <button onclick="filterByCategory('virtual')" class="mt-4 px-6 py-2 bg-white text-blue-500 rounded-full font-medium text-sm hover:bg-blue-50 transition">查看卡券</button>
+                </div>
+            </div>
+            <div class="banner-slide h-full bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 md:px-16">
+                <div class="max-w-lg">
+                    <h2 class="text-2xl md:text-4xl font-bold mb-2">实物礼品全国配送</h2>
+                    <p class="text-orange-100 text-sm md:text-base">精选品质好礼，全国300+城市快递直达</p>
+                    <button onclick="filterByCategory('physical')" class="mt-4 px-6 py-2 bg-white text-orange-500 rounded-full font-medium text-sm hover:bg-orange-50 transition">查看礼品</button>
+                </div>
+            </div>
+            <div class="banner-dots">
+                <div class="banner-dot active" onclick="goToSlide(0)"></div>
+                <div class="banner-dot" onclick="goToSlide(1)"></div>
+                <div class="banner-dot" onclick="goToSlide(2)"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 分类快捷入口 -->
+    <section class="max-w-7xl mx-auto px-4 py-6">
+        <div class="grid grid-cols-3 gap-4">
+            <div class="category-card bg-white rounded-xl p-4 text-center shadow-sm" onclick="filterByCategory('virtual')">
+                <div class="w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-ticket-alt text-blue-600 text-xl"></i>
+                </div>
+                <h3 class="font-medium text-gray-800 text-sm">电子卡券</h3>
+                <p class="text-xs text-gray-500 mt-1">即时到账</p>
+            </div>
+            <div class="category-card bg-white rounded-xl p-4 text-center shadow-sm" onclick="filterByCategory('physical')">
+                <div class="w-12 h-12 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-box-open text-green-600 text-xl"></i>
+                </div>
+                <h3 class="font-medium text-gray-800 text-sm">实物商品</h3>
+                <p class="text-xs text-gray-500 mt-1">全国配送</p>
+            </div>
+            <div class="category-card bg-white rounded-xl p-4 text-center shadow-sm" onclick="window.location.href='../contact.html'">
+                <div class="w-12 h-12 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-building text-purple-600 text-xl"></i>
+                </div>
+                <h3 class="font-medium text-gray-800 text-sm">企业团购</h3>
+                <p class="text-xs text-gray-500 mt-1">定制方案</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 精选福利 -->
+    <section class="max-w-7xl mx-auto px-4 pb-4">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-gray-800">精选福利</h2>
+            <span class="text-sm text-gray-500">人气推荐</span>
+        </div>
+        <div id="featuredGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+    </section>
+
+    <!-- 促销横幅 -->
+    <section class="max-w-7xl mx-auto px-4 py-4">
+        <div class="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-4 md:p-6 text-white flex items-center justify-between cursor-pointer" onclick="window.location.href='../contact.html'">
+            <div>
+                <h3 class="font-bold text-lg">企业批量采购享专属折扣</h3>
+                <p class="text-emerald-100 text-sm">满 100 单享 95 折，满 500 单享 9 折，联系客服定制方案</p>
+            </div>
+            <i class="fas fa-chevron-right text-white text-xl"></i>
+        </div>
+    </section>
+
     <!-- 分类导航 -->
     <div class="bg-white border-b">
         <div class="max-w-7xl mx-auto px-4 py-3">
@@ -64,6 +159,7 @@
         </div>
     </div>
 
+    <!-- 商品列表 -->
     <main class="max-w-7xl mx-auto px-4 py-8">
         <div id="productGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"></div>
         <div id="emptyState" class="hidden text-center py-20">
@@ -78,24 +174,91 @@
         let products = [];
         let cart = JSON.parse(localStorage.getItem('cart') || '[]');
         let currentCategory = 'all';
+        let bannerIndex = 0;
+        let bannerInterval;
 
         document.addEventListener('DOMContentLoaded', () => {
             loadProducts();
             updateCartBadge();
             updateUserSection();
             setupEventListeners();
+            startBannerCarousel();
         });
 
+        // Banner 轮播
+        function startBannerCarousel() {
+            bannerInterval = setInterval(() => {
+                goToSlide((bannerIndex + 1) % 3);
+            }, 5000);
+        }
+
+        function goToSlide(index) {
+            bannerIndex = index;
+            document.querySelectorAll('.banner-slide').forEach((s, i) => {
+                s.classList.toggle('active', i === index);
+            });
+            document.querySelectorAll('.banner-dot').forEach((d, i) => {
+                d.classList.toggle('active', i === index);
+            });
+        }
+
+        function scrollToProducts() {
+            document.querySelector('.category-btn[data-category="all"]').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function filterByCategory(cat) {
+            document.querySelectorAll('.category-btn').forEach(b => {
+                b.classList.remove('active');
+                b.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            const btn = document.querySelector('.category-btn[data-category="' + cat + '"]');
+            if (btn) {
+                btn.classList.add('active');
+                btn.classList.remove('bg-gray-100', 'text-gray-600');
+            }
+            currentCategory = cat;
+            renderProducts();
+            scrollToProducts();
+        }
+
         function loadProducts() {
-            // 使用 shop-data.js 的统一数据层（异步，返回 Promise）
             getProducts().then(function(data) {
                 products = data || [];
+                renderFeatured();
                 renderProducts();
             }).catch(function(err) {
                 console.error('加载商品失败:', err);
                 products = [];
+                renderFeatured();
                 renderProducts();
             });
+        }
+
+        // 渲染精选福利（价格最高的4个）
+        function renderFeatured() {
+            const grid = document.getElementById('featuredGrid');
+            if (!products.length) {
+                grid.innerHTML = '';
+                return;
+            }
+            const featured = products.slice().sort(function(a, b) { return b.price - a.price; }).slice(0, 4);
+            grid.innerHTML = featured.map(p => `
+                <div class="featured-card bg-white rounded-xl overflow-hidden shadow-sm cursor-pointer" onclick="goToProduct(${p.id})">
+                    <div class="aspect-square overflow-hidden bg-gray-100 relative">
+                        <img src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                        <span class="absolute top-2 left-2 px-2 py-0.5 text-xs rounded-full bg-red-500 text-white">精选</span>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="font-medium text-gray-800 text-sm line-clamp-1">${p.name}</h3>
+                        <div class="flex items-center justify-between mt-1">
+                            <span class="text-base font-bold text-red-500">¥${p.price}</span>
+                            <button onclick="event.stopPropagation(); addToCart(${p.id})" class="w-7 h-7 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center hover:bg-purple-600 hover:text-white transition">
+                                <i class="fas fa-plus text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function renderProducts() {
