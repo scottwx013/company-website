@@ -461,7 +461,12 @@
                                 <h2 class="text-2xl font-bold text-gray-900">商城订单管理</h2>
                                 <p class="text-sm text-gray-500 mt-1">查看和处理用户订单</p>
                             </div>
-                            <button onclick="loadShopOrders()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">刷新</button>
+                            <div class="flex gap-2">
+                                <button onclick="exportShopOrders()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm flex items-center gap-1">
+                                    <i class="fas fa-download"></i>导出订单
+                                </button>
+                                <button onclick="loadShopOrders()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">刷新</button>
+                            </div>
                         </div>
 
                         <!-- 统计卡片 -->
@@ -2623,6 +2628,78 @@
                 '<p class="text-gray-700 bg-white rounded p-3 mt-2">' + escapeHtml(m.content) + '</p>' +
             '</div>';
         }).join('');
+    }
+
+    function exportShopOrders() {
+        if (filteredShopOrders.length === 0) {
+            alert('当前没有可导出的订单');
+            return;
+        }
+
+        var statusMap = {
+            pending: '待付款',
+            paid: '待发货',
+            shipped: '待收货',
+            completed: '已完成',
+            cancelled: '已取消',
+            refunded: '已退款'
+        };
+
+        var headers = ['订单编号', '下单时间', '订单状态', '收货人', '收货电话', '收货地址', '商品明细', '订单总额', '物流方式', '物流单号', '备注', '用户ID'];
+
+        var rows = filteredShopOrders.map(function(o) {
+            var items = (o.items || []).map(function(item) {
+                return item.productName + '×' + item.quantity;
+            }).join(' | ');
+
+            return [
+                o.id,
+                new Date(o.createTime).toLocaleString('zh-CN'),
+                statusMap[o.status] || o.status,
+                o.receiverName || '',
+                o.receiverPhone || '',
+                (o.receiverAddress || o.address || '').replace(/,/g, '，'),
+                items,
+                o.totalAmount,
+                o.logisticsCompany || '',
+                o.logisticsNo || '',
+                (o.remark || '').replace(/,/g, '，').replace(/\n/g, ' '),
+                o.userId || ''
+            ];
+        });
+
+        function escapeCSV(val) {
+            var str = String(val == null ? '' : val);
+            if (str.indexOf(',') !== -1 || str.indexOf('"') !== -1 || str.indexOf('\n') !== -1) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        }
+
+        var csvContent = [headers].concat(rows).map(function(row) {
+            return row.map(escapeCSV).join(',');
+        }).join('\n');
+
+        var blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        var dateStr = new Date().toISOString().slice(0, 10);
+        var filterLabel = currentOrderFilter === 'all' ? '全部' : statusMap[currentOrderFilter];
+        link.href = URL.createObjectURL(blob);
+        link.download = '订单_' + filterLabel + '_' + dateStr + '.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 </script>
 <script src="../js/supabase-client.js"></script>
