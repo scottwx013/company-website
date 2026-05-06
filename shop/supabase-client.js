@@ -293,9 +293,6 @@
             return { success: false, error: '商品不存在' };
         });
     }
-            return { success: false, error: '商品不存在' };
-        });
-    }
 
     function createShopProduct(product) {
         var body = {
@@ -512,6 +509,8 @@
         };
         return makeRequest(REST_URL + '/shop_addresses', 'POST', body, true);
     }
+
+    // ===== 购物车 API =====
 
     function getShopCart(userId) {
         var currentUser = getCurrentUser();
