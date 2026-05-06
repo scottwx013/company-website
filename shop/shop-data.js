@@ -426,8 +426,21 @@ function saveOrder(orderData) {
             }
             return result;
         }).catch(function(err) {
-            console.warn('Supabase 下单失败，降级到 localStorage:', err);
-            return saveOrderFallback(orderData);
+            console.warn('Supabase 下单失败，降级到服务端API:', err);
+            // 降级：通过服务端API转发
+            return fetch('/api/data?action=shop_order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: orderData.userId || (getCurrentUser() ? getCurrentUser().id : null),
+                    items: orderData.items,
+                    totalAmount: orderData.totalAmount,
+                    address: orderData.address,
+                    receiverName: orderData.receiverName,
+                    receiverPhone: orderData.receiverPhone,
+                    remark: orderData.remark
+                })
+            }).then(function(response) { return response.json(); });
         });
     }
     return Promise.resolve(saveOrderFallback(orderData));

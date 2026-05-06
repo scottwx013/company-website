@@ -1,264 +1,174 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>确认订单 - 宜礼商城</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .address-card { border: 2px solid transparent; transition: all 0.3s; }
-        .address-card.selected { border-color: #7c3aed; background: #faf5ff; }
-        .address-card:hover { border-color: #ddd6fe; }
-    </style>
-</head>
-<body class="bg-gray-50 min-h-screen">
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
-            <a href="cart.html" class="text-gray-600 hover:text-purple-600"><i class="fas fa-arrow-left mr-1"></i>返回购物车</a>
-            <h1 class="font-bold text-gray-800">确认订单</h1>
-            <div class="w-16"></div>
-        </div>
-    </nav>
-
-    <main class="max-w-3xl mx-auto px-4 py-4 pb-24">
-        <!-- 收货地址 -->
-        <div class="bg-white rounded-xl p-4 mb-4">
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="font-bold text-gray-800">收货地址</h2>
-                <button onclick="showAddressModal()" class="text-purple-600 text-sm"><i class="fas fa-plus mr-1"></i>新增地址</button>
-            </div>
-            <div id="addressList" class="space-y-3"></div>
-        </div>
-
-        <!-- 商品清单 -->
-        <div class="bg-white rounded-xl p-4 mb-4">
-            <h2 class="font-bold text-gray-800 mb-3">商品清单</h2>
-            <div id="productList" class="space-y-4"></div>
-        </div>
-
-        <!-- 配送方式 -->
-        <div class="bg-white rounded-xl p-4 mb-4">
-            <h2 class="font-bold text-gray-800 mb-3">配送方式</h2>
-            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                <input type="radio" name="delivery" value="express" checked class="text-purple-600 mr-3">
-                <div class="flex-1"><p class="font-medium">快递配送</p><p class="text-sm text-gray-500">预计3-5个工作日送达</p></div>
-                <span class="text-gray-600">¥0</span>
-            </label>
-        </div>
-
-        <!-- 订单备注 -->
-        <div class="bg-white rounded-xl p-4 mb-4">
-            <h2 class="font-bold text-gray-800 mb-3">订单备注</h2>
-            <textarea id="orderRemark" rows="2" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:border-purple-500" placeholder="如有特殊要求，请在此填写（选填）"></textarea>
-        </div>
-
-        <!-- 金额明细 -->
-        <div class="bg-white rounded-xl p-4">
-            <h2 class="font-bold text-gray-800 mb-3">金额明细</h2>
-            <div class="space-y-2 text-sm">
-                <div class="flex justify-between"><span class="text-gray-500">商品总额</span><span id="subtotal">¥0</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">运费</span><span>¥0</span></div>
-                <div class="flex justify-between items-center pt-2 border-t"><span class="font-medium">实付款</span><span id="totalAmount" class="text-xl font-bold text-red-500">¥0</span></div>
-            </div>
-        </div>
-    </main>
-
-    <!-- 底部结算栏 -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t px-4 py-3">
-        <div class="max-w-3xl mx-auto flex items-center justify-between">
-            <div><span class="text-sm text-gray-500">合计:</span><span id="footerTotal" class="text-xl font-bold text-red-500 ml-1">¥0</span></div>
-            <button id="submitBtn" onclick="submitOrder()" class="px-8 py-3 bg-purple-600 text-white rounded-full font-medium hover:bg-purple-700 transition flex items-center">
-                <span>提交订单</span>
-                <i class="fas fa-spinner fa-spin ml-2 hidden" id="submitLoading"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- 新增/编辑地址弹窗 -->
-    <div id="addressModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
-                <h2 class="text-lg font-bold">添加地址</h2>
-                <button onclick="closeAddressModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div class="p-6 space-y-4">
-                <div><label class="block text-sm font-medium text-gray-700 mb-2">收货人</label><input type="text" id="addrName" class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500" placeholder="请输入收货人姓名"></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-2">手机号</label><input type="tel" id="addrPhone" class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500" placeholder="请输入手机号"></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-2">详细地址</label><textarea id="addrDetail" rows="3" class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:border-purple-500" placeholder="请输入详细地址（省市区+街道+门牌号）"></textarea></div>
-                <label class="flex items-center"><input type="checkbox" id="addrDefault" class="text-purple-600 rounded mr-2"><span class="text-sm">设为默认地址</span></label>
-                <button onclick="saveCheckoutAddress()" class="w-full py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition">保存地址</button>
-            </div>
-        </div>
-    </div>
-
     <script src="../js/supabase-client.js"></script>
     <script src="shop-data.js"></script>
     <script>
-        let currentUser = null;
-        let cartItems = [];
-        let addresses = [];
-        let selectedAddressId = null;
-
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!checkLogin()) return;
-            loadCart();
-            loadAddresses();
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        let selectedAddress = null;
+        let savedAddresses = [];
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCheckout();
+            loadSavedAddresses();
         });
-
-        function checkLogin() {
-            const user = getCurrentUser();
-            if (!user) {
-                showToast('请先登录', 'error');
-                setTimeout(() => { window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href); }, 1500);
-                return false;
-            }
-            currentUser = user;
-            return true;
-        }
-
-        function loadCart() {
-            cartItems = JSON.parse(localStorage.getItem('cart') || '[]');
-            if (cartItems.length === 0) {
-                showToast('购物车为空', 'error');
-                setTimeout(() => { window.location.href = '/shop/'; }, 1500);
+        
+        function renderCheckout() {
+            const container = document.getElementById('cartItems');
+            const emptyState = document.getElementById('emptyState');
+            const totalAmount = document.getElementById('totalAmount');
+            
+            if (cart.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                totalAmount.textContent = '¥0';
                 return;
             }
-            renderProducts();
-            calculateTotal();
-        }
-
-        function loadAddresses() {
-            const saved = localStorage.getItem('shop_addresses');
-            if (saved) { addresses = JSON.parse(saved); }
-            else { addresses = []; }
-            renderAddresses();
-        }
-
-        function renderAddresses() {
-            const container = document.getElementById('addressList');
-            if (addresses.length === 0) {
-                container.innerHTML = `<div class="text-center py-6 text-gray-500"><i class="fas fa-map-marker-alt text-3xl mb-2 text-gray-300"></i><p>暂无收货地址，请先添加</p></div>`;
-                return;
-            }
-            container.innerHTML = addresses.map((addr, index) => `
-                <div class="address-card ${addr.id === selectedAddressId ? 'selected' : ''} p-4 rounded-lg cursor-pointer" onclick="selectAddress('${addr.id}')">
-                    <div class="flex items-start">
-                        <input type="radio" name="address" ${addr.id === selectedAddressId ? 'checked' : ''} class="mt-1 mr-3 text-purple-600">
+            
+            emptyState.classList.add('hidden');
+            let total = 0;
+            
+            container.innerHTML = cart.map((item, index) => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                return `
+                    <div class="flex items-center gap-4 py-4 border-b">
+                        <img src="${item.image}" alt="${item.name}" class="w-20 h-20 object-cover rounded-lg bg-gray-100">
                         <div class="flex-1">
-                            <div class="flex items-center mb-1">
-                                <span class="font-medium">${addr.name}</span>
-                                <span class="mx-2 text-gray-300">|</span>
-                                <span class="text-gray-600">${addr.phone}</span>
-                                ${addr.isDefault ? '<span class="ml-2 px-2 py-0.5 bg-purple-100 text-purple-600 text-xs rounded">默认</span>' : ''}
+                            <h3 class="font-medium text-gray-800">${item.name}</h3>
+                            <p class="text-sm text-gray-500">${item.type === 'virtual' ? '电子卡券' : '实物商品'} · ¥${item.price}/件</p>
+                            <div class="flex items-center gap-3 mt-2">
+                                <button onclick="updateQuantity(${index}, -1)" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">-</button>
+                                <span class="font-medium">${item.quantity}</span>
+                                <button onclick="updateQuantity(${index}, 1)" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">+</button>
                             </div>
-                            <p class="text-sm text-gray-500">${addr.detail}</p>
                         </div>
-                        <button onclick="event.stopPropagation(); editAddress('${addr.id}')" class="text-gray-400 hover:text-purple-600 ml-2"><i class="fas fa-edit"></i></button>
+                        <div class="text-right">
+                            <p class="font-bold text-lg">¥${itemTotal}</p>
+                            <button onclick="removeItem(${index})" class="text-sm text-red-500 hover:text-red-600 mt-1">删除</button>
+                        </div>
                     </div>
+                `;
+            }).join('');
+            
+            totalAmount.textContent = '¥' + total;
+        }
+        
+        function updateQuantity(index, delta) {
+            cart[index].quantity += delta;
+            if (cart[index].quantity < 1) {
+                cart[index].quantity = 1;
+            }
+            localStorage.setItem('cart', JSON.stringify(cart));
+            renderCheckout();
+        }
+        
+        function removeItem(index) {
+            if (confirm('确定要删除这个商品吗？')) {
+                cart.splice(index, 1);
+                localStorage.setItem('cart', JSON.stringify(cart));
+                renderCheckout();
+            }
+        }
+        
+        function loadSavedAddresses() {
+            const user = getCurrentUser();
+            if (!user) return;
+            
+            getAddresses(user.id).then(function(result) {
+                if (result.success && result.data) {
+                    savedAddresses = result.data;
+                    renderSavedAddresses();
+                }
+            });
+        }
+        
+        function renderSavedAddresses() {
+            const container = document.getElementById('savedAddresses');
+            if (!savedAddresses.length) {
+                container.innerHTML = '<p class="text-sm text-gray-500">暂无保存的地址</p>';
+                return;
+            }
+            
+            container.innerHTML = savedAddresses.map((addr, index) => `
+                <div class="border rounded-lg p-3 cursor-pointer hover:border-purple-500 transition ${selectedAddress === index ? 'border-purple-500 bg-purple-50' : ''}"
+                     onclick="selectAddress(${index})">
+                    <div class="flex items-center justify-between">
+                        <span class="font-medium">${addr.receiver_name}</span>
+                        <span class="text-sm text-gray-500">${addr.receiver_phone}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">${addr.province}${addr.city}${addr.district}${addr.detail_address}</p>
                 </div>
             `).join('');
-            const defaultAddr = addresses.find(a => a.isDefault);
-            if (defaultAddr && !selectedAddressId) selectedAddressId = defaultAddr.id;
-            else if (addresses.length > 0 && !selectedAddressId) selectedAddressId = addresses[0].id;
         }
-
-        function selectAddress(id) { selectedAddressId = id; renderAddresses(); }
-
-        function renderProducts() {
-            const container = document.getElementById('productList');
-            container.innerHTML = cartItems.map(item => `
-                <div class="flex items-center space-x-3">
-                    <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded-lg bg-gray-100">
-                    <div class="flex-1">
-                        <h3 class="font-medium text-gray-800">${item.name}</h3>
-                        <p class="text-xs text-gray-500">${item.type === 'virtual' ? '电子卡券' : '实物商品'}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-medium">¥${item.price}</p>
-                        <p class="text-sm text-gray-500">x${item.quantity}</p>
-                    </div>
-                </div>
-            `).join('');
+        
+        function selectAddress(index) {
+            selectedAddress = index;
+            renderSavedAddresses();
         }
-
-        function calculateTotal() {
-            const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-            document.getElementById('subtotal').textContent = '¥' + total;
-            document.getElementById('totalAmount').textContent = '¥' + total;
-            document.getElementById('footerTotal').textContent = '¥' + total;
-            return total;
-        }
-
-        function showAddressModal() { document.getElementById('addressModal').classList.remove('hidden'); }
-        function closeAddressModal() { document.getElementById('addressModal').classList.add('hidden'); }
-
-        function saveCheckoutAddress() {
-            const name = document.getElementById('addrName').value.trim();
-            const phone = document.getElementById('addrPhone').value.trim();
-            const detail = document.getElementById('addrDetail').value.trim();
-            const isDefault = document.getElementById('addrDefault').checked;
-            if (!name || !phone || !detail) { showToast('请填写完整信息', 'error'); return; }
-            if (!/^1[3-9]\d{9}$/.test(phone)) { showToast('请输入正确的手机号', 'error'); return; }
-
-            const newAddr = { id: 'ADDR' + Date.now(), name, phone, detail, isDefault };
-            if (isDefault) addresses.forEach(a => a.isDefault = false);
-            addresses.push(newAddr);
-            localStorage.setItem('shop_addresses', JSON.stringify(addresses));
-            selectedAddressId = newAddr.id;
-            renderAddresses();
-            closeAddressModal();
-            showToast('地址添加成功', 'success');
-        }
-
+        
+        // 提交订单 - 通过服务端API转发到Supabase
         function submitOrder() {
-            if (!selectedAddressId) { showToast('请选择收货地址', 'error'); return; }
-            const address = addresses.find(a => a.id === selectedAddressId);
-            const totalAmount = calculateTotal();
-            const remark = document.getElementById('orderRemark').value;
-
-            const submitBtn = document.getElementById('submitBtn');
-            const loading = document.getElementById('submitLoading');
-            submitBtn.disabled = true; loading.classList.remove('hidden');
-
+            if (cart.length === 0) {
+                alert('购物车为空');
+                return;
+            }
+            
+            const address = document.getElementById('address').value.trim();
+            const receiverName = document.getElementById('receiverName').value.trim();
+            const receiverPhone = document.getElementById('receiverPhone').value.trim();
+            const remark = document.getElementById('remark').value.trim();
+            
+            if (!address || !receiverName || !receiverPhone) {
+                alert('请填写收货信息');
+                return;
+            }
+            
+            const user = getCurrentUser();
+            const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            
             const orderData = {
-                userId: currentUser.id,
-                items: cartItems.map(item => ({
+                userId: user ? user.id : null,
+                items: cart.map(item => ({
                     productId: item.productId,
                     productName: item.name,
                     productType: item.type,
                     quantity: item.quantity,
-                    price: item.price,
-                    image: item.image
+                    price: item.price
                 })),
-                totalAmount,
-                address: address.detail,
-                receiverName: address.name,
-                receiverPhone: address.phone,
-                remark
+                totalAmount: totalAmount,
+                address: address,
+                receiverName: receiverName,
+                receiverPhone: receiverPhone,
+                remark: remark
             };
-
-            saveOrder(orderData).then(function(result) {
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('submitLoading');
+            submitBtn.disabled = true;
+            loading.classList.remove('hidden');
+            
+            // 通过服务端API转发下单（绕过RLS限制）
+            fetch('/api/data?action=shop_order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
+            }).then(function(response) {
+                return response.json();
+            }).then(function(result) {
                 if (result.success) {
-                    clearCartEverywhere();
+                    localStorage.removeItem('cart');
                     showToast('订单创建成功！', 'success');
-                    setTimeout(() => { window.location.href = 'payment.html?orderId=' + encodeURIComponent(result.data.orderId || result.data.id); }, 1500);
+                    setTimeout(() => {
+                        window.location.href = 'payment.html?orderId=' + encodeURIComponent(result.data.orderId);
+                    }, 1500);
                 } else {
                     showToast(result.error || '提交失败', 'error');
+                    submitBtn.disabled = false;
+                    loading.classList.add('hidden');
                 }
-                submitBtn.disabled = false; loading.classList.add('hidden');
             }).catch(function(err) {
-                console.error('下单异常:', err);
-                showToast('提交异常，请重试', 'error');
-                submitBtn.disabled = false; loading.classList.add('hidden');
+                console.error('下单失败:', err);
+                showToast('网络错误，请重试', 'error');
+                submitBtn.disabled = false;
+                loading.classList.add('hidden');
             });
         }
     </script>
-
-    <footer class="bg-white border-t mt-12 py-6">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <p class="text-sm text-gray-500">© 2026 宜礼商城 · <a href="privacy.html" class="text-purple-600 hover:text-purple-700">隐私政策</a> · <a href="terms.html" class="text-purple-600 hover:text-purple-700">用户协议</a></p>
-        </div>
-    </footer>
-</body>
-</html>

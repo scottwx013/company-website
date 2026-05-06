@@ -357,8 +357,8 @@ module.exports = async (req, res) => {
         }
         
         // ===== 商城 API - 废弃（已迁移至 Supabase）=====
-        if (action === 'shop_products' || action === 'shop_product' || action === 'shop_orders' || action === 'shop_order_detail') {
-            return res.json({ success: false, error: '商城 API 已废弃，前台直接调用 Supabase REST API' });
+        if (action === 'shop_products' || action === 'shop_product') {
+            return res.json({ success: false, error: '商城商品 API 已废弃，前台直接调用 Supabase REST API' });
         }
         
         // 后台管理：获取全部商城订单（通过 Supabase service_role 绕过 RLS）
@@ -505,9 +505,70 @@ module.exports = async (req, res) => {
             return res.json({ success: true, data: newMessage });
         }
         
+        // 前台用户下单（通过服务端转发到 Supabase，绕过 RLS）
+        if (action === 'shop_order') {
+            const { userId, items, totalAmount, address, receiverName, receiverPhone, remark } = req.body;
+            if (!items || items.length === 0) {
+                return res.json({ success: false, error: '购物车为空' });
+            }
+            
+            const orderId = 'ORD' + Date.now();
+            
+            // 检查库存
+            for (const item of items) {
+                const stockResult = await supabaseRequest('shop_products', 'GET', 'id=eq.' + item.productId + '&select=stock');
+                if (!stockResult.ok || !stockResult.data || stockResult.data.length === 0) {
+                    return res.json({ success: false, error: '商品 ' + item.productName + ' 不存在' });
+                }
+                const currentStock = stockResult.data[0].stock;
+                if (currentStock < item.quantity) {
+                    return res.json({ success: false, error: '商品 ' + item.productName + ' 库存不足（剩余 ' + currentStock + '）' });
+                }
+            }
+            
+            // 创建订单
+            const orderBody = {
+                id: orderId,
+                user_id: userId || null,
+                total_amount: totalAmount,
+                status: 'pending',
+                receiver_name: receiverName || '匿名用户',
+                receiver_phone: receiverPhone || '',
+                receiver_address: address || '',
+                remark: remark || ''
+            };
+            const orderResult = await supabaseRequest('shop_orders', 'POST', '', orderBody);
+            if (!orderResult.ok) {
+                return res.json({ success: false, error: '创建订单失败', details: orderResult.data });
+            }
+            
+            // 创建订单明细
+            for (const item of items) {
+                const itemBody = {
+                    order_id: orderId,
+                    product_id: item.productId,
+                    product_name: item.productName || '',
+                    product_type: item.productType || 'virtual',
+                    quantity: item.quantity,
+                    unit_price: item.price,
+                    total_price: item.price * item.quantity
+                };
+                await supabaseRequest('shop_order_items', 'POST', '', itemBody);
+            }
+            
+            // 扣减库存
+            for (const item of items) {
+                const stockResult = await supabaseRequest('shop_products', 'GET', 'id=eq.' + item.productId + '&select=stock');
+                const currentStock = stockResult.data[0].stock;
+                await supabaseRequest('shop_products', 'PATCH', 'id=eq.' + item.productId, { stock: currentStock - item.quantity });
+            }
+            
+            return res.json({ success: true, data: { orderId, status: 'pending', totalAmount } });
+        }
+        
         // ===== 商城 API - POST（已废弃或迁移至 Supabase）=====
-        if (action === 'shop_register' || action === 'shop_login' || action === 'shop_order') {
-            return res.json({ success: false, error: '商城用户/下单 API 已废弃，前台直接调用 Supabase REST API' });
+        if (action === 'shop_register' || action === 'shop_login') {
+            return res.json({ success: false, error: '商城用户/登录 API 已废弃，前台直接调用 Supabase REST API' });
         }
         
         // 管理员登录
