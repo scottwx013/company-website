@@ -56,6 +56,22 @@ function getAdminUser(req) {
     return verifyToken(token);
 }
 
+function getAdminUserInfo(req, data) {
+    const username = getAdminUser(req);
+    if (!username) return null;
+    if (data && data.admin_users) {
+        const user = data.admin_users.find(function(u) { return u.username === username; });
+        if (user) return user;
+    }
+    if (username === 'admin') return { username: 'admin', role: 'admin' };
+    if (username === 'manager') return { username: 'manager', role: 'manager' };
+    return { username: username, role: 'manager' };
+}
+
+function isSuperAdmin(user) {
+    return user && (user.role === 'admin' || user.role === 'manager');
+}
+
 // 内存中的数据缓存
 let memoryData = null;
 
@@ -602,9 +618,9 @@ module.exports = async (req, res) => {
         }
         
         // 验证管理员 token（后续受保护端点统一检查）
-        const adminUser = getAdminUser(req);
+        const adminUserInfo = getAdminUserInfo(req, data);
         const protectedActions = ['shop_orders_list', 'shop_order_status', 'shop_order_ship', 'shop_logistics_update', 'shop_product_manage', 'shop_coupons_list', 'shop_coupons_import', 'shop_coupons_delete', 'shop_coupons_auto_get', 'admin_users_list', 'admin_user_create', 'admin_user_delete', 'admin_user_update'];
-        if (protectedActions.includes(action) && !adminUser) {
+        if (protectedActions.includes(action) && !isSuperAdmin(adminUserInfo)) {
             return res.json({ success: false, error: '未授权，请先登录' });
         }
         
