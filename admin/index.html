@@ -589,23 +589,46 @@
                 <!-- 账户管理 -->
                 <div id="tab-account" class="tab-content">
                     <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-6">账户管理</h2>
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-900">账户管理</h2>
+                            <button onclick="openAddUserModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                                <i class="fas fa-plus"></i>新增账户
+                            </button>
+                        </div>
 
-                        <div class="max-w-md">
+                        <!-- 账户列表 -->
+                        <div class="overflow-x-auto mb-8">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 border-b">
+                                    <tr>
+                                        <th class="px-4 py-3 text-sm font-medium text-gray-700">用户名</th>
+                                        <th class="px-4 py-3 text-sm font-medium text-gray-700">角色</th>
+                                        <th class="px-4 py-3 text-sm font-medium text-gray-700">创建时间</th>
+                                        <th class="px-4 py-3 text-sm font-medium text-gray-700">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-users-list" class="divide-y">
+                                    <!-- JS 填充 -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 修改当前账户密码 -->
+                        <div class="border-t pt-6 max-w-md">
+                            <h3 class="text-lg font-semibold mb-4">修改密码</h3>
                             <div class="mb-4">
-                                <label class="block text-gray-700 font-medium mb-2">当前用户名</label>
+                                <label class="block text-gray-700 font-medium mb-2">当前用户</label>
                                 <input type="text" id="account-username" class="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100" readonly>
                             </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 font-medium mb-2">新密码</label>
-                                <input type="password" id="account-new-password" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="不修改请留空">
+                                <input type="password" id="account-new-password" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="输入新密码">
                             </div>
                             <div class="mb-4">
                                 <label class="block text-gray-700 font-medium mb-2">确认新密码</label>
-                                <input type="password" id="account-confirm-password" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="不修改请留空">
+                                <input type="password" id="account-confirm-password" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="再次输入新密码">
                             </div>
                             <p id="account-error" class="text-red-500 text-sm hidden mb-4"></p>
-
                             <button onclick="changePassword()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">修改密码</button>
                         </div>
                     </div>
@@ -996,6 +1019,38 @@
         </div>
     </div>
 
+    <!-- 新增账户弹窗 -->
+    <div id="add-user-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">新增账户</h3>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">用户名 *</label>
+                    <input type="text" id="new-user-username" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="3-20位字母/数字/下划线">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">密码 *</label>
+                    <input type="password" id="new-user-password" class="w-full border border-gray-300 rounded-lg px-4 py-2" placeholder="设置登录密码">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">角色</label>
+                    <select id="new-user-role" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                        <option value="manager">管理员</option>
+                        <option value="admin">超级管理员</option>
+                    </select>
+                </div>
+            </div>
+
+            <p id="new-user-error" class="text-red-500 text-sm hidden mt-4"></p>
+
+            <div class="flex justify-end gap-4 mt-6">
+                <button onclick="closeAddUserModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">取消</button>
+                <button onclick="createAdminUser()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">确认新增</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 引入SheetJS库用于解析Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
@@ -1280,13 +1335,131 @@
     }
 
     function changePassword() {
+        const newPass = document.getElementById('account-new-password').value;
+        const confirmPass = document.getElementById('account-confirm-password').value;
         const errorEl = document.getElementById('account-error');
-        errorEl.textContent = '请联系管理员修改密码';
-        errorEl.classList.remove('hidden');
-        errorEl.classList.remove('text-red-500');
-        errorEl.classList.add('text-green-500');
-        document.getElementById('account-new-password').value = '';
-        document.getElementById('account-confirm-password').value = '';
+
+        if (!newPass) {
+            errorEl.textContent = '请输入新密码';
+            errorEl.classList.remove('hidden');
+            errorEl.classList.remove('text-green-500');
+            errorEl.classList.add('text-red-500');
+            return;
+        }
+        if (newPass !== confirmPass) {
+            errorEl.textContent = '两次输入的密码不一致';
+            errorEl.classList.remove('hidden');
+            errorEl.classList.remove('text-green-500');
+            errorEl.classList.add('text-red-500');
+            return;
+        }
+        if (newPass.length < 6) {
+            errorEl.textContent = '密码长度至少6位';
+            errorEl.classList.remove('hidden');
+            errorEl.classList.remove('text-green-500');
+            errorEl.classList.add('text-red-500');
+            return;
+        }
+
+        apiRequest('admin_user_update', 'POST', { username: currentUser, password: newPass })
+            .then(function() {
+                errorEl.textContent = '密码修改成功';
+                errorEl.classList.remove('hidden');
+                errorEl.classList.remove('text-red-500');
+                errorEl.classList.add('text-green-500');
+                document.getElementById('account-new-password').value = '';
+                document.getElementById('account-confirm-password').value = '';
+            })
+            .catch(function(err) {
+                errorEl.textContent = err.message || '修改密码失败';
+                errorEl.classList.remove('hidden');
+                errorEl.classList.remove('text-green-500');
+                errorEl.classList.add('text-red-500');
+            });
+    }
+
+    // ===== 账户列表管理 =====
+    async function loadAdminUsers() {
+        try {
+            const result = await apiRequest('admin_users_list', 'GET');
+            const users = result.data || [];
+            const tbody = document.getElementById('admin-users-list');
+            if (!tbody) return;
+
+            tbody.innerHTML = users.map(function(u) {
+                const isSelf = u.username === currentUser;
+                const dateStr = u.created_at ? new Date(u.created_at).toLocaleDateString('zh-CN') : '-';
+                return '<tr class="hover:bg-gray-50">' +
+                    '<td class="px-4 py-3 text-sm">' + escapeHtml(u.username) + (isSelf ? ' <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">当前</span>' : '') + '</td>' +
+                    '<td class="px-4 py-3 text-sm">' + (u.role === 'admin' ? '<span class="text-red-600">超级管理员</span>' : '<span class="text-gray-600">管理员</span>') + '</td>' +
+                    '<td class="px-4 py-3 text-sm text-gray-500">' + dateStr + '</td>' +
+                    '<td class="px-4 py-3 text-sm">' +
+                        (isSelf ? '<span class="text-gray-400">—</span>' : '<button onclick="deleteAdminUser(\'' + escapeHtml(u.username) + '\')" class="text-red-600 hover:text-red-800">删除</button>') +
+                    '</td>' +
+                '</tr>';
+            }).join('');
+        } catch (e) {
+            console.error('加载账户列表失败:', e);
+        }
+    }
+
+    function openAddUserModal() {
+        document.getElementById('add-user-modal').classList.remove('hidden');
+        document.getElementById('new-user-username').value = '';
+        document.getElementById('new-user-password').value = '';
+        document.getElementById('new-user-role').value = 'manager';
+        document.getElementById('new-user-error').classList.add('hidden');
+    }
+
+    function closeAddUserModal() {
+        document.getElementById('add-user-modal').classList.add('hidden');
+    }
+
+    async function createAdminUser() {
+        const username = document.getElementById('new-user-username').value.trim();
+        const password = document.getElementById('new-user-password').value;
+        const role = document.getElementById('new-user-role').value;
+        const errorEl = document.getElementById('new-user-error');
+
+        if (!username || !password) {
+            errorEl.textContent = '用户名和密码不能为空';
+            errorEl.classList.remove('hidden');
+            return;
+        }
+        if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+            errorEl.textContent = '用户名只能包含字母、数字、下划线，长度3-20';
+            errorEl.classList.remove('hidden');
+            return;
+        }
+        if (password.length < 6) {
+            errorEl.textContent = '密码长度至少6位';
+            errorEl.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            await apiRequest('admin_user_create', 'POST', { username, password, role });
+            closeAddUserModal();
+            loadAdminUsers();
+            alert('账户创建成功：' + username);
+        } catch (err) {
+            errorEl.textContent = err.message || '创建失败';
+            errorEl.classList.remove('hidden');
+        }
+    }
+
+    function deleteAdminUser(username) {
+        if (!confirm('确定要删除账户 "' + username + '" 吗？此操作不可恢复。')) {
+            return;
+        }
+        apiRequest('admin_user_delete', 'DELETE', { username: username })
+            .then(function() {
+                loadAdminUsers();
+                alert('账户已删除');
+            })
+            .catch(function(err) {
+                alert(err.message || '删除失败');
+            });
     }
 
     // ===== 初始化管理后台 =====
@@ -1350,6 +1523,10 @@
                 break;
             case 'data-report':
                 loadDataReport();
+                break;
+            case 'account':
+                document.getElementById('account-username').value = currentUser;
+                loadAdminUsers();
                 break;
         }
     }

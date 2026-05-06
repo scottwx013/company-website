@@ -7,10 +7,24 @@ const crypto = require('crypto');
 
 // ===== 管理员认证配置 =====
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'yili-admin-secret-key-2024';
-const ADMIN_USERS = {
-    'admin': '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
-    'manager': '866485796cfa8d7c0cf7111640205b83076433547577511d81f8030ae99ecea5'
-};
+
+// 管理员用户管理（动态，从数据加载）
+function getAdminUsers(data) {
+    // 优先从数据文件的 admin_users 读取
+    if (data && data.admin_users && Array.isArray(data.admin_users) && data.admin_users.length > 0) {
+        const map = {};
+        data.admin_users.forEach(function(u) {
+            map[u.username] = u.password_hash;
+        });
+        return map;
+    }
+    // 降级到硬编码默认账户
+    return {
+        'admin': '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
+        'manager': '866485796cfa8d7c0cf7111640205b83076433547577511d81f8030ae99ecea5'
+    };
+}
+
 const TOKEN_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
 
 function sha256(str) {
@@ -256,7 +270,11 @@ const defaultData = {
     shop_orders: [],
     shop_order_items: [],
     shop_logistics: [],
-    shop_virtual_deliveries: []
+    shop_virtual_deliveries: [],
+    admin_users: [
+        { username: 'admin', password_hash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', role: 'admin', created_at: '2024-01-01T00:00:00Z' },
+        { username: 'manager', password_hash: '866485796cfa8d7c0cf7111640205b83076433547577511d81f8030ae99ecea5', role: 'manager', created_at: '2024-01-01T00:00:00Z' }
+    ]
 };
 
 // 从文件加载数据
@@ -575,7 +593,8 @@ module.exports = async (req, res) => {
         if (action === 'admin_login') {
             const { username, password } = req.body;
             const hash = sha256(password);
-            if (ADMIN_USERS[username] === hash) {
+            const adminUsers = getAdminUsers(data);
+            if (adminUsers[username] === hash) {
                 const token = generateToken(username);
                 return res.json({ success: true, data: { token, username } });
             }
@@ -584,9 +603,81 @@ module.exports = async (req, res) => {
         
         // 验证管理员 token（后续受保护端点统一检查）
         const adminUser = getAdminUser(req);
-        const protectedActions = ['shop_orders_list', 'shop_order_status', 'shop_order_ship', 'shop_logistics_update', 'shop_product_manage', 'shop_coupons_list', 'shop_coupons_import', 'shop_coupons_delete', 'shop_coupons_auto_get'];
+        const protectedActions = ['shop_orders_list', 'shop_order_status', 'shop_order_ship', 'shop_logistics_update', 'shop_product_manage', 'shop_coupons_list', 'shop_coupons_import', 'shop_coupons_delete', 'shop_coupons_auto_get', 'admin_users_list', 'admin_user_create', 'admin_user_delete', 'admin_user_update'];
         if (protectedActions.includes(action) && !adminUser) {
             return res.json({ success: false, error: '未授权，请先登录' });
+        }
+        
+        // ===== 账户管理 API =====
+        if (action === 'admin_users_list') {
+            const users = (data.admin_users || []).map(function(u) {
+                return {
+                    username: u.username,
+                    role: u.role || 'manager',
+                    created_at: u.created_at
+                };
+            });
+            return res.json({ success: true, data: users });
+        }
+        
+        if (action === 'admin_user_create') {
+            const { username, password, role } = req.body;
+            if (!username || !password) {
+                return res.json({ success: false, error: '用户名和密码不能为空' });
+            }
+            if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+                return res.json({ success: false, error: '用户名只能包含字母、数字、下划线，长度3-20' });
+            }
+            const existing = (data.admin_users || []).find(function(u) { return u.username === username; });
+            if (existing) {
+                return res.json({ success: false, error: '用户名已存在' });
+            }
+            const newUser = {
+                username: username,
+                password_hash: sha256(password),
+                role: role || 'manager',
+                created_at: new Date().toISOString()
+            };
+            data.admin_users = data.admin_users || [];
+            data.admin_users.push(newUser);
+            saveToFile(data);
+            return res.json({ success: true, data: { username: newUser.username, role: newUser.role, created_at: newUser.created_at } });
+        }
+        
+        if (action === 'admin_user_delete') {
+            const username = req.query.username || req.body?.username;
+            if (!username) {
+                return res.json({ success: false, error: '缺少用户名' });
+            }
+            if (username === adminUser) {
+                return res.json({ success: false, error: '不能删除当前登录账户' });
+            }
+            const initialLen = (data.admin_users || []).length;
+            data.admin_users = (data.admin_users || []).filter(function(u) { return u.username !== username; });
+            if (data.admin_users.length === initialLen) {
+                return res.json({ success: false, error: '用户不存在' });
+            }
+            saveToFile(data);
+            return res.json({ success: true });
+        }
+        
+        if (action === 'admin_user_update') {
+            const { username, password, role } = req.body;
+            if (!username) {
+                return res.json({ success: false, error: '缺少用户名' });
+            }
+            const user = (data.admin_users || []).find(function(u) { return u.username === username; });
+            if (!user) {
+                return res.json({ success: false, error: '用户不存在' });
+            }
+            if (password) {
+                user.password_hash = sha256(password);
+            }
+            if (role) {
+                user.role = role;
+            }
+            saveToFile(data);
+            return res.json({ success: true, data: { username: user.username, role: user.role } });
         }
         
         // 后台管理：更新订单状态（通过 Supabase service_role 绕过 RLS）
