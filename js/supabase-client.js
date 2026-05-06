@@ -258,7 +258,7 @@
             image: (p.images && p.images[0]) || p.image || '',
             images: p.images || [p.image || ''].filter(function(img) { return img; }),
             status: p.status || 'on_sale',
-            sales: p.sales || 0,
+            sales: p.sales_count || p.sales || 0,
             features: p.features || [],
             createTime: p.created_at
         };
