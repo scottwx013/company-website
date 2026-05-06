@@ -48,11 +48,21 @@
         </div>
     </div>
 
+    <script src="../js/supabase-client.js"></script>
+    <script src="shop-data.js"></script>
     <script>
         let cart = JSON.parse(localStorage.getItem('cart') || '[]');
         
         document.addEventListener('DOMContentLoaded', () => {
-            renderCart();
+            var user = getCurrentUser();
+            if (user) {
+                loadCartFromServer().then(function() {
+                    cart = getLocalCart();
+                    renderCart();
+                });
+            } else {
+                renderCart();
+            }
         });
         
         // 渲染购物车
@@ -110,6 +120,7 @@
                 cart[index].quantity = 1;
             }
             localStorage.setItem('cart', JSON.stringify(cart));
+            syncCartToServer();
             renderCart();
         }
         
@@ -118,6 +129,7 @@
             if (confirm('确定要删除这个商品吗？')) {
                 cart.splice(index, 1);
                 localStorage.setItem('cart', JSON.stringify(cart));
+                syncCartToServer();
                 renderCart();
             }
         }
@@ -128,6 +140,7 @@
             if (confirm('确定要清空购物车吗？')) {
                 cart = [];
                 localStorage.setItem('cart', JSON.stringify(cart));
+                clearCartEverywhere();
                 renderCart();
             }
         }

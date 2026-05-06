@@ -240,7 +240,7 @@
 
             saveOrder(orderData).then(function(result) {
                 if (result.success) {
-                    localStorage.removeItem('cart');
+                    clearCartEverywhere();
                     showToast('订单创建成功！', 'success');
                     setTimeout(() => { window.location.href = 'payment.html?orderId=' + encodeURIComponent(result.data.orderId || result.data.id); }, 1500);
                 } else {

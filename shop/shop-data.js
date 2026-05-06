@@ -551,6 +551,70 @@ function clearCurrentUser() {
     }
 }
 
+// ===== 购物车持久化同步 =====
+const CART_KEY = 'cart';
+const CART_SYNCED_KEY = 'cart_synced_at';
+
+function getLocalCart() {
+    try { return JSON.parse(localStorage.getItem(CART_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function setLocalCart(items) {
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
+}
+
+function mergeCarts(localItems, serverItems) {
+    var merged = {};
+    localItems.forEach(function(item) {
+        merged[item.productId] = { ...item };
+    });
+    serverItems.forEach(function(item) {
+        if (merged[item.productId]) {
+            merged[item.productId].quantity = Math.max(merged[item.productId].quantity, item.quantity);
+        } else {
+            merged[item.productId] = { ...item };
+        }
+    });
+    return Object.values(merged);
+}
+
+function syncCartToServer() {
+    var client = getSupabaseClient();
+    var user = getCurrentUser();
+    if (!client || !user) return;
+    var items = getLocalCart();
+    client.saveShopCart(items).then(function(result) {
+        if (result.success) {
+            localStorage.setItem(CART_SYNCED_KEY, Date.now().toString());
+        }
+    });
+}
+
+function loadCartFromServer() {
+    var client = getSupabaseClient();
+    var user = getCurrentUser();
+    if (!client || !user) return Promise.resolve(null);
+    return client.getShopCart(user.id).then(function(result) {
+        if (result.success) {
+            var serverItems = result.data || [];
+            var localItems = getLocalCart();
+            var merged = mergeCarts(localItems, serverItems);
+            setLocalCart(merged);
+            return merged;
+        }
+        return null;
+    });
+}
+
+function clearCartEverywhere() {
+    setLocalCart([]);
+    var client = getSupabaseClient();
+    var user = getCurrentUser();
+    if (client && user) {
+        client.clearShopCart(user.id);
+    }
+}
+
 // ===== 工具函数 =====
 function formatDate(dateStr) {
     if (!dateStr) return '-';

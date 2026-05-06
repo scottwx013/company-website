@@ -513,6 +513,54 @@
         return makeRequest(REST_URL + '/shop_addresses', 'POST', body, true);
     }
 
+    function getShopCart(userId) {
+        var currentUser = getCurrentUser();
+        userId = userId || (currentUser ? currentUser.id : null);
+        if (!userId) {
+            return Promise.resolve({ success: false, error: '未登录' });
+        }
+        var url = REST_URL + '/shop_carts?user_id=eq.' + encodeURIComponent(userId) + '&select=items,updated_at';
+        return makeRequest(url, 'GET', null, true).then(function(result) {
+            if (result.success && result.data && result.data.length > 0) {
+                return { success: true, data: result.data[0].items || [] };
+            }
+            return { success: true, data: [] };
+        });
+    }
+
+    function saveShopCart(items, userId) {
+        var currentUser = getCurrentUser();
+        userId = userId || (currentUser ? currentUser.id : null);
+        if (!userId) {
+            return Promise.resolve({ success: false, error: '未登录' });
+        }
+        var body = {
+            user_id: userId,
+            items: items,
+            updated_at: new Date().toISOString()
+        };
+        return makeRequest(
+            REST_URL + '/shop_carts?on_conflict=user_id',
+            'POST',
+            body,
+            true
+        );
+    }
+
+    function clearShopCart(userId) {
+        var currentUser = getCurrentUser();
+        userId = userId || (currentUser ? currentUser.id : null);
+        if (!userId) {
+            return Promise.resolve({ success: false, error: '未登录' });
+        }
+        return makeRequest(
+            REST_URL + '/shop_carts?user_id=eq.' + encodeURIComponent(userId),
+            'DELETE',
+            null,
+            true
+        );
+    }
+
     // ===== 导出 =====
     window.YiliSupabase = {
         // Auth
@@ -543,6 +591,11 @@
         // Addresses
         getShopAddresses: getShopAddresses,
         createShopAddress: createShopAddress,
+
+        // Cart
+        getShopCart: getShopCart,
+        saveShopCart: saveShopCart,
+        clearShopCart: clearShopCart,
 
         // Raw request
         makeRequest: makeRequest,

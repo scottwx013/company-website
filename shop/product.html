@@ -143,6 +143,7 @@
             }
             localStorage.setItem('cart', JSON.stringify(cart));
             updateCartBadge();
+            syncCartToServer();
             showToast('已添加到购物车', 'success');
         }
         

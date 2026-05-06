@@ -232,6 +232,15 @@
                 renderFeatured();
                 renderProducts();
             });
+
+            // 登录用户：从服务器加载购物车并合并
+            var user = getCurrentUser();
+            if (user) {
+                loadCartFromServer().then(function() {
+                    cart = getLocalCart();
+                    updateCartBadge();
+                });
+            }
         }
 
         // 渲染精选福利（价格最高的4个）
@@ -332,6 +341,7 @@
             
             localStorage.setItem('cart', JSON.stringify(cart));
             updateCartBadge();
+            syncCartToServer();
             showToast('已添加到购物车', 'success');
         }
 
