@@ -389,7 +389,37 @@ module.exports = async (req, res) => {
             const messages = (data.messages || []).sort((a, b) => new Date(b.createTime) - new Date(a.createTime));
             return res.json({ success: true, data: messages });
         }
-        
+
+        // ===== 受保护接口统一鉴权 =====
+        const adminUserInfo = getAdminUserInfo(req, data);
+        const protectedActions = ['shop_orders_list', 'shop_order_status', 'shop_order_ship', 'shop_logistics_update', 'shop_product_manage', 'shop_coupons_list', 'shop_coupons_import', 'shop_coupons_delete', 'shop_coupons_auto_get', 'admin_users_list', 'admin_user_create', 'admin_user_delete', 'admin_user_update'];
+        if (protectedActions.includes(action) && !isSuperAdmin(adminUserInfo)) {
+            return res.json({ success: false, error: '未授权，请先登录' });
+        }
+
+        if (action === 'admin_users_list') {
+            let users = (data.admin_users || []);
+            // 防御：始终确保默认超级管理员账户存在
+            const defaultSuperAdmins = [
+                { username: 'admin', role: 'admin', created_at: '2024-01-01T00:00:00Z' },
+                { username: 'manager', role: 'manager', created_at: '2024-01-01T00:00:00Z' }
+            ];
+            defaultSuperAdmins.forEach(function(def) {
+                const exists = users.find(function(u) { return u.username === def.username; });
+                if (!exists) {
+                    users.push(def);
+                }
+            });
+            data.admin_users = users;
+            return res.json({ success: true, data: users.map(function(u) {
+                return {
+                    username: u.username,
+                    role: u.role || 'manager',
+                    created_at: u.created_at
+                };
+            }) });
+        }
+
         // ===== 商城 API - 废弃（已迁移至 Supabase）=====
         if (action === 'shop_products' || action === 'shop_product') {
             return res.json({ success: false, error: '商城商品 API 已废弃，前台直接调用 Supabase REST API' });
@@ -460,6 +490,13 @@ module.exports = async (req, res) => {
     if (req.method === 'POST' || req.method === 'PUT') {
         const body = req.body;
         let changed = false;
+        
+        // 验证管理员 token（后续受保护端点统一检查）
+        const adminUserInfo = getAdminUserInfo(req, data);
+        const protectedPostActions = ['shop_order_status', 'shop_order_ship', 'shop_logistics_update', 'shop_product_manage', 'shop_coupons_import', 'shop_coupons_delete', 'shop_coupons_auto_get', 'admin_user_create', 'admin_user_delete', 'admin_user_update'];
+        if (protectedPostActions.includes(action) && !isSuperAdmin(adminUserInfo)) {
+            return res.json({ success: false, error: '未授权，请先登录' });
+        }
         
         if (action === 'merchant') {
             if (body.id) {
