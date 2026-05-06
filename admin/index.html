@@ -603,6 +603,7 @@
                                     <tr>
                                         <th class="px-4 py-3 text-sm font-medium text-gray-700">用户名</th>
                                         <th class="px-4 py-3 text-sm font-medium text-gray-700">角色</th>
+                                        <th class="px-4 py-3 text-sm font-medium text-gray-700">权限</th>
                                         <th class="px-4 py-3 text-sm font-medium text-gray-700">创建时间</th>
                                         <th class="px-4 py-3 text-sm font-medium text-gray-700">操作</th>
                                     </tr>
@@ -611,6 +612,52 @@
                                     <!-- JS 填充 -->
                                 </tbody>
                             </table>
+                        </div>
+
+                        <!-- 权限分配（仅超级管理员可见） -->
+                        <div id="permission-section" class="border-t pt-6 mb-8 hidden">
+                            <h3 class="text-lg font-semibold mb-4">权限分配</h3>
+                            <p class="text-sm text-gray-500 mb-4">选择操作员并勾选其可访问的板块</p>
+                            
+                            <div class="mb-4">
+                                <label class="block text-gray-700 font-medium mb-2">选择账户</label>
+                                <select id="perm-target-user" class="w-full border border-gray-300 rounded-lg px-4 py-2">
+                                    <option value="">-- 请选择 --</option>
+                                </select>
+                            </div>
+                            
+                            <div id="perm-checkboxes" class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                                <label class="flex items-center cursor-pointer bg-gray-50 rounded-lg px-3 py-2">
+                                    <input type="checkbox" value="company" class="mr-2 perm-checkbox"> 🏢 公司信息
+                                </label>
+                                <label class="flex items-center cursor-pointer bg-gray-50 rounded-lg px-3 py-2">
+                                    <input type="checkbox" value="merchants" class="mr-2 perm-checkbox"> 🏪 商户管理
+                                </label>
+                                <label class="flex items-center cursor-pointer bg-gray-50 rounded-lg px-3 py-2">
+                                    <input type="checkbox" value="products" class="mr-2 perm-checkbox"> 📦 产品管理
+                                </label>
+                                <label class="flex items-center cursor-pointer bg-gray-50 rounded-lg px-3 py-2">
+                                    <input type="checkbox" value="home" class="mr-2 perm-checkbox"> 🏠 首页配置
+                                </label>
+                                <label class="flex items-center cursor-pointer bg-gray-50 rounded-lg px-3 py-2">
+                                    <input type="checkbox" value="about" class="mr-2 perm-checkbox"> 📖 关于我们
+                                </label>
+                                <label class="flex items-center cursor-pointer bg-gray-50 rounded-lg px-3 py-2">
+                                    <input type="checkbox" value="messages" class="mr-2 perm-checkbox"> 💬 消息管理
+                                </label>
+                                <label class="flex items-center cursor-pointer bg-gray-50 rounded-lg px-3 py-2">
+                                    <input type="checkbox" value="shop_orders" class="mr-2 perm-checkbox"> 📋 商城订单
+                                </label>
+                                <label class="flex items-center cursor-pointer bg-gray-50 rounded-lg px-3 py-2">
+                                    <input type="checkbox" value="reports" class="mr-2 perm-checkbox"> 📊 数据统计
+                                </label>
+                                <label class="flex items-center cursor-pointer bg-gray-50 rounded-lg px-3 py-2">
+                                    <input type="checkbox" value="account" class="mr-2 perm-checkbox"> 🔐 账户管理
+                                </label>
+                            </div>
+                            
+                            <button onclick="saveUserPermissions()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">保存权限</button>
+                            <p id="perm-save-msg" class="text-sm mt-2 hidden"></p>
                         </div>
 
                         <!-- 修改当前账户密码 -->
@@ -1237,6 +1284,8 @@
 
     let currentUser = localStorage.getItem('admin_user');
     let adminToken = localStorage.getItem('admin_token');
+    let currentUserPermissions = [];
+    let isCurrentUserSuperAdmin = false;
     let siteData = { merchants: [], products: [], company: {}, about: {}, home: {} };
     let selectedMerchants = new Set();
     let filteredMerchants = [];
@@ -1271,6 +1320,57 @@
         return data.data;
     }
 
+    // ===== 权限系统 =====
+    function hasPermission(permission) {
+        if (isCurrentUserSuperAdmin) return true;
+        return currentUserPermissions.includes('all') || currentUserPermissions.includes(permission);
+    }
+
+    async function loadUserPermissions() {
+        try {
+            const result = await apiRequest('admin_users_list', 'GET');
+            const users = result || [];
+            const me = users.find(function(u) { return u.username === currentUser; });
+            if (me) {
+                currentUserPermissions = me.permissions || [];
+                isCurrentUserSuperAdmin = (me.role === 'admin' || me.role === 'manager');
+            } else {
+                // 默认回退
+                currentUserPermissions = ['all'];
+                isCurrentUserSuperAdmin = true;
+            }
+        } catch (e) {
+            console.error('加载权限失败:', e);
+            currentUserPermissions = [];
+            isCurrentUserSuperAdmin = false;
+        }
+    }
+
+    function renderSidebar() {
+        const tabs = [
+            { id: 'company', label: '🏢 公司信息', perm: 'company' },
+            { id: 'merchants', label: '🏪 商户管理', perm: 'merchants' },
+            { id: 'products', label: '📦 产品管理', perm: 'products' },
+            { id: 'home', label: '🏠 首页配置', perm: 'home' },
+            { id: 'about', label: '📖 关于我们', perm: 'about' },
+            { id: 'messages', label: '💬 消息管理', perm: 'messages' },
+            { id: 'shop-products', label: '🛒 商城商品', perm: 'shop_orders' },
+            { id: 'shop-orders', label: '📋 商城订单', perm: 'shop_orders' },
+            { id: 'data-report', label: '📊 数据统计', perm: 'reports' },
+            { id: 'account', label: '🔐 账户管理', perm: 'account' }
+        ];
+        tabs.forEach(function(t) {
+            const btn = document.getElementById('tab-btn-' + t.id);
+            if (btn) {
+                if (hasPermission(t.perm)) {
+                    btn.classList.remove('hidden');
+                } else {
+                    btn.classList.add('hidden');
+                }
+            }
+        });
+    }
+
     // ===== 页面初始化 =====
     document.addEventListener('DOMContentLoaded', function() {
         // 初始化验证码
@@ -1295,7 +1395,30 @@
         document.getElementById('admin-page').classList.remove('hidden');
         document.getElementById('current-user').textContent = '当前用户: ' + currentUser;
         document.getElementById('account-username').value = currentUser;
-        initAdmin();
+        loadUserPermissions().then(function() {
+            renderSidebar();
+            initAdmin();
+            // 自动切换到第一个有权限的标签页
+            const tabPermissions = [
+                { id: 'company', perm: 'company' },
+                { id: 'merchants', perm: 'merchants' },
+                { id: 'products', perm: 'products' },
+                { id: 'home', perm: 'home' },
+                { id: 'about', perm: 'about' },
+                { id: 'messages', perm: 'messages' },
+                { id: 'shop-products', perm: 'shop_orders' },
+                { id: 'shop-orders', perm: 'shop_orders' },
+                { id: 'data-report', perm: 'reports' },
+                { id: 'account', perm: 'account' }
+            ];
+            const firstVisible = tabPermissions.find(function(t) { return hasPermission(t.perm); });
+            if (firstVisible) {
+                showTab(firstVisible.id);
+            } else {
+                // 没有任何权限，显示提示
+                document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+            }
+        });
     }
 
     // ===== 登录相关 =====
@@ -1386,20 +1509,55 @@
             const tbody = document.getElementById('admin-users-list');
             if (!tbody) return;
 
+            // 显示/隐藏权限分配区域
+            const permSection = document.getElementById('permission-section');
+            if (permSection) {
+                if (isCurrentUserSuperAdmin) {
+                    permSection.classList.remove('hidden');
+                } else {
+                    permSection.classList.add('hidden');
+                }
+            }
+
+            // 填充权限分配下拉框
+            const permSelect = document.getElementById('perm-target-user');
+            if (permSelect) {
+                permSelect.innerHTML = '<option value="">-- 请选择 --</option>';
+                users.filter(function(u) { return u.role === 'operator'; }).forEach(function(u) {
+                    permSelect.innerHTML += '<option value="' + escapeHtml(u.username) + '">' + escapeHtml(u.username) + '</option>';
+                });
+                // 选择变化时加载权限
+                permSelect.onchange = function() {
+                    const selectedUser = users.find(function(u) { return u.username === permSelect.value; });
+                    if (selectedUser) {
+                        document.querySelectorAll('.perm-checkbox').forEach(function(cb) {
+                            cb.checked = (selectedUser.permissions || []).includes(cb.value);
+                        });
+                    } else {
+                        document.querySelectorAll('.perm-checkbox').forEach(function(cb) { cb.checked = false; });
+                    }
+                };
+            }
+
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">暂无账户数据</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">暂无账户数据</td></tr>';
                 return;
             }
 
             tbody.innerHTML = users.map(function(u) {
                 const isSelf = u.username === currentUser;
                 const dateStr = u.created_at ? new Date(u.created_at).toLocaleDateString('zh-CN') : '-';
+                const perms = (u.permissions || []).slice(0, 3).join(', ');
+                const permText = perms || (u.role === 'admin' || u.role === 'manager' ? '全部权限' : '无权限');
                 return '<tr class="hover:bg-gray-50">' +
                     '<td class="px-4 py-3 text-sm">' + escapeHtml(u.username) + (isSelf ? ' <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">当前</span>' : '') + '</td>' +
                     '<td class="px-4 py-3 text-sm">' + (u.role === 'admin' || u.role === 'manager' ? '<span class="text-red-600">超级管理员</span>' : '<span class="text-gray-600">普通操作员</span>') + '</td>' +
+                    '<td class="px-4 py-3 text-sm text-gray-500">' + escapeHtml(permText) + '</td>' +
                     '<td class="px-4 py-3 text-sm text-gray-500">' + dateStr + '</td>' +
                     '<td class="px-4 py-3 text-sm">' +
-                        (isSelf ? '<span class="text-gray-400">—</span>' : '<button onclick="deleteAdminUser(\'' + escapeHtml(u.username) + '\')" class="text-red-600 hover:text-red-800">删除</button>') +
+                        (isSelf ? '<span class="text-gray-400">—</span>' : 
+                        (isCurrentUserSuperAdmin && u.role === 'operator' ? '<button onclick="deleteAdminUser(\'' + escapeHtml(u.username) + '\')" class="text-red-600 hover:text-red-800 mr-2">删除</button><button onclick="quickPerm(\'' + escapeHtml(u.username) + '\')" class="text-blue-600 hover:text-blue-800">分配权限</button>' : 
+                        '<button onclick="deleteAdminUser(\'' + escapeHtml(u.username) + '\')" class="text-red-600 hover:text-red-800">删除</button>')) +
                     '</td>' +
                 '</tr>';
             }).join('');
@@ -1407,8 +1565,47 @@
             console.error('加载账户列表失败:', e);
             const tbody = document.getElementById('admin-users-list');
             if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-red-400">加载失败：' + escapeHtml(e.message || '未知错误') + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-red-400">加载失败：' + escapeHtml(e.message || '未知错误') + '</td></tr>';
             }
+        }
+    }
+
+    function quickPerm(username) {
+        const permSelect = document.getElementById('perm-target-user');
+        if (permSelect) {
+            permSelect.value = username;
+            permSelect.dispatchEvent(new Event('change'));
+        }
+        // 滚动到权限分配区域
+        const permSection = document.getElementById('permission-section');
+        if (permSection) {
+            permSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    async function saveUserPermissions() {
+        const username = document.getElementById('perm-target-user').value;
+        if (!username) {
+            alert('请先选择账户');
+            return;
+        }
+        const checked = [];
+        document.querySelectorAll('.perm-checkbox:checked').forEach(function(cb) {
+            checked.push(cb.value);
+        });
+        try {
+            await apiRequest('admin_user_permissions', 'POST', { username: username, permissions: checked });
+            const msg = document.getElementById('perm-save-msg');
+            msg.textContent = '权限已保存';
+            msg.classList.remove('hidden', 'text-red-500');
+            msg.classList.add('text-green-500');
+            setTimeout(function() { msg.classList.add('hidden'); }, 3000);
+            loadAdminUsers();
+        } catch (e) {
+            const msg = document.getElementById('perm-save-msg');
+            msg.textContent = e.message || '保存失败';
+            msg.classList.remove('hidden', 'text-green-500');
+            msg.classList.add('text-red-500');
         }
     }
 
@@ -1475,12 +1672,12 @@
     async function initAdmin() {
         try {
             await loadData();
-            loadCompanyData();
-            loadMerchantsList();
-            loadProductsList();
-            loadHomeData();
-            loadAboutData();
-            loadMessages();
+            if (hasPermission('company')) loadCompanyData();
+            if (hasPermission('merchants')) loadMerchantsList();
+            if (hasPermission('products')) loadProductsList();
+            if (hasPermission('home')) loadHomeData();
+            if (hasPermission('about')) loadAboutData();
+            if (hasPermission('messages')) loadMessages();
         } catch (e) {
             console.error('初始化失败:', e);
             alert('加载数据失败: ' + e.message);
@@ -1503,6 +1700,24 @@
 
     // ===== 标签切换 =====
     function showTab(tab) {
+        // 权限检查
+        const tabPermissions = {
+            'company': 'company',
+            'merchants': 'merchants',
+            'products': 'products',
+            'home': 'home',
+            'about': 'about',
+            'messages': 'messages',
+            'shop-products': 'shop_orders',
+            'shop-orders': 'shop_orders',
+            'data-report': 'reports',
+            'account': 'account'
+        };
+        if (tabPermissions[tab] && !hasPermission(tabPermissions[tab])) {
+            alert('无权访问此板块');
+            return;
+        }
+
         document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
         document.querySelectorAll('[id^="tab-btn-"]').forEach(function(el) {
             el.classList.remove('bg-blue-50', 'text-blue-700');

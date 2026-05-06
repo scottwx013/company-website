@@ -63,13 +63,20 @@ function getAdminUserInfo(req, data) {
         const user = data.admin_users.find(function(u) { return u.username === username; });
         if (user) return user;
     }
-    if (username === 'admin') return { username: 'admin', role: 'admin' };
-    if (username === 'manager') return { username: 'manager', role: 'manager' };
-    return { username: username, role: 'manager' };
+    if (username === 'admin') return { username: 'admin', role: 'admin', permissions: ['all'] };
+    if (username === 'manager') return { username: 'manager', role: 'manager', permissions: ['all'] };
+    return { username: username, role: 'operator', permissions: [] };
 }
 
 function isSuperAdmin(user) {
     return user && (user.role === 'admin' || user.role === 'manager');
+}
+
+function hasPermission(user, permission) {
+    if (!user) return false;
+    if (isSuperAdmin(user)) return true;
+    const perms = user.permissions || [];
+    return perms.includes('all') || perms.includes(permission);
 }
 
 // 内存中的数据缓存
@@ -288,8 +295,8 @@ const defaultData = {
     shop_logistics: [],
     shop_virtual_deliveries: [],
     admin_users: [
-        { username: 'admin', password_hash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', role: 'admin', created_at: '2024-01-01T00:00:00Z' },
-        { username: 'manager', password_hash: '866485796cfa8d7c0cf7111640205b83076433547577511d81f8030ae99ecea5', role: 'manager', created_at: '2024-01-01T00:00:00Z' }
+        { username: 'admin', password_hash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', role: 'admin', permissions: ['all'], created_at: '2024-01-01T00:00:00Z' },
+        { username: 'manager', password_hash: '866485796cfa8d7c0cf7111640205b83076433547577511d81f8030ae99ecea5', role: 'manager', permissions: ['all'], created_at: '2024-01-01T00:00:00Z' }
     ]
 };
 
@@ -385,24 +392,24 @@ module.exports = async (req, res) => {
             return res.json({ success: true, data: data.home });
         }
         if (action === 'messages') {
-            // 返回所有联系表单消息（按时间倒序）
+            const adminUserInfo = getAdminUserInfo(req, data);
+            if (!hasPermission(adminUserInfo, 'messages')) {
+                return res.json({ success: false, error: '无权访问联系消息' });
+            }
             const messages = (data.messages || []).sort((a, b) => new Date(b.createTime) - new Date(a.createTime));
             return res.json({ success: true, data: messages });
         }
 
-        // ===== 受保护接口统一鉴权 =====
-        const adminUserInfo = getAdminUserInfo(req, data);
-        const protectedActions = ['shop_orders_list', 'shop_order_status', 'shop_order_ship', 'shop_logistics_update', 'shop_product_manage', 'shop_coupons_list', 'shop_coupons_import', 'shop_coupons_delete', 'shop_coupons_auto_get', 'admin_users_list', 'admin_user_create', 'admin_user_delete', 'admin_user_update'];
-        if (protectedActions.includes(action) && !isSuperAdmin(adminUserInfo)) {
-            return res.json({ success: false, error: '未授权，请先登录' });
-        }
-
         if (action === 'admin_users_list') {
+            const adminUserInfo = getAdminUserInfo(req, data);
+            if (!hasPermission(adminUserInfo, 'account')) {
+                return res.json({ success: false, error: '无权访问账户管理' });
+            }
             let users = (data.admin_users || []);
             // 防御：始终确保默认超级管理员账户存在
             const defaultSuperAdmins = [
-                { username: 'admin', role: 'admin', created_at: '2024-01-01T00:00:00Z' },
-                { username: 'manager', role: 'manager', created_at: '2024-01-01T00:00:00Z' }
+                { username: 'admin', role: 'admin', permissions: ['all'], created_at: '2024-01-01T00:00:00Z' },
+                { username: 'manager', role: 'manager', permissions: ['all'], created_at: '2024-01-01T00:00:00Z' }
             ];
             defaultSuperAdmins.forEach(function(def) {
                 const exists = users.find(function(u) { return u.username === def.username; });
@@ -415,6 +422,7 @@ module.exports = async (req, res) => {
                 return {
                     username: u.username,
                     role: u.role || 'manager',
+                    permissions: u.permissions || [],
                     created_at: u.created_at
                 };
             }) });
@@ -427,9 +435,9 @@ module.exports = async (req, res) => {
         
         // 后台管理：获取全部商城订单（通过 Supabase service_role 绕过 RLS）
         if (action === 'shop_orders_list') {
-            const adminUser = getAdminUser(req);
-            if (!adminUser) {
-                return res.json({ success: false, error: '未授权，请先登录' });
+            const adminUserInfo = getAdminUserInfo(req, data);
+            if (!hasPermission(adminUserInfo, 'shop_orders')) {
+                return res.json({ success: false, error: '无权访问商城订单' });
             }
             const ordersResult = await supabaseRequest('shop_orders', 'GET', 'order=created_at.desc&limit=1000');
             if (!ordersResult.ok) {
@@ -490,15 +498,12 @@ module.exports = async (req, res) => {
     if (req.method === 'POST' || req.method === 'PUT') {
         const body = req.body;
         let changed = false;
-        
-        // 验证管理员 token（后续受保护端点统一检查）
         const adminUserInfo = getAdminUserInfo(req, data);
-        const protectedPostActions = ['shop_order_status', 'shop_order_ship', 'shop_logistics_update', 'shop_product_manage', 'shop_coupons_import', 'shop_coupons_delete', 'shop_coupons_auto_get', 'admin_user_create', 'admin_user_delete', 'admin_user_update'];
-        if (protectedPostActions.includes(action) && !isSuperAdmin(adminUserInfo)) {
-            return res.json({ success: false, error: '未授权，请先登录' });
-        }
         
         if (action === 'merchant') {
+            if (!hasPermission(adminUserInfo, 'merchants')) {
+                return res.json({ success: false, error: '无权访问商户管理' });
+            }
             if (body.id) {
                 // 更新
                 const idx = data.merchants.findIndex(m => m.id === body.id);
@@ -520,6 +525,9 @@ module.exports = async (req, res) => {
         }
         
         if (action === 'product') {
+            if (!hasPermission(adminUserInfo, 'products')) {
+                return res.json({ success: false, error: '无权访问产品管理' });
+            }
             if (body.id) {
                 const idx = data.products.findIndex(p => p.id === body.id);
                 if (idx !== -1) {
@@ -539,6 +547,9 @@ module.exports = async (req, res) => {
         }
         
         if (action === 'company') {
+            if (!hasPermission(adminUserInfo, 'company')) {
+                return res.json({ success: false, error: '无权访问公司信息' });
+            }
             data.company = { ...data.company, ...body };
             changed = true;
             saveToFile(data);
@@ -546,6 +557,9 @@ module.exports = async (req, res) => {
         }
         
         if (action === 'about') {
+            if (!hasPermission(adminUserInfo, 'about')) {
+                return res.json({ success: false, error: '无权访问关于我们' });
+            }
             data.about = { ...data.about, ...body };
             changed = true;
             saveToFile(data);
@@ -553,6 +567,9 @@ module.exports = async (req, res) => {
         }
         
         if (action === 'home') {
+            if (!hasPermission(adminUserInfo, 'home')) {
+                return res.json({ success: false, error: '无权访问首页配置' });
+            }
             data.home = { ...data.home, ...body };
             changed = true;
             saveToFile(data);
@@ -654,38 +671,11 @@ module.exports = async (req, res) => {
             return res.json({ success: false, error: '用户名或密码错误' });
         }
         
-        // 验证管理员 token（后续受保护端点统一检查）
-        const adminUserInfo = getAdminUserInfo(req, data);
-        const protectedActions = ['shop_orders_list', 'shop_order_status', 'shop_order_ship', 'shop_logistics_update', 'shop_product_manage', 'shop_coupons_list', 'shop_coupons_import', 'shop_coupons_delete', 'shop_coupons_auto_get', 'admin_users_list', 'admin_user_create', 'admin_user_delete', 'admin_user_update'];
-        if (protectedActions.includes(action) && !isSuperAdmin(adminUserInfo)) {
-            return res.json({ success: false, error: '未授权，请先登录' });
-        }
-        
         // ===== 账户管理 API =====
-        if (action === 'admin_users_list') {
-            let users = (data.admin_users || []);
-            // 防御：始终确保默认超级管理员账户存在
-            const defaultSuperAdmins = [
-                { username: 'admin', role: 'admin', created_at: '2024-01-01T00:00:00Z' },
-                { username: 'manager', role: 'manager', created_at: '2024-01-01T00:00:00Z' }
-            ];
-            defaultSuperAdmins.forEach(function(def) {
-                const exists = users.find(function(u) { return u.username === def.username; });
-                if (!exists) {
-                    users.push(def);
-                }
-            });
-            data.admin_users = users;
-            return res.json({ success: true, data: users.map(function(u) {
-                return {
-                    username: u.username,
-                    role: u.role || 'manager',
-                    created_at: u.created_at
-                };
-            }) });
-        }
-        
         if (action === 'admin_user_create') {
+            if (!hasPermission(adminUserInfo, 'permissions')) {
+                return res.json({ success: false, error: '无权创建账户，需要权限分配权限' });
+            }
             const { username, password, role } = req.body;
             if (!username || !password) {
                 return res.json({ success: false, error: '用户名和密码不能为空' });
@@ -700,21 +690,26 @@ module.exports = async (req, res) => {
             const newUser = {
                 username: username,
                 password_hash: sha256(password),
-                role: role || 'manager',
+                role: role || 'operator',
+                permissions: role === 'operator' ? [] : ['all'],
                 created_at: new Date().toISOString()
             };
             data.admin_users = data.admin_users || [];
             data.admin_users.push(newUser);
             saveToFile(data);
-            return res.json({ success: true, data: { username: newUser.username, role: newUser.role, created_at: newUser.created_at } });
+            return res.json({ success: true, data: { username: newUser.username, role: newUser.role, permissions: newUser.permissions, created_at: newUser.created_at } });
         }
         
         if (action === 'admin_user_delete') {
+            if (!hasPermission(adminUserInfo, 'permissions')) {
+                return res.json({ success: false, error: '无权删除账户' });
+            }
             const username = req.query.username || req.body?.username;
             if (!username) {
                 return res.json({ success: false, error: '缺少用户名' });
             }
-            if (username === adminUser) {
+            const currentUsername = getAdminUser(req);
+            if (username === currentUsername) {
                 return res.json({ success: false, error: '不能删除当前登录账户' });
             }
             const initialLen = (data.admin_users || []).length;
@@ -731,6 +726,15 @@ module.exports = async (req, res) => {
             if (!username) {
                 return res.json({ success: false, error: '缺少用户名' });
             }
+            const currentUsername = getAdminUser(req);
+            // 修改自己密码：需要 account 权限
+            // 修改别人密码/角色：需要 permissions 权限
+            if (username !== currentUsername && !hasPermission(adminUserInfo, 'permissions')) {
+                return res.json({ success: false, error: '无权修改其他账户' });
+            }
+            if (username === currentUsername && !hasPermission(adminUserInfo, 'account')) {
+                return res.json({ success: false, error: '无权修改密码' });
+            }
             const user = (data.admin_users || []).find(function(u) { return u.username === username; });
             if (!user) {
                 return res.json({ success: false, error: '用户不存在' });
@@ -740,13 +744,42 @@ module.exports = async (req, res) => {
             }
             if (role) {
                 user.role = role;
+                if (role === 'operator') {
+                    user.permissions = user.permissions || [];
+                } else {
+                    user.permissions = ['all'];
+                }
             }
             saveToFile(data);
-            return res.json({ success: true, data: { username: user.username, role: user.role } });
+            return res.json({ success: true, data: { username: user.username, role: user.role, permissions: user.permissions } });
+        }
+        
+        if (action === 'admin_user_permissions') {
+            if (!hasPermission(adminUserInfo, 'permissions')) {
+                return res.json({ success: false, error: '无权分配权限' });
+            }
+            const { username, permissions } = req.body;
+            if (!username) {
+                return res.json({ success: false, error: '缺少用户名' });
+            }
+            const user = (data.admin_users || []).find(function(u) { return u.username === username; });
+            if (!user) {
+                return res.json({ success: false, error: '用户不存在' });
+            }
+            // 不能修改超级管理员的权限
+            if (isSuperAdmin(user)) {
+                return res.json({ success: false, error: '不能修改超级管理员的权限' });
+            }
+            user.permissions = Array.isArray(permissions) ? permissions : [];
+            saveToFile(data);
+            return res.json({ success: true, data: { username: user.username, permissions: user.permissions } });
         }
         
         // 后台管理：更新订单状态（通过 Supabase service_role 绕过 RLS）
         if (action === 'shop_order_status' || action === 'shop_order_ship') {
+            if (!hasPermission(adminUserInfo, 'shop_orders')) {
+                return res.json({ success: false, error: '无权访问商城订单' });
+            }
             const { orderId, status, logisticsInfo, virtualContent } = req.body;
             
             const updateBody = { status: status || 'shipped' };
@@ -816,6 +849,9 @@ module.exports = async (req, res) => {
         
         // 后台管理：券号管理（虚拟商品卡密池）
         if (action === 'shop_coupons_list') {
+            if (!hasPermission(adminUserInfo, 'shop_orders')) {
+                return res.json({ success: false, error: '无权访问商城订单' });
+            }
             const { productId } = req.query;
             if (!productId) {
                 return res.json({ success: false, error: '缺少商品ID' });
@@ -828,6 +864,9 @@ module.exports = async (req, res) => {
         }
         
         if (action === 'shop_coupons_import') {
+            if (!hasPermission(adminUserInfo, 'shop_orders')) {
+                return res.json({ success: false, error: '无权访问商城订单' });
+            }
             const { productId, codes } = req.body;
             if (!productId || !codes || !Array.isArray(codes) || codes.length === 0) {
                 return res.json({ success: false, error: '缺少商品ID或券号列表' });
@@ -849,6 +888,9 @@ module.exports = async (req, res) => {
         }
         
         if (action === 'shop_coupons_delete') {
+            if (!hasPermission(adminUserInfo, 'shop_orders')) {
+                return res.json({ success: false, error: '无权访问商城订单' });
+            }
             const { id } = req.query;
             if (!id) {
                 return res.json({ success: false, error: '缺少券号ID' });
@@ -861,6 +903,9 @@ module.exports = async (req, res) => {
         }
         
         if (action === 'shop_coupons_auto_get') {
+            if (!hasPermission(adminUserInfo, 'shop_orders')) {
+                return res.json({ success: false, error: '无权访问商城订单' });
+            }
             const { productId, orderId } = req.query;
             if (!productId) {
                 return res.json({ success: false, error: '缺少商品ID' });
@@ -876,16 +921,25 @@ module.exports = async (req, res) => {
         
         // 物流更新（暂不支持，订单表直接记录 ship_time）
         if (action === 'shop_logistics_update') {
+            if (!hasPermission(adminUserInfo, 'shop_orders')) {
+                return res.json({ success: false, error: '无权访问商城订单' });
+            }
             return res.json({ success: false, error: '物流更新暂不支持，请联系开发者' });
         }
         
         // 后台管理：商品管理（已废弃，admin 直接调用 Supabase REST API）
         if (action === 'shop_product_manage') {
+            if (!hasPermission(adminUserInfo, 'shop_orders')) {
+                return res.json({ success: false, error: '无权访问商城订单' });
+            }
             return res.json({ success: false, error: '商品管理已迁移至 Supabase，admin 直接调用 Supabase REST API' });
         }
         
         // 图片上传到 Supabase Storage
         if (action === 'admin_upload_image') {
+            if (!hasPermission(adminUserInfo, 'products')) {
+                return res.json({ success: false, error: '无权上传图片' });
+            }
             const { filename, base64, mimeType } = req.body;
             if (!filename || !base64) {
                 return res.json({ success: false, error: '缺少文件名或图片数据' });
