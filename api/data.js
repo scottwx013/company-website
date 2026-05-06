@@ -584,7 +584,7 @@ module.exports = async (req, res) => {
         
         // 验证管理员 token（后续受保护端点统一检查）
         const adminUser = getAdminUser(req);
-        const protectedActions = ['shop_orders_list', 'shop_order_status', 'shop_order_ship', 'shop_logistics_update', 'shop_product_manage'];
+        const protectedActions = ['shop_orders_list', 'shop_order_status', 'shop_order_ship', 'shop_logistics_update', 'shop_product_manage', 'shop_coupons_list', 'shop_coupons_import', 'shop_coupons_delete', 'shop_coupons_auto_get'];
         if (protectedActions.includes(action) && !adminUser) {
             return res.json({ success: false, error: '未授权，请先登录' });
         }
@@ -610,8 +610,49 @@ module.exports = async (req, res) => {
                 updateBody.tracking_no = logisticsInfo.trackingNo;
             }
             
-            // 保存虚拟商品内容
-            if (virtualContent && virtualContent.content) {
+            // 虚拟商品发货：自动从券号池获取券号
+            if (status === 'shipped') {
+                // 先获取订单明细，看看有没有虚拟商品
+                const itemsResult = await supabaseRequest('shop_order_items', 'GET', 'order_id=eq.' + encodeURIComponent(orderId));
+                if (itemsResult.ok && itemsResult.data) {
+                    const virtualItems = itemsResult.data.filter(item => item.product_type === 'virtual');
+                    if (virtualItems.length > 0) {
+                        let autoCoupons = [];
+                        for (const item of virtualItems) {
+                            const couponResult = await supabaseRequest('shop_coupons', 'GET', 'product_id=eq.' + item.product_id + '&status=eq.unused&limit=1');
+                            if (couponResult.ok && couponResult.data && couponResult.data.length > 0) {
+                                const coupon = couponResult.data[0];
+                                // 标记券号已使用
+                                await supabaseRequest('shop_coupons', 'PATCH', 'id=eq.' + coupon.id, {
+                                    status: 'delivered',
+                                    order_id: orderId,
+                                    delivered_at: new Date().toISOString()
+                                });
+                                autoCoupons.push({
+                                    productName: item.product_name,
+                                    code: coupon.code
+                                });
+                            }
+                        }
+                        
+                        // 构建虚拟商品内容（自动券号 + 手动填写内容）
+                        let virtualBody = '';
+                        if (autoCoupons.length > 0) {
+                            virtualBody = autoCoupons.map(c => c.productName + '：' + c.code).join('\n');
+                        }
+                        if (virtualContent && virtualContent.content) {
+                            if (virtualBody) virtualBody += '\n\n备注：\n';
+                            virtualBody += virtualContent.content;
+                        }
+                        if (virtualBody) {
+                            updateBody.virtual_content = virtualBody;
+                        }
+                    } else if (virtualContent && virtualContent.content) {
+                        // 非虚拟商品但用户填写了虚拟内容（不应该发生）
+                        updateBody.virtual_content = virtualContent.content;
+                    }
+                }
+            } else if (virtualContent && virtualContent.content) {
                 updateBody.virtual_content = virtualContent.content;
             }
             
@@ -621,6 +662,74 @@ module.exports = async (req, res) => {
             }
             
             return res.json({ success: true, data: { orderId, status: updateBody.status } });
+        }
+        
+        // 后台管理：券号管理（虚拟商品卡密池）
+        if (action === 'shop_coupons_list') {
+            const { productId } = req.query;
+            if (!productId) {
+                return res.json({ success: false, error: '缺少商品ID' });
+            }
+            const result = await supabaseRequest('shop_coupons', 'GET', 'product_id=eq.' + productId + '&order=created_at.desc&limit=1000');
+            if (!result.ok) {
+                return res.json({ success: false, error: '查询券号失败', details: result.data });
+            }
+            return res.json({ success: true, data: result.data || [] });
+        }
+        
+        if (action === 'shop_coupons_import') {
+            const { productId, codes } = req.body;
+            if (!productId || !codes || !Array.isArray(codes) || codes.length === 0) {
+                return res.json({ success: false, error: '缺少商品ID或券号列表' });
+            }
+            
+            let successCount = 0;
+            let failCount = 0;
+            for (const code of codes) {
+                if (!code || !code.trim()) continue;
+                const result = await supabaseRequest('shop_coupons', 'POST', '', {
+                    product_id: parseInt(productId),
+                    code: code.trim(),
+                    status: 'unused'
+                });
+                if (result.ok) successCount++;
+                else failCount++;
+            }
+            return res.json({ success: true, data: { successCount, failCount, total: codes.length } });
+        }
+        
+        if (action === 'shop_coupons_delete') {
+            const { id } = req.query;
+            if (!id) {
+                return res.json({ success: false, error: '缺少券号ID' });
+            }
+            const result = await supabaseRequest('shop_coupons', 'DELETE', 'id=eq.' + id);
+            if (!result.ok) {
+                return res.json({ success: false, error: '删除券号失败', details: result.data });
+            }
+            return res.json({ success: true });
+        }
+        
+        if (action === 'shop_coupons_auto_get') {
+            const { productId, orderId } = req.query;
+            if (!productId) {
+                return res.json({ success: false, error: '缺少商品ID' });
+            }
+            // 获取一个未使用的券号
+            const result = await supabaseRequest('shop_coupons', 'GET', 'product_id=eq.' + productId + '&status=eq.unused&limit=1');
+            if (!result.ok || !result.data || result.data.length === 0) {
+                return res.json({ success: false, error: '该商品暂无可用券号，请先导入券号' });
+            }
+            const coupon = result.data[0];
+            // 标记为已发货
+            if (orderId) {
+                await supabaseRequest('shop_coupons', 'PATCH', 'id=eq.' + coupon.id, {
+                    status: 'delivered',
+                    order_id: orderId,
+                    delivered_at: new Date().toISOString()
+                });
+            }
+            return res.json({ success: true, data: { code: coupon.code, id: coupon.id } });
         }
         
         // 物流更新（暂不支持，订单表直接记录 ship_time）
