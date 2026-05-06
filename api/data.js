@@ -626,14 +626,21 @@ module.exports = async (req, res) => {
         
         // ===== 账户管理 API =====
         if (action === 'admin_users_list') {
-            const users = (data.admin_users || []).map(function(u) {
+            let users = (data.admin_users || []);
+            // 如果数据文件中的 admin_users 为空，回退到默认账户
+            if (users.length === 0) {
+                users = [
+                    { username: 'admin', role: 'admin', created_at: '2024-01-01T00:00:00Z' },
+                    { username: 'manager', role: 'manager', created_at: '2024-01-01T00:00:00Z' }
+                ];
+            }
+            return res.json({ success: true, data: users.map(function(u) {
                 return {
                     username: u.username,
                     role: u.role || 'manager',
                     created_at: u.created_at
                 };
-            });
-            return res.json({ success: true, data: users });
+            }) });
         }
         
         if (action === 'admin_user_create') {
