@@ -610,7 +610,7 @@ module.exports = async (req, res) => {
                 updateBody.tracking_no = logisticsInfo.trackingNo;
             }
             
-            // 虚拟商品发货：自动从券号池获取券号
+            // 虚拟商品发货：自动从券号池获取券号并标记，virtual_content 优先用前端传来的内容
             if (status === 'shipped') {
                 // 先获取订单明细，看看有没有虚拟商品
                 const itemsResult = await supabaseRequest('shop_order_items', 'GET', 'order_id=eq.' + encodeURIComponent(orderId));
@@ -622,7 +622,7 @@ module.exports = async (req, res) => {
                             const couponResult = await supabaseRequest('shop_coupons', 'GET', 'product_id=eq.' + item.product_id + '&status=eq.unused&limit=1');
                             if (couponResult.ok && couponResult.data && couponResult.data.length > 0) {
                                 const coupon = couponResult.data[0];
-                                // 标记券号已使用
+                                // 标记券号已发货
                                 await supabaseRequest('shop_coupons', 'PATCH', 'id=eq.' + coupon.id, {
                                     status: 'delivered',
                                     order_id: orderId,
@@ -635,20 +635,14 @@ module.exports = async (req, res) => {
                             }
                         }
                         
-                        // 构建虚拟商品内容（自动券号 + 手动填写内容）
-                        let virtualBody = '';
-                        if (autoCoupons.length > 0) {
-                            virtualBody = autoCoupons.map(c => c.productName + '：' + c.code).join('\n');
-                        }
+                        // virtual_content 优先使用前端传来的内容（用户已预览确认）
+                        // 如果前端没传，用后端自动构建的券号文本
                         if (virtualContent && virtualContent.content) {
-                            if (virtualBody) virtualBody += '\n\n备注：\n';
-                            virtualBody += virtualContent.content;
-                        }
-                        if (virtualBody) {
-                            updateBody.virtual_content = virtualBody;
+                            updateBody.virtual_content = virtualContent.content;
+                        } else if (autoCoupons.length > 0) {
+                            updateBody.virtual_content = autoCoupons.map(c => c.productName + '：' + c.code).join('\n');
                         }
                     } else if (virtualContent && virtualContent.content) {
-                        // 非虚拟商品但用户填写了虚拟内容（不应该发生）
                         updateBody.virtual_content = virtualContent.content;
                     }
                 }
@@ -715,20 +709,12 @@ module.exports = async (req, res) => {
             if (!productId) {
                 return res.json({ success: false, error: '缺少商品ID' });
             }
-            // 获取一个未使用的券号
+            // 获取一个未使用的券号（仅预览，不标记状态，留给发货时真正扣减）
             const result = await supabaseRequest('shop_coupons', 'GET', 'product_id=eq.' + productId + '&status=eq.unused&limit=1');
             if (!result.ok || !result.data || result.data.length === 0) {
                 return res.json({ success: false, error: '该商品暂无可用券号，请先导入券号' });
             }
             const coupon = result.data[0];
-            // 标记为已发货
-            if (orderId) {
-                await supabaseRequest('shop_coupons', 'PATCH', 'id=eq.' + coupon.id, {
-                    status: 'delivered',
-                    order_id: orderId,
-                    delivered_at: new Date().toISOString()
-                });
-            }
             return res.json({ success: true, data: { code: coupon.code, id: coupon.id } });
         }
         

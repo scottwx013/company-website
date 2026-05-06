@@ -474,8 +474,8 @@
                                 <p class="text-sm text-gray-500 mt-1">查看和处理用户订单</p>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="requestNotificationPermission()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm flex items-center gap-1" id="btn-enable-notify">
-                                    <i class="fas fa-bell"></i>开启通知
+                                <button onclick="toggleNotification()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm flex items-center gap-1" id="btn-enable-notify">
+                                    <i class="fas fa-bell"></i><span id="btn-enable-notify-text">开启通知</span>
                                 </button>
                                 <button onclick="exportShopOrders()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm flex items-center gap-1">
                                     <i class="fas fa-download"></i>导出订单
@@ -853,7 +853,7 @@
             
             <div class="flex justify-end gap-4 mt-6">
                 <button onclick="closeShipModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">取消</button>
-                <button onclick="confirmShip()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">确认发货</button>
+                <button id="btn-confirm-ship" onclick="confirmShip()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">确认发货</button>
             </div>
         </div>
     </div>
@@ -1346,6 +1346,7 @@
                 loadShopOrders();
                 startOrderPolling();
                 clearUnreadOrders();
+                updateNotifyButton(isNotifyEnabled());
                 break;
             case 'data-report':
                 loadDataReport();
@@ -2556,8 +2557,8 @@
         // 页面内 toast
         showToast(msg, 'success');
         
-        // 浏览器桌面通知（需用户授权）
-        if ('Notification' in window && Notification.permission === 'granted') {
+        // 浏览器桌面通知（需用户主动开启）
+        if (isNotifyEnabled()) {
             new Notification('宜礼商城 - 新订单', {
                 body: msg,
                 icon: '/favicon.ico'
@@ -2566,18 +2567,48 @@
     }
     
     // 请求浏览器通知权限
-    function requestNotificationPermission() {
-        if (!('Notification' in window)) {
-            alert('您的浏览器不支持桌面通知');
-            return;
-        }
-        Notification.requestPermission().then(function(permission) {
-            if (permission === 'granted') {
-                showToast('已开启桌面通知，有新订单时会自动提醒', 'success');
-            } else {
-                showToast('未获得通知权限，将仅使用页面内提醒', 'warning');
+    function toggleNotification() {
+        var enabled = localStorage.getItem('yili_order_notify') === 'true';
+        if (!enabled) {
+            if (!('Notification' in window)) {
+                alert('您的浏览器不支持桌面通知');
+                return;
             }
-        });
+            Notification.requestPermission().then(function(permission) {
+                if (permission === 'granted') {
+                    localStorage.setItem('yili_order_notify', 'true');
+                    showToast('已开启桌面通知，有新订单时会自动提醒', 'success');
+                    updateNotifyButton(true);
+                } else {
+                    showToast('未获得通知权限，将仅使用页面内提醒', 'warning');
+                    localStorage.setItem('yili_order_notify', 'false');
+                    updateNotifyButton(false);
+                }
+            });
+        } else {
+            localStorage.setItem('yili_order_notify', 'false');
+            showToast('已关闭桌面通知', 'info');
+            updateNotifyButton(false);
+        }
+    }
+
+    function updateNotifyButton(enabled) {
+        var btn = document.getElementById('btn-enable-notify');
+        var text = document.getElementById('btn-enable-notify-text');
+        if (!btn || !text) return;
+        if (enabled) {
+            btn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700');
+            text.textContent = '通知已开启';
+        } else {
+            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            btn.classList.add('bg-purple-600', 'hover:bg-purple-700');
+            text.textContent = '开启通知';
+        }
+    }
+
+    function isNotifyEnabled() {
+        return localStorage.getItem('yili_order_notify') === 'true' && Notification.permission === 'granted';
     }
     
     // 页面标题闪烁提醒
@@ -2815,6 +2846,10 @@
             document.getElementById('ship-virtual-section').classList.remove('hidden');
             document.getElementById('ship-physical-section').classList.add('hidden');
             
+            // 禁用确认按钮，加载完成后再启用
+            const btn = document.getElementById('btn-confirm-ship');
+            if (btn) { btn.disabled = true; btn.textContent = '获取券号中...'; }
+            
             // 自动从券号池获取券号并填入
             var virtualItems = o.items.filter(function(item) { return item.productType === 'virtual'; });
             var autoCodes = [];
@@ -2822,6 +2857,7 @@
             
             if (pendingCount === 0) {
                 document.getElementById('ship-virtual-content').value = '';
+                if (btn) { btn.disabled = false; btn.textContent = '确认发货'; }
             } else {
                 document.getElementById('ship-virtual-content').value = '正在获取券号...';
                 virtualItems.forEach(function(item) {
@@ -2835,6 +2871,7 @@
                         if (pendingCount === 0) {
                             var text = autoCodes.map(function(c) { return c.name + '：' + c.code; }).join('\n');
                             document.getElementById('ship-virtual-content').value = text;
+                            if (btn) { btn.disabled = false; btn.textContent = '确认发货'; }
                         }
                     }).catch(function() {
                         autoCodes.push({ name: item.productName, code: '【获取失败】' });
@@ -2842,6 +2879,7 @@
                         if (pendingCount === 0) {
                             var text = autoCodes.map(function(c) { return c.name + '：' + c.code; }).join('\n');
                             document.getElementById('ship-virtual-content').value = text;
+                            if (btn) { btn.disabled = false; btn.textContent = '确认发货'; }
                         }
                     });
                 });
@@ -2903,6 +2941,10 @@
             const content = document.getElementById('ship-virtual-content').value.trim();
             if (!content) {
                 alert('请填写卡券内容');
+                return;
+            }
+            if (content.indexOf('正在获取') >= 0 || content.indexOf('【获取失败】') >= 0) {
+                alert('券号仍在加载中，请稍后再试');
                 return;
             }
             shipPayload.virtualContent = { content: content };
