@@ -627,13 +627,18 @@ module.exports = async (req, res) => {
         // ===== 账户管理 API =====
         if (action === 'admin_users_list') {
             let users = (data.admin_users || []);
-            // 如果数据文件中的 admin_users 为空，回退到默认账户
-            if (users.length === 0) {
-                users = [
-                    { username: 'admin', role: 'admin', created_at: '2024-01-01T00:00:00Z' },
-                    { username: 'manager', role: 'manager', created_at: '2024-01-01T00:00:00Z' }
-                ];
-            }
+            // 防御：始终确保默认超级管理员账户存在
+            const defaultSuperAdmins = [
+                { username: 'admin', role: 'admin', created_at: '2024-01-01T00:00:00Z' },
+                { username: 'manager', role: 'manager', created_at: '2024-01-01T00:00:00Z' }
+            ];
+            defaultSuperAdmins.forEach(function(def) {
+                const exists = users.find(function(u) { return u.username === def.username; });
+                if (!exists) {
+                    users.push(def);
+                }
+            });
+            data.admin_users = users;
             return res.json({ success: true, data: users.map(function(u) {
                 return {
                     username: u.username,
