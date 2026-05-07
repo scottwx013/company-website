@@ -1099,7 +1099,13 @@
     </div>
 
     <!-- 引入SheetJS库用于解析Excel -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+        // 如果主CDN加载失败，尝试备用CDN
+        if (typeof XLSX === 'undefined') {
+            document.write('<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>');
+        }
+    </script>
 
     <script>
     // ===== 文字点选验证码类 =====
@@ -2232,7 +2238,19 @@
 
         // 检查 SheetJS 是否加载
         if (typeof XLSX === 'undefined') {
-            alert('Excel 解析库未加载，请刷新页面后重试');
+            if (isCSV) {
+                // XLSX 未加载但文件是 CSV，直接用文本方式读取
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var csvText = e.target.result;
+                    document.getElementById('import-data').value = csvText;
+                    var lines = csvText.split('\n').filter(function(l) { return l.trim(); });
+                    alert('CSV 文件已读取！共 ' + (lines.length > 0 && /名称|name|商户|城市/.test(lines[0]) ? lines.length - 1 : lines.length) + ' 条数据\n\n⚠️ Excel 解析库未加载（.xlsx/.xls 暂不支持），建议直接粘贴 CSV 数据');
+                };
+                reader.readAsText(file);
+                return;
+            }
+            alert('Excel 解析库未加载，请刷新页面重试。\n\n临时方案：\n1) 将 .xlsx 另存为 .csv 后上传；\n2) 或直接在下方文本框粘贴内容。');
             return;
         }
 
