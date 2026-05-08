@@ -77,8 +77,16 @@
 
         if (needAuth) {
             var token = getToken();
-            if (token) {
+            // 如果 token 不是有效 JWT（应包含 3 部分），回退到 anon key
+            if (token && token.split('.').length === 3) {
                 headers['Authorization'] = 'Bearer ' + token;
+            } else {
+                // 使用 anon key，同时添加自定义 x-user-id 头供 RLS 使用
+                headers['Authorization'] = 'Bearer ' + SUPABASE_ANON_KEY;
+                var user = getCurrentUser();
+                if (user && user.id) {
+                    headers['x-user-id'] = user.id;
+                }
             }
         }
 
