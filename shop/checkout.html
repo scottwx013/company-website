@@ -1,3 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>结算 - 宜礼商城</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/shop.css">
+    <link rel="stylesheet" href="../css/shop.css">
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航 -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-3xl mx-auto px-4">
+            <div class="flex items-center h-14">
+                <a href="cart.html" class="text-gray-600 mr-4">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </a>
+                <h1 class="text-lg font-medium">确认订单</h1>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 订单内容 -->
+    <main class="max-w-3xl mx-auto p-4 pb-32">
+        <!-- 商品列表 -->
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+            <h2 class="font-medium mb-3">商品清单</h2>
+            <div id="cartItems">
+                <!-- 动态生成 -->
+            </div>
+            <div id="emptyState" class="hidden text-center py-8 text-gray-500">
+                <i class="fas fa-shopping-cart text-4xl mb-2"></i>
+                <p>购物车为空</p>
+            </div>
+        </div>
+
+        <!-- 收货信息 -->
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+            <h2 class="font-medium mb-3">收货信息</h2>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">收货人</label>
+                    <input type="text" id="receiverName" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-purple-500" placeholder="请输入收货人姓名">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">手机号</label>
+                    <input type="tel" id="receiverPhone" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-purple-500" placeholder="请输入手机号">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">收货地址</label>
+                    <textarea id="address" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-purple-500" rows="3" placeholder="请输入详细地址"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-1">备注</label>
+                    <input type="text" id="remark" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-purple-500" placeholder="选填">
+                </div>
+            </div>
+        </div>
+
+        <!-- 已保存地址 -->
+        <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+            <h2 class="font-medium mb-3">已保存地址</h2>
+            <div id="savedAddresses" class="space-y-2">
+                <p class="text-sm text-gray-500">暂无保存的地址</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部结算栏 -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
+        <div class="max-w-3xl mx-auto flex items-center justify-between">
+            <div>
+                <span class="text-sm text-gray-600">合计：</span>
+                <span id="totalAmount" class="text-xl font-bold text-red-600">¥0</span>
+            </div>
+            <button id="submitBtn" onclick="submitOrder()" class="bg-purple-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-purple-700 transition">
+                <span id="submitLoading" class="hidden">
+                    <i class="fas fa-spinner fa-spin mr-2"></i>提交中...
+                </span>
+                <span id="submitText">提交订单</span>
+            </button>
+        </div>
+    </div>
+
     <script src="../js/supabase-client.js"></script>
     <script src="shop-data.js"></script>
     <script>
@@ -102,6 +188,11 @@
         function selectAddress(index) {
             selectedAddress = index;
             renderSavedAddresses();
+            // 自动填充表单
+            const addr = savedAddresses[index];
+            document.getElementById('receiverName').value = addr.receiver_name || '';
+            document.getElementById('receiverPhone').value = addr.receiver_phone || '';
+            document.getElementById('address').value = `${addr.province || ''}${addr.city || ''}${addr.district || ''}${addr.detail_address || ''}`;
         }
         
         // 提交订单 - 通过服务端API转发到Supabase
@@ -142,8 +233,10 @@
             
             const submitBtn = document.getElementById('submitBtn');
             const loading = document.getElementById('submitLoading');
+            const submitText = document.getElementById('submitText');
             submitBtn.disabled = true;
             loading.classList.remove('hidden');
+            submitText.classList.add('hidden');
             
             // 通过服务端API转发下单（绕过RLS限制）
             fetch('/api/data?action=shop_order', {
@@ -163,12 +256,16 @@
                     showToast(result.error || '提交失败', 'error');
                     submitBtn.disabled = false;
                     loading.classList.add('hidden');
+                    submitText.classList.remove('hidden');
                 }
             }).catch(function(err) {
                 console.error('下单失败:', err);
                 showToast('网络错误，请重试', 'error');
                 submitBtn.disabled = false;
                 loading.classList.add('hidden');
+                submitText.classList.remove('hidden');
             });
         }
     </script>
+</body>
+</html>
