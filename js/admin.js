@@ -239,6 +239,24 @@
         if (forceRefresh || allOrders.length === 0) {
             var res = await YiliSupabase.getShopOrders();
             allOrders = res.success ? res.data : [];
+
+            // 批量获取所有订单的商品数量
+            if (allOrders.length > 0) {
+                var orderIds = allOrders.map(function(o) { return o.id; }).join(',');
+                var itemsRes = await YiliSupabase.makeRequest(
+                    YiliSupabase.REST_URL + '/shop_order_items?select=order_id&order_id=in.(' + encodeURIComponent(orderIds) + ')',
+                    'GET', null, false
+                );
+                if (itemsRes.success && Array.isArray(itemsRes.data)) {
+                    var counts = {};
+                    itemsRes.data.forEach(function(item) {
+                        counts[item.order_id] = (counts[item.order_id] || 0) + 1;
+                    });
+                    allOrders.forEach(function(o) {
+                        o.item_count = counts[o.id] || 0;
+                    });
+                }
+            }
         }
         orderPage = 1;
         renderOrders();
