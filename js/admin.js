@@ -84,6 +84,8 @@
             loadOrdersPage(true);
         });
 
+        document.getElementById('export-orders').addEventListener('click', exportOrders);
+
         // 添加商品
         document.getElementById('add-product-btn').addEventListener('click', function() {
             openProductModal();
@@ -744,6 +746,53 @@
         toast.textContent = msg;
         document.body.appendChild(toast);
         setTimeout(function() { toast.remove(); }, 3000);
+    }
+
+    // ===== 订单导出（CSV 带 BOM，Excel 直接打开不乱码） =====
+    function exportOrders() {
+        if (!filteredOrders || filteredOrders.length === 0) {
+            alert('没有可导出的订单');
+            return;
+        }
+
+        var headers = ['订单号', '状态', '收货人', '电话', '地址', '商品明细', '总金额', '下单时间', '付款时间', '发货时间', '备注'];
+        var rows = filteredOrders.map(function(o) {
+            var items = (o.items || []).map(function(i) {
+                return (i.product_name || '') + ' x' + (i.quantity || 0);
+            }).join('; ');
+            return [
+                o.id || '',
+                getStatusLabel(o.status) || '',
+                o.receiver_name || '',
+                o.receiver_phone || '',
+                o.receiver_address || '',
+                items,
+                '¥' + formatPrice(o.total_amount),
+                formatDate(o.created_at),
+                formatDate(o.paid_at),
+                formatDate(o.shipped_at),
+                o.remark || ''
+            ];
+        });
+
+        var csvContent = '\uFEFF'; // BOM for UTF-8
+        csvContent += headers.map(function(h) { return '"' + h + '"'; }).join(',') + '\n';
+        rows.forEach(function(row) {
+            csvContent += row.map(function(cell) {
+                var s = String(cell || '').replace(/"/g, '""');
+                return '"' + s + '"';
+            }).join(',') + '\n';
+        });
+
+        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'orders_' + new Date().toISOString().slice(0, 10) + '.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
 
     // ===== 启动 =====

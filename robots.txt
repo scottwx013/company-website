@@ -1,5 +1,11 @@
 User-agent: *
 Allow: /
+
+Disallow: /shop/admin.html
+Disallow: /shop/cart.html
+Disallow: /shop/checkout.html
+Disallow: /shop/orders.html
+Disallow: /shop/login.html
 Disallow: /admin/
 
-Sitemap: https://yili-website.vercel.app/sitemap.xml
+Sitemap: https://1gift.co/sitemap.xml
