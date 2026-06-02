@@ -202,44 +202,31 @@ async function runTest() {
     await page.waitForURL(/checkout/, { timeout: 8000 });
     await page.waitForTimeout(500);
 
-    // 检查是否需要添加地址
+    // 检查是否需要填写地址（checkout 页面直接显示表单）
     const hasAddress = await page.locator('.address-card').count() > 0;
-    if (!hasAddress) {
-      console.log('  → 没有地址，添加新地址...');
-      await page.click('button:has-text("新增地址")');
-      await page.waitForTimeout(300);
-
-      // 填写地址表单（使用 checkout.html 的实际字段 ID）
-      const addrName = page.locator('#addrName');
+    const addrNameInput = page.locator('#addrName');
+    const hasAddrForm = await addrNameInput.count() > 0;
+    
+    if (!hasAddress && hasAddrForm) {
+      console.log('  → 直接填写地址表单...');
+      // 填写地址表单
       const addrPhone = page.locator('#addrPhone');
       const addrDetail = page.locator('#addrDetail');
 
-      if (await addrName.count() > 0) await addrName.fill(TEST_USER.name);
+      if (await addrNameInput.count() > 0) await addrNameInput.fill(TEST_USER.name);
       if (await addrPhone.count() > 0) await addrPhone.fill(TEST_USER.phone);
       if (await addrDetail.count() > 0) await addrDetail.fill(TEST_USER.detail);
-
-      // 保存地址
-      const saveBtn = page.locator('button').filter({ hasText: /保存|确认/ });
-      if (await saveBtn.count() > 0) {
-        await saveBtn.click();
-        await page.waitForTimeout(1000);
-      }
-
-      // 确保弹窗已关闭
-      const modal = page.locator('#addressModal');
-      if (await modal.isVisible().catch(() => false)) {
-        await page.keyboard.press('Escape');
+    } else if (hasAddress) {
+      // 选择第一个地址
+      const firstAddress = page.locator('.address-card').first();
+      if (await firstAddress.count() > 0) {
+        await firstAddress.click();
         await page.waitForTimeout(300);
       }
+    } else {
+      log('确认订单', 'WARN', '未检测到地址表单');
     }
-
-    // 选择第一个地址
-    const firstAddress = page.locator('.address-card').first();
-    if (await firstAddress.count() > 0) {
-      await firstAddress.click();
-      await page.waitForTimeout(300);
-    }
-
+    
     const subtotal = await page.locator('#subtotal').innerText({ timeout: 3000 }).catch(() => '¥0');
     const totalAmount = await page.locator('#totalAmount').innerText({ timeout: 3000 }).catch(() => '¥0');
     log('确认订单', 'PASS', `商品总额: ${subtotal}, 实付款: ${totalAmount}`);
