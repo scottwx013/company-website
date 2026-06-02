@@ -204,14 +204,14 @@ async function runTest() {
 
     // 检查是否需要填写地址（checkout 页面直接显示表单）
     const hasAddress = await page.locator('.address-card').count() > 0;
-    const addrNameInput = page.locator('#addrName');
+    const addrNameInput = page.locator('#receiverName');
     const hasAddrForm = await addrNameInput.count() > 0;
     
     if (!hasAddress && hasAddrForm) {
       console.log('  → 直接填写地址表单...');
       // 填写地址表单
-      const addrPhone = page.locator('#addrPhone');
-      const addrDetail = page.locator('#addrDetail');
+      const addrPhone = page.locator('#receiverPhone');
+      const addrDetail = page.locator('#address');
 
       if (await addrNameInput.count() > 0) await addrNameInput.fill(TEST_USER.name);
       if (await addrPhone.count() > 0) await addrPhone.fill(TEST_USER.phone);
@@ -289,7 +289,7 @@ async function runTest() {
     // ── Step 9: 查看订单 ──
     console.log('\n--- Step 9: 查看订单列表 ---');
     await page.goto(`${SHOP_URL}/orders.html`, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(3000);
 
     const orderContent = await page.content();
     const hasOrders = await page.locator('.order-card, #orderList > div').count() > 0;
