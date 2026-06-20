@@ -2811,7 +2811,7 @@
                     '<p class="text-sm text-gray-500 mb-1">' + p.category + ' · 销量 ' + p.sales + '</p>' +
                     '<div class="flex items-center gap-3">' +
                         '<span class="text-lg font-bold text-red-500">¥' + p.price + '</span>' +
-                        p.originalPrice ? '<span class="text-sm text-gray-400 line-through">¥' + p.originalPrice + '</span>' : '' +
+                        (p.originalPrice ? '<span class="text-sm text-gray-400 line-through">¥' + p.originalPrice + '</span>' : '') +
                         '<span class="text-sm text-gray-500">库存 ' + p.stock + '</span>' +
                     '</div>' +
                 '</div>' +
