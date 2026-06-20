@@ -2999,23 +2999,19 @@
     
     function loadShopOrders() {
         // 从 Supabase 加载所有订单（通过 Vercel API 代理，避免 RLS 限制）
-        apiRequest('shop_orders_list').then(function(result) {
-            if (result.success) {
-                var newOrders = result.data || [];
-                // 检测新订单
-                var freshOrders = newOrders.filter(function(o) { return !knownOrderIds.has(o.id); });
-                if (freshOrders.length > 0 && knownOrderIds.size > 0) {
-                    // 有新订单到达
-                    unreadOrderCount += freshOrders.length;
-                    showOrderNotification(freshOrders);
-                    flashPageTitle();
-                }
-                // 更新已知订单集合
-                newOrders.forEach(function(o) { knownOrderIds.add(o.id); });
-                shopOrders = newOrders;
-            } else {
-                shopOrders = [];
+        apiRequest('shop_orders_list').then(function(orders) {
+            var newOrders = orders || [];
+            // 检测新订单
+            var freshOrders = newOrders.filter(function(o) { return !knownOrderIds.has(o.id); });
+            if (freshOrders.length > 0 && knownOrderIds.size > 0) {
+                // 有新订单到达
+                unreadOrderCount += freshOrders.length;
+                showOrderNotification(freshOrders);
+                flashPageTitle();
             }
+            // 更新已知订单集合
+            newOrders.forEach(function(o) { knownOrderIds.add(o.id); });
+            shopOrders = newOrders;
             filterShopOrders(currentOrderFilter);
         }).catch(function(err) {
             console.error('加载订单失败:', err);
