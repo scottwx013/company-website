@@ -3022,6 +3022,12 @@
             filterShopOrders(currentOrderFilter);
         }).catch(function(err) {
             console.error('加载订单失败:', err);
+            // token 过期时自动登出
+            if (err.message && (err.message.indexOf('无权访问') !== -1 || err.message.indexOf('未登录') !== -1 || err.message.indexOf('token') !== -1)) {
+                console.log('Token 失效，自动登出');
+                doLogout();
+                return;
+            }
             shopOrders = [];
             filterShopOrders(currentOrderFilter);
         });
