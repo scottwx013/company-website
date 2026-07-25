@@ -54,14 +54,14 @@ async function runTest() {
   try {
     // ── Step 1: 打开商城首页 ──
     console.log('\n--- Step 1: 打开商城首页 ---');
-    await page.goto(`${SHOP_URL}/`, { waitUntil: 'networkidle' });
+    await page.goto(`${SHOP_URL}/`);
     await page.waitForSelector('#productGrid', { timeout: 10000 });
     log('打开商城首页', 'PASS', `加载了 ${await page.locator('.product-card').count()} 个商品`);
     await screenshot('01-homepage');
 
     // ── Step 2: 跳转到登录页并注册 ──
     console.log('\n--- Step 2: 用户注册 ---');
-    await page.goto(`${SHOP_URL}/login.html`, { waitUntil: 'networkidle' });
+    await page.goto(`${SHOP_URL}/login.html`);
     await page.waitForSelector('#registerTab', { timeout: 10000 });
 
     // 切换到注册 Tab

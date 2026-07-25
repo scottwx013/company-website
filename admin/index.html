@@ -3006,7 +3006,7 @@
     
     function loadShopOrders() {
         // 从 Supabase 加载所有订单（通过 Vercel API 代理，避免 RLS 限制）
-        apiRequest('shop_orders_list').then(function(orders) {
+        return apiRequest('shop_orders_list').then(function(orders) {
             var newOrders = orders || [];
             // 检测新订单
             var freshOrders = newOrders.filter(function(o) { return !knownOrderIds.has(o.id); });
@@ -3606,7 +3606,12 @@
     function loadDataReport() {
         // 确保订单数据已加载
         if (shopOrders.length === 0) {
-            loadShopOrders();
+            loadShopOrders().then(function() {
+                // 数据加载完成后重新渲染报表
+                if (shopOrders.length > 0) {
+                    loadDataReport();
+                }
+            });
             return;
         }
 
