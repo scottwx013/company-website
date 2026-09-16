@@ -98,14 +98,20 @@ async function supabaseRequest(table, method, query, body) {
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
     };
-    const response = await fetch(url, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : undefined
-    });
-    let data = null;
-    try { data = await response.json(); } catch(e) { data = null; }
-    return { ok: response.ok, status: response.status, data };
+    try {
+        const response = await fetch(url, {
+            method,
+            headers,
+            body: body ? JSON.stringify(body) : undefined
+        });
+        let data = null;
+        try { data = await response.json(); } catch(e) { data = null; }
+        return { ok: response.ok, status: response.status, data };
+    } catch (err) {
+        // Supabase 不可达（DNS 失败/网络错误/超时）
+        console.error('Supabase request failed:', url, err.message);
+        return { ok: false, status: 0, data: null, error: 'Supabase 不可达: ' + err.message };
+    }
 }
 
 // 默认数据
