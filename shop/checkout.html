@@ -239,19 +239,13 @@
             loading.classList.remove('hidden');
             submitText.classList.add('hidden');
             
-            // 通过服务端API转发下单（绕过RLS限制）
-            fetch('/api/data?action=shop_order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderData)
-            }).then(function(response) {
-                return response.json();
-            }).then(function(result) {
+            // 优先使用 shop-data.js 的 saveOrder（含 Supabase → localStorage 降级）
+            saveOrder(orderData).then(function(result) {
                 if (result.success) {
                     localStorage.removeItem('cart');
                     showToast('订单创建成功！', 'success');
                     setTimeout(() => {
-                        window.location.href = 'payment.html?orderId=' + encodeURIComponent(result.data.orderId);
+                        window.location.href = 'payment.html?orderId=' + encodeURIComponent(result.data.orderId || result.data.id || '');
                     }, 1500);
                 } else {
                     showToast(result.error || '提交失败', 'error');

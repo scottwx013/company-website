@@ -183,23 +183,33 @@
             const client = getSupabaseClient();
             if (client && client.updateShopOrderStatus) {
                 client.updateShopOrderStatus(orderId, 'paid', { payMethod: 'enterprise' }).then(function(result) {
-                    handlePayResult(result);
+                    if (result.success) {
+                        handlePayResult(result);
+                    } else {
+                        // Supabase 不可达，降级到 localStorage
+                        console.warn('Supabase 支付失败，降级到 localStorage:', result.error);
+                        handlePayResult(payOrderFallback());
+                    }
                 }).catch(function(err) {
-                    console.error('支付失败:', err);
-                    handlePayResult({ success: false, error: '支付异常' });
+                    console.error('支付异常，降级到 localStorage:', err);
+                    handlePayResult(payOrderFallback());
                 });
             } else {
-                // fallback: 直接更新 localStorage
-                const data = getFallbackData();
-                const order = data.orders.find(o => o.id === orderId);
-                if (order) {
-                    order.status = 'paid';
-                    order.paidAt = new Date().toISOString();
-                    order.payMethod = 'enterprise';
-                    saveFallbackData(data);
-                }
-                handlePayResult({ success: true });
+                handlePayResult(payOrderFallback());
             }
+        }
+
+        function payOrderFallback() {
+            const data = getFallbackData();
+            const order = data.orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = 'paid';
+                order.payTime = new Date().toISOString();
+                order.payMethod = 'enterprise';
+                saveFallbackData(data);
+                return { success: true };
+            }
+            return { success: false, error: '订单不存在' };
         }
 
         function handlePayResult(result) {
