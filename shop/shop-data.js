@@ -119,10 +119,13 @@ function registerUser(userData) {
                     });
                     saveFallbackData(data);
                 }
+                return result;
             }
-            return result;
+            // Supabase 不可达（如项目暂停/删除），降级到 localStorage
+            console.warn('Supabase 注册失败，降级到 localStorage:', result.error);
+            return registerUserFallback(userData);
         }).catch(function(err) {
-            console.warn('Supabase 注册失败，降级到 localStorage:', err);
+            console.warn('Supabase 注册异常，降级到 localStorage:', err);
             return registerUserFallback(userData);
         });
     }
@@ -169,10 +172,13 @@ function loginUser(username, password) {
                     data.users.push(user);
                     saveFallbackData(data);
                 }
+                return result;
             }
-            return result;
+            // Supabase 不可达或用户不存在于 Supabase，尝试 localStorage 降级
+            console.warn('Supabase 登录失败，尝试 localStorage 降级:', result.error);
+            return loginUserFallback(username, password);
         }).catch(function(err) {
-            console.warn('Supabase 登录失败，降级到 localStorage:', err);
+            console.warn('Supabase 登录异常，降级到 localStorage:', err);
             return loginUserFallback(username, password);
         });
     }
@@ -288,7 +294,8 @@ function decrementStock(productId, quantity) {
             false
         ).then(function(result) {
             if (!result.success || !result.data || result.data.length === 0) {
-                return { success: false, error: '商品不存在' };
+                // Supabase 不可达，降级到 localStorage
+                return decrementStockFallback(productId, quantity);
             }
             var currentStock = result.data[0].stock;
             if (currentStock < quantity) {
@@ -300,8 +307,14 @@ function decrementStock(productId, quantity) {
                 { stock: currentStock - quantity },
                 false
             );
+        }).catch(function() {
+            return decrementStockFallback(productId, quantity);
         });
     }
+    return Promise.resolve(decrementStockFallback(productId, quantity));
+}
+
+function decrementStockFallback(productId, quantity) {
     const data = getFallbackData();
     const product = data.products.find(p => p.id === productId);
     if (product) {
@@ -424,24 +437,14 @@ function saveOrder(orderData) {
                 };
                 data.orders.push(order);
                 saveFallbackData(data);
+                return result;
             }
-            return result;
+            // Supabase 不可达，降级到 localStorage
+            console.warn('Supabase 下单失败，降级到 localStorage:', result.error);
+            return saveOrderFallback(orderData);
         }).catch(function(err) {
-            console.warn('Supabase 下单失败，降级到服务端API:', err);
-            // 降级：通过服务端API转发
-            return fetch('/api/data?action=shop_order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: orderData.userId || (getCurrentUser() ? getCurrentUser().id : null),
-                    items: orderData.items,
-                    totalAmount: orderData.totalAmount,
-                    address: orderData.address,
-                    receiverName: orderData.receiverName,
-                    receiverPhone: orderData.receiverPhone,
-                    remark: orderData.remark
-                })
-            }).then(function(response) { return response.json(); });
+            console.warn('Supabase 下单异常，降级到 localStorage:', err);
+            return saveOrderFallback(orderData);
         });
     }
     return Promise.resolve(saveOrderFallback(orderData));
@@ -472,8 +475,20 @@ function saveOrderFallback(orderData) {
 function updateOrderStatus(orderId, status, extra) {
     const client = getSupabaseClient();
     if (client) {
-        return client.updateShopOrderStatus(orderId, status, extra);
+        return client.updateShopOrderStatus(orderId, status, extra).then(function(result) {
+            if (result.success) return result;
+            // Supabase 不可达，降级到 localStorage
+            console.warn('Supabase 更新订单状态失败，降级到 localStorage:', result.error);
+            return updateOrderStatusFallback(orderId, status, extra);
+        }).catch(function(err) {
+            console.warn('Supabase 更新订单状态异常，降级到 localStorage:', err);
+            return updateOrderStatusFallback(orderId, status, extra);
+        });
     }
+    return Promise.resolve(updateOrderStatusFallback(orderId, status, extra));
+}
+
+function updateOrderStatusFallback(orderId, status, extra) {
     const data = getFallbackData();
     const order = data.orders.find(o => o.id === orderId);
     if (!order) return { success: false, error: '订单不存在' };
