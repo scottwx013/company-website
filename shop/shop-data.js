@@ -250,13 +250,23 @@ function getProductById(id) {
 function saveProduct(product) {
     const client = getSupabaseClient();
     if (client) {
-        if (product.id) {
-            return client.updateShopProduct(product.id, product);
-        } else {
-            return client.createShopProduct(product);
-        }
+        var supabaseCall = product.id
+            ? client.updateShopProduct(product.id, product)
+            : client.createShopProduct(product);
+        return supabaseCall.then(function(result) {
+            if (result.success) return result;
+            // Supabase 不可达，降级到 localStorage
+            console.warn('Supabase 保存商品失败，降级到 localStorage:', result.error);
+            return saveProductFallback(product);
+        }).catch(function(err) {
+            console.warn('Supabase 保存商品异常，降级到 localStorage:', err);
+            return saveProductFallback(product);
+        });
     }
-    // 降级
+    return Promise.resolve(saveProductFallback(product));
+}
+
+function saveProductFallback(product) {
     const data = getFallbackData();
     if (product.id) {
         const idx = data.products.findIndex(p => p.id === product.id);
@@ -276,8 +286,19 @@ function saveProduct(product) {
 function deleteProduct(id) {
     const client = getSupabaseClient();
     if (client) {
-        return client.deleteShopProduct(id);
+        return client.deleteShopProduct(id).then(function(result) {
+            if (result.success) return result;
+            console.warn('Supabase 删除商品失败，降级到 localStorage:', result.error);
+            return deleteProductFallback(id);
+        }).catch(function(err) {
+            console.warn('Supabase 删除商品异常，降级到 localStorage:', err);
+            return deleteProductFallback(id);
+        });
     }
+    return Promise.resolve(deleteProductFallback(id));
+}
+
+function deleteProductFallback(id) {
     const data = getFallbackData();
     data.products = data.products.filter(p => p.id !== id);
     saveFallbackData(data);
@@ -539,8 +560,19 @@ function getAddresses(userId) {
 function saveAddress(addressData) {
     const client = getSupabaseClient();
     if (client) {
-        return client.createShopAddress(addressData);
+        return client.createShopAddress(addressData).then(function(result) {
+            if (result.success) return result;
+            console.warn('Supabase 保存地址失败，降级到 localStorage:', result.error);
+            return saveAddressFallback(addressData);
+        }).catch(function(err) {
+            console.warn('Supabase 保存地址异常，降级到 localStorage:', err);
+            return saveAddressFallback(addressData);
+        });
     }
+    return Promise.resolve(saveAddressFallback(addressData));
+}
+
+function saveAddressFallback(addressData) {
     const data = getFallbackData();
     data.addresses.push({
         ...addressData,
