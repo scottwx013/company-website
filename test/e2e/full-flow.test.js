@@ -288,7 +288,7 @@ async function runTest() {
 
     // ── Step 9: 查看订单 ──
     console.log('\n--- Step 9: 查看订单列表 ---');
-    await page.goto(`${SHOP_URL}/orders.html`, { waitUntil: 'networkidle' });
+    await page.goto(`${SHOP_URL}/orders.html`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     await page.waitForTimeout(3000);
 
     const orderContent = await page.content();
