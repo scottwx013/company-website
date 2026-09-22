@@ -117,7 +117,9 @@ async function runTest() {
     // ── Step 3: 登录（如果注册未自动登录）─
     console.log('\n--- Step 3: 用户登录 ---');
     if (!page.url().includes('index') && !await page.locator('text=退出').count()) {
-      await page.goto(`${SHOP_URL}/login.html`, { waitUntil: 'networkidle' });
+      await page.goto(`${SHOP_URL}/login.html`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+      await page.waitForSelector('#loginUsername', { timeout: 10000 });
+      await page.waitForTimeout(500);
       await page.fill('#loginUsername', TEST_USER.username);
       await page.fill('#loginPassword', TEST_USER.password);
       await page.click('#loginForm button[type="submit"]');
@@ -130,7 +132,7 @@ async function runTest() {
     }
 
     // 验证登录状态
-    await page.goto(`${SHOP_URL}/`, { waitUntil: 'networkidle' });
+    await page.goto(`${SHOP_URL}/`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     await page.waitForTimeout(500);
 
     const userSection = await page.locator('#userSection').innerText({ timeout: 5000 }).catch(() => '');
@@ -144,7 +146,7 @@ async function runTest() {
 
     // ── Step 4: 加购 ──
     console.log('\n--- Step 4: 加购商品 ---');
-    await page.goto(`${SHOP_URL}/`, { waitUntil: 'networkidle' });
+    await page.goto(`${SHOP_URL}/`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     await page.waitForSelector('.product-card', { timeout: 10000 });
 
     const productCards = page.locator('.product-card');
@@ -182,8 +184,8 @@ async function runTest() {
 
     // ── Step 5: 进入购物车 ──
     console.log('\n--- Step 5: 购物车 ---');
-    await page.goto(`${SHOP_URL}/cart.html`, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(500);
+    await page.goto(`${SHOP_URL}/cart.html`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    await page.waitForTimeout(1000);
 
     const emptyCart = await page.locator('#emptyState').isVisible().catch(() => false);
     if (emptyCart) {
