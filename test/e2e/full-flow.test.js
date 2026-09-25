@@ -11,6 +11,27 @@ const SHOP_URL = `${BASE_URL}/shop`;
 
 // 测试用户（带时间戳确保唯一）
 const timestamp = Date.now();
+
+// Supabase 持久层配置（与 js/supabase-client.js 保持一致）
+const SUPABASE_URL = 'https://baoqfrcyoizfjkwiqwbd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhb3FmcmN5b2l6Zmprd2lxd2JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MTM4MTksImV4cCI6MjA5MjM4OTgxOX0.IDNEll2brUzBKlsIQf0JSiWVUsZ6kPjb1nuYjG9dvhE';
+let supabaseReachable = false;
+
+// 先探测 Supabase 持久层连通性（决定后续测试是「真实通过」还是「降级模式通过」）
+async function checkSupabaseHealth() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/shop_products?select=id&limit=1`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+      signal: AbortSignal.timeout(10000)
+    });
+    supabaseReachable = res.ok;
+    return res.ok;
+  } catch (e) {
+    supabaseReachable = false;
+    return false;
+  }
+}
+
 const TEST_USER = {
   username: `tu${String(timestamp).slice(-6)}`,
   password: 'TestPass123!',
@@ -52,6 +73,15 @@ async function runTest() {
   page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 
   try {
+    // ── Step 0: Supabase 持久层连通性 ──
+    console.log('\n--- Step 0: Supabase 持久层连通性 ---');
+    const healthy = await checkSupabaseHealth();
+    if (healthy) {
+      log('Supabase 持久层', 'PASS', 'REST API 可达，后续结果为真实持久化数据');
+    } else {
+      log('Supabase 持久层', 'FAIL', '不可达！后续流程运行在 localStorage 降级模式，数据不落库');
+    }
+
     // ── Step 1: 打开商城首页 ──
     console.log('\n--- Step 1: 打开商城首页 ---');
     await page.goto(`${SHOP_URL}/`);
@@ -322,9 +352,18 @@ async function runTest() {
     testResults.forEach(r => console.log(r));
     console.log('');
 
+    const passCount = testResults.filter(r => r.includes('[PASS]')).length;
+    const failCount = testResults.filter(r => r.includes('[FAIL]')).length;
+    const mode = supabaseReachable ? '真实模式' : '降级模式（localStorage 兜底，数据不落库）';
+    console.log(`模式: ${mode} | PASS: ${passCount} | FAIL: ${failCount}`);
+    if (!supabaseReachable && failCount === 0) {
+      console.log('⚠️  注意：全部通过但为降级模式通过 —— 商城前端功能正常，服务端持久化不可用，需恢复 Supabase 项目');
+    }
+
     // 保存报告到文件
     const reportPath = '/tmp/openclaw/test-report.txt';
-    fs.writeFileSync(reportPath, testResults.join('\n'));
+    const header = `模式: ${mode}\n`;
+    fs.writeFileSync(reportPath, header + testResults.join('\n'));
     console.log(`报告已保存: ${reportPath}`);
 
     if (browser) await browser.close();
