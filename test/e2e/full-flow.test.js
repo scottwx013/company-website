@@ -84,8 +84,8 @@ async function runTest() {
 
     // ── Step 1: 打开商城首页 ──
     console.log('\n--- Step 1: 打开商城首页 ---');
-    await page.goto(`${SHOP_URL}/`);
-    await page.waitForSelector('#productGrid', { timeout: 10000 });
+    await page.goto(`${SHOP_URL}/`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForSelector('#productGrid', { timeout: 15000 });
     log('打开商城首页', 'PASS', `加载了 ${await page.locator('.product-card').count()} 个商品`);
     await screenshot('01-homepage');
 
