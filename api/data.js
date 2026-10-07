@@ -497,7 +497,62 @@ module.exports = async (req, res) => {
             
             return res.json({ success: true, data: ordersWithItems });
         }
-        
+
+        // 后台管理：券号管理（虚拟商品卡密池）— GET 版本
+        // 回归修复：9bbedee 权限系统重构时误删了 GET 处理器，
+        // 而 admin 前端通过 GET 调用 list/delete/auto_get，导致请求穿透到"返回全部数据"。
+        if (action === 'shop_coupons_list') {
+            const adminUserInfo = getAdminUserInfo(req, data);
+            if (!hasPermission(adminUserInfo, 'shop_orders')) {
+                return res.json({ success: false, error: '无权访问商城订单' });
+            }
+            const { productId } = req.query;
+            if (!productId) {
+                return res.json({ success: false, error: '缺少商品ID' });
+            }
+            const result = await supabaseRequest('shop_coupons', 'GET', 'product_id=eq.' + productId + '&order=created_at.desc&limit=1000');
+            if (!result.ok) {
+                // Supabase 不可达时降级为空列表，避免后台页面报错
+                console.error('Supabase 券号获取失败，降级为空列表:', result.error || result.status);
+                return res.json({ success: true, data: [], _warning: '数据库暂不可用，显示为空列表' });
+            }
+            return res.json({ success: true, data: result.data || [] });
+        }
+
+        if (action === 'shop_coupons_delete') {
+            const adminUserInfo = getAdminUserInfo(req, data);
+            if (!hasPermission(adminUserInfo, 'shop_orders')) {
+                return res.json({ success: false, error: '无权访问商城订单' });
+            }
+            const { id } = req.query;
+            if (!id) {
+                return res.json({ success: false, error: '缺少券号ID' });
+            }
+            const result = await supabaseRequest('shop_coupons', 'DELETE', 'id=eq.' + id);
+            if (!result.ok) {
+                return res.json({ success: false, error: '删除券号失败', details: result.data });
+            }
+            return res.json({ success: true });
+        }
+
+        if (action === 'shop_coupons_auto_get') {
+            const adminUserInfo = getAdminUserInfo(req, data);
+            if (!hasPermission(adminUserInfo, 'shop_orders')) {
+                return res.json({ success: false, error: '无权访问商城订单' });
+            }
+            const { productId, orderId } = req.query;
+            if (!productId) {
+                return res.json({ success: false, error: '缺少商品ID' });
+            }
+            // 获取一个未使用的券号（仅预览，不标记状态，留给发货时真正扣减）
+            const result = await supabaseRequest('shop_coupons', 'GET', 'product_id=eq.' + productId + '&status=eq.unused&limit=1');
+            if (!result.ok || !result.data || result.data.length === 0) {
+                return res.json({ success: false, error: '该商品暂无可用券号，请先导入券号' });
+            }
+            const coupon = result.data[0];
+            return res.json({ success: true, data: { code: coupon.code, id: coupon.id } });
+        }
+
         // 返回全部数据
         return res.json({ success: true, data });
     }
