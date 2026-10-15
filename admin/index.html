@@ -1671,7 +1671,7 @@
         if (!confirm('确定要删除账户 "' + username + '" 吗？此操作不可恢复。')) {
             return;
         }
-        apiRequest('admin_user_delete', 'DELETE', { username: username })
+        apiRequest('admin_user_delete', 'POST', { username: username })
             .then(function() {
                 loadAdminUsers();
                 alert('账户已删除');
