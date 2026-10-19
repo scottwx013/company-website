@@ -71,6 +71,8 @@ async function runTest() {
 
   browser = await chromium.launch({ headless: true });
   page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  page.on('dialog', d => { console.log('[DIALOG]', d.type(), d.message()); d.dismiss(); });
+  page.on('framenavigated', f => { if (f === page.mainFrame()) console.log('[NAV]', page.url()); });
 
   try {
     // ── Step 0: Supabase 持久层连通性 ──
@@ -230,8 +232,28 @@ async function runTest() {
 
     // ── Step 6: 去结算 ──
     console.log('\n--- Step 6: 确认订单 ---');
-    await page.click('button:has-text("去结算")');
-    await page.waitForURL(/checkout/, { timeout: 8000 });
+    // 偶发点击后导航检测丢失（waiter 注册晚于导航完成），用 Promise.all 竞态 + 重试兜底
+    let checkoutOk = false;
+    for (let attempt = 1; attempt <= 3 && !checkoutOk; attempt++) {
+      try {
+        await Promise.all([
+          page.waitForURL(/checkout[./]/, { timeout: 10000 }),
+          page.click('button:has-text("去结算")', { timeout: 5000 }),
+        ]);
+        checkoutOk = true;
+      } catch (e) {
+        console.log(`  → 去结算跳转超时（第${attempt}次），刷新购物车重试`);
+        if (page.url().includes('checkout')) { checkoutOk = true; break; }
+        if (attempt < 3) {
+          await page.goto(`${SHOP_URL}/cart.html`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+          await page.waitForTimeout(1200);
+        }
+      }
+    }
+    if (!checkoutOk) {
+      log('确认订单', 'FAIL', '点击去结算后 3 次均未跳转到结算页');
+      throw new Error('去结算跳转失败');
+    }
     await page.waitForTimeout(500);
 
     // 检查是否需要填写地址（checkout 页面直接显示表单）
