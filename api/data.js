@@ -553,8 +553,9 @@ module.exports = async (req, res) => {
             return res.json({ success: true, data: { code: coupon.code, id: coupon.id } });
         }
 
-        // 返回全部数据
-        return res.json({ success: true, data });
+        // 未知 action：显式报错。历史上这里曾兜底返回全量数据（含 admin_users 密码哈希），
+        // 未鉴权请求可通过任意未知 action 拿到全部数据，9bbedee 回归教训。
+        return res.json({ success: false, error: 'Unknown action: ' + String(action || '(empty)') });
     }
     
     // POST/PUT 请求 - 更新数据
