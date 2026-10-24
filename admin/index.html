@@ -1692,7 +1692,7 @@
     }
 
     async function loadData() {
-        const data = await apiRequest(null, 'GET');
+        const data = await apiRequest('site_data', 'GET');
         siteData = data;
         // 确保商户数据格式正确
         if (siteData.merchants) {

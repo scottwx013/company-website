@@ -397,6 +397,22 @@ module.exports = async (req, res) => {
         if (action === 'home') {
             return res.json({ success: true, data: data.home });
         }
+        // admin 后台初始化：显式返回非敏感站点数据（不含 messages/admin_users 等敏感集合）
+        if (action === 'site_data') {
+            const merchantsSanitized = data.merchants.map(function(m) { return ({
+                id: m.id, name: m.name, city: m.city, address: m.address, phone: m.phone,
+                lat: m.lat, lng: m.lng,
+                categories: m.categories || m.coupon_types || (m.category ? [m.category] : []),
+                category: m.category, coupon_types: m.coupon_types, tags: m.tags, status: m.status
+            }); });
+            return res.json({ success: true, data: {
+                merchants: merchantsSanitized,
+                products: data.products,
+                company: data.company,
+                about: data.about,
+                home: data.home
+            }});
+        }
         if (action === 'messages') {
             const adminUserInfo = getAdminUserInfo(req, data);
             if (!hasPermission(adminUserInfo, 'messages')) {
