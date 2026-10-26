@@ -3583,6 +3583,7 @@
     var salesTrendChart = null;
     var orderStatusChart = null;
     var productRankingChart = null;
+    var shopOrdersLoaded = false;
 
     function setChartRange(days) {
         chartRangeDays = days;
@@ -3598,13 +3599,11 @@
     }
 
     function loadDataReport() {
-        // 确保订单数据已加载
-        if (shopOrders.length === 0) {
+        // 确保订单数据已加载（首次只触发一次加载，空数据也要渲染空图表，避免画布空白）
+        if (!shopOrdersLoaded) {
             loadShopOrders().then(function() {
-                // 数据加载完成后重新渲染报表
-                if (shopOrders.length > 0) {
-                    loadDataReport();
-                }
+                shopOrdersLoaded = true;
+                loadDataReport();
             });
             return;
         }
