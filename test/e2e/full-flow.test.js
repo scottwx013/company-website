@@ -281,9 +281,9 @@ async function runTest() {
       log('确认订单', 'WARN', '未检测到地址表单');
     }
     
-    const subtotal = await page.locator('#subtotal').innerText({ timeout: 3000 }).catch(() => '¥0');
+    // 结算页只有「合计」（#totalAmount），无单独小计行
     const totalAmount = await page.locator('#totalAmount').innerText({ timeout: 3000 }).catch(() => '¥0');
-    log('确认订单', 'PASS', `商品总额: ${subtotal}, 实付款: ${totalAmount}`);
+    log('确认订单', 'PASS', `合计: ${totalAmount}`);
     await screenshot('06-checkout');
 
     // ── Step 7: 提交订单 ──
