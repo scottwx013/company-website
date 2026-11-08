@@ -364,6 +364,18 @@ module.exports = async (req, res) => {
     const data = initData();
     const { action, type } = req.query;
     
+    // 容错：客户端发 JSON 但没带 application/json 头时，body 可能是字符串或 form 对象
+    if (typeof req.body === 'string') {
+        try { req.body = JSON.parse(req.body); } catch (e) { req.body = {}; }
+    }
+    if (req.body && typeof req.body === 'object' && !(Array.isArray(req.body)) && Object.keys(req.body).length === 1) {
+        const onlyKey = Object.keys(req.body)[0];
+        if (onlyKey.charAt(0) === '{' && req.body[onlyKey] === '') {
+            // urlencoded 形式的 JSON 字符串（key 是整段 JSON）
+            try { req.body = JSON.parse(onlyKey); } catch (e) { /* 保持原样 */ }
+        }
+    }
+    
     // GET 请求 - 读取数据
     if (req.method === 'GET') {
         if (action === 'merchants') {
@@ -741,7 +753,10 @@ module.exports = async (req, res) => {
         
         // 管理员登录
         if (action === 'admin_login') {
-            const { username, password } = req.body;
+            const { username, password } = (req.body && typeof req.body === 'object') ? req.body : {};
+            if (!username || !password) {
+                return res.json({ success: false, error: '请求体缺少 username/password（需 application/json）' });
+            }
             const hash = sha256(password);
             const adminUsers = getAdminUsers(data);
             if (adminUsers[username] === hash) {
